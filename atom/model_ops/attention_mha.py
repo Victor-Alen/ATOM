@@ -558,8 +558,12 @@ class PagedAttentionImpl(nn.Module):
 
         # variable lenth attention use key value as input
         attn_metadata = fwd_ctx.attn_metadata
+        # FlashAttention's left-window convention includes the current token.
+        # Match HF and the decode path: a configured size N attends to N keys.
         sliding_window = (
-            (self.sliding_window, 0, 0) if self.sliding_window > 0 else (-1, -1, 0)
+            (self.sliding_window - 1, 0, 0)
+            if self.sliding_window > 0
+            else (-1, -1, 0)
         )
         o = aiter.flash_attn_varlen_func(
             q,
