@@ -565,6 +565,9 @@ class QuantizationConfig:
 
 
 _CONFIG_REGISTRY: dict[str, str] = {
+    # Mellum 2.1 shares Qwen3-MoE's core dimensions and expert weight layout.
+    # Its per-layer attention and RoPE differences live in atom.models.mellum.
+    "mellum": "qwen3_moe",
     "deepseek_v32": "deepseek_v3",
     "deepseek_v4": "deepseek_v3",  # V4 reuses V3 schema; V4-specific fields
     # (compress_ratios, num_hash_layers, hc_mult, swiglu_limit, ...) flow
