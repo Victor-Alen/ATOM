@@ -138,3 +138,28 @@ with it; if it stays at 55, the threshold belongs to something else entirely.
 Also worth noting: the nondeterminism only becomes *visible* when the step lands
 near a tie, which is why C-0000 was stable 8/8 while C-0003 was not. So
 "C-0000 is stable" is luck, not evidence of a working path.
+
+### Block-size sensitivity
+
+Repeating the 10-request, 96-token probe at three KV block sizes (level 0,
+eager, everything else identical):
+
+| `--block-size` | distinct streams / 10 runs | first unstable generated index | context length there |
+|----------------|---------------------------|-------------------------------|----------------------|
+| 16 (default) | 3 | 55 | 65 |
+| 32 | 10 | 1 | 11 |
+| 64 | 10 | 1 | 11 |
+
+Changing the block size does not just move the 64-token threshold - it makes the
+output unstable from the very first decoded token. That means the block size
+selects a different attention kernel path rather than only changing the layout,
+so this probe does not isolate the block allocator on its own. It does establish
+one practically useful fact: the default `block_size=16` is the *least* unstable
+configuration of the three, and any tuning that touches the KV block size has to
+re-run the determinism probe before its speed numbers mean anything.
+
+Open question, stated as a question and not a conclusion: with `block_size=16`,
+why does instability begin exactly when the context passes 64 tokens? Candidates
+not yet excluded: the paged-ASM kernel's partition count as a function of
+context length, and the block-table walk when the row count crosses a kernel
+tile boundary. Answering it needs a kernel-level read, not more black-box runs.

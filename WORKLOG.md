@@ -46,3 +46,9 @@
 - So it is a single step that goes bad once the context passes 64 tokens, not diffuse jitter. `context_partition_size` is 128/256 so the attention partition path is not the explanation; KV block size is 16, making 64 = 4 blocks.
 - This also explains why C-0000 looked stable and C-0003 did not: the instability only shows when the affected step happens to be near a tie. I had been reading that as evidence that some paths work and others do not - wrong. Recorded that in `RESULTS.md` so the next person does not repeat it.
 - Next concrete test, if I pick this up: vary `kv_cache_block_size` and check whether the unstable index moves with it.
+
+### D3 (cont.) - 02:50-03:05 Beijing time
+
+- Ran the block-size discrimination test to check my own "4 blocks = 64 tokens" hypothesis. It failed in an informative way: block size 32 and 64 are unstable from the first decoded token (10 distinct streams / 10 runs), while the default 16 is stable to 64 tokens. So block size changes which attention kernel runs, and my hypothesis is not confirmed - I wrote it up as an open question instead of a cause.
+- Useful by-product: default `block_size=16` is the least unstable of the three, so the KV-block axis is a thing to re-probe after any future change rather than a knob to tune for speed.
+- Restored the canonical Step 0 server (level 0, eager, bf16 KV, default block size, prefix cache off) so the machine is left in the configuration that `RESULTS.md` describes.
