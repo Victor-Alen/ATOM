@@ -39,3 +39,10 @@
 - Repeated the whole 5-prompt comparison ten times against the identical HF reference file: agreement ranged 0.250-0.594 (mean 0.469) on a warm server. This is the important result of the day: my earlier "59.1% after the window fix" was one sample, and the level-0-vs-level-3 delta I reported an hour ago is *inside* the engine's own noise.
 - Decision: stop treating single-run agreement as a measurement. Ruled out compile level, MoE kernel, and context length. Next suspect is the paged-attention / KV-block-layout path (reduction order depends on the block allocation a request receives). I would rather spend the next block of time making the engine deterministic than chasing another percentage point of agreement - without determinism the 90% gate is not even measurable.
 - Corrected `RESULTS.md` in place rather than editing history away, so the wrong reading and the probe that overturned it are both visible.
+
+### D3 (cont.) - 02:30-02:50 Beijing time
+
+- Bisected the nondeterminism instead of guessing. Output lengths 1/2/4/8/12/16/20/24/32/48 are perfectly reproducible over 10 requests each; 64 is not. Across 10 runs at length 64 the common prefix is exactly 55 generated tokens, so the first unstable prediction sits at context length 65.
+- So it is a single step that goes bad once the context passes 64 tokens, not diffuse jitter. `context_partition_size` is 128/256 so the attention partition path is not the explanation; KV block size is 16, making 64 = 4 blocks.
+- This also explains why C-0000 looked stable and C-0003 did not: the instability only shows when the affected step happens to be near a tie. I had been reading that as evidence that some paths work and others do not - wrong. Recorded that in `RESULTS.md` so the next person does not repeat it.
+- Next concrete test, if I pick this up: vary `kv_cache_block_size` and check whether the unstable index moves with it.

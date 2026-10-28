@@ -105,3 +105,36 @@ aiter both unstable), context length (unstable at 10 tokens in), sliding window
 (short prompt has no window effect). Still suspect: the paged-attention /
 KV-block-layout path, where the reduction order can depend on the block
 allocation chosen per request. That is the next thing to pin down.
+
+### Where exactly does the nondeterminism start
+
+Same 10-token prompt, 10 identical requests, output length bisected:
+
+```
+max_tokens =  1  2  4  8 12 16 20 24 32 48   -> 1 distinct stream / 10 runs each
+max_tokens = 64                              -> 3 distinct streams (4/4/2)
+```
+
+Collecting 10 runs at `max_tokens=64` and locating the first index where the
+runs disagree:
+
+```
+common prefix over all 10 runs: 55 generated tokens
+prompt is 10 tokens, so the first unstable prediction is at context length 65
+```
+
+Every divergent run agrees with the others for the first 55 generated tokens and
+diverges at exactly index 55 - i.e. as soon as the context passes 64 tokens.
+That is not a tie-breaking coin flip spread over the sequence; it is one
+specific step that becomes unstable once the context crosses 64.
+
+What 64 is *not*: `context_partition_size` in the paged-ASM path is 128 or 256,
+so it is not the attention context partitioning. The KV block size in this run is
+16, so 64 tokens is 4 blocks - the block-allocation/block-table path remains the
+best hypothesis, but it is a hypothesis, not a verified cause. The next concrete
+test is to change `kv_cache_block_size` and see whether the unstable index moves
+with it; if it stays at 55, the threshold belongs to something else entirely.
+
+Also worth noting: the nondeterminism only becomes *visible* when the step lands
+near a tie, which is why C-0000 was stable 8/8 while C-0003 was not. So
+"C-0000 is stable" is luck, not evidence of a working path.
