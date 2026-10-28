@@ -68,3 +68,40 @@ but it is **not yet numerics-preserving**. Level 3 splits the graph at
 One of those is wrong by one key. Confirming which requires reading the ASM
 kernel's window convention; until then point 1 cannot be claimed as passing the
 correctness gate.
+
+## Correction: the greedy output is not reproducible, so the agreement numbers above are single draws
+
+The token-parity table above was read as "level 3 changed the tokens". That
+reading was wrong, and the repeat-request probe shows why.
+
+Same server, same prompt, `temperature=0`, `ignore_eos`, 8 identical
+non-streaming requests, counting distinct token streams:
+
+| config | 10-token prompt, 64 out | C-0000 (7881 in) | C-0003 (6183 in) |
+|--------|------------------------|------------------|------------------|
+| level 3 (compile + cudagraph) | **3 streams** (4/3/1) | 1 stream (8/8) | **3 streams** (4/3/1) |
+| level 0 (eager) | **3 streams** (3/3/2) | 1 stream (8/8) | **2 streams** (5/3) |
+| level 0, `ATOM_USE_TRITON_MOE=0` (aiter MoE) | **3 streams** (3/3/2) | 1 stream (8/8) | **2 streams** (6/2) |
+
+So the nondeterminism is not caused by compilation and not caused by the choice
+of MoE kernel. It survives on a 10-token prompt, so it is not a long-context or
+sliding-window effect either.
+
+Consequence for the correctness gate: five (later ten) identical repetitions of
+the same 5-prompt comparison against the same fixed HF reference file give
+
+```
+0.334 0.338 0.391 0.547 0.594 | 0.553 0.588 0.503 0.250 0.594
+```
+
+i.e. token-position agreement between **0.250 and 0.594, mean 0.469**, on a warm
+server. The 59.1% figure quoted earlier was one draw from that distribution, and
+the "level 3 changes tokens" delta is smaller than the engine's own run-to-run
+spread. Until the nondeterminism is removed, no token-level gate and no
+token-level ablation on this port can be measured.
+
+Ruled out so far: compile level (0 and 3 both unstable), MoE kernel (Triton and
+aiter both unstable), context length (unstable at 10 tokens in), sliding window
+(short prompt has no window effect). Still suspect: the paged-attention /
+KV-block-layout path, where the reduction order can depend on the block
+allocation chosen per request. That is the next thing to pin down.
