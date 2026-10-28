@@ -1,0 +1,6 @@
+Source: https://github.com/huggingface/transformers/tree/ca68c9e07b69cd686c8bbf8869cc40889f5c82ce/src/transformers/models/mellum
+Downloaded for the required HF reference comparison; the installed Transformers package remains unchanged.
+Compatibility for frozen Transformers 5.2.0: removed the strict dataclass decorator from MellumConfig; no model computation was changed.
+Compatibility for frozen Transformers 5.2.0: removed auto_docstring decorators that require newer model registry metadata.
+Compatibility for frozen Transformers 5.2.0: added slice_logits_to_keep equivalent used by this model.
+Compatibility for frozen Transformers 5.2.0: pass cache_position explicitly to causal mask helpers.

@@ -146,6 +146,8 @@ class CompletionResponse(BaseModel):
     model: str
     choices: List[Dict[str, Any]]
     usage: Dict[str, Any]
+    # Diagnostic token IDs for non-streaming correctness comparisons.
+    token_ids: Optional[List[int]] = None
     # Optional KV-transfer metadata returned for P/D disaggregation.
     kv_transfer_params: Optional[Dict[str, Any]] = None
 

@@ -131,6 +131,7 @@ def build_completion_response(
             "tpot_s": round(final_output.get("tpot", 0.0), 4),
             "latency_s": round(final_output.get("latency", 0.0), 4),
         },
+        token_ids=final_output["token_ids"],
     )
     if "kv_transfer_output_meta_info" in final_output:
         response = response.model_copy(
