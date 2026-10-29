@@ -401,6 +401,11 @@ class MellumModel(nn.Module):
             ["hidden_states", "residual"], self.config.hidden_size
         )
 
+        if __import__('os').environ.get('ATOM_LAYER_TRACE_DIR'):
+            from atom.models.layer_trace import install_layer_trace
+
+            install_layer_trace(self)
+
     def get_input_embeddings(self, input_ids: torch.Tensor) -> torch.Tensor:
         return self.embed_tokens(input_ids)
 
