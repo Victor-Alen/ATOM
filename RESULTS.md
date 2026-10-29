@@ -201,3 +201,47 @@ count grows with context, not at KV block boundaries or a length constant.
 Next probe, if this is picked up again: read how `paged_attention_asm` /
 `paged_attention_triton` choose their split count as a function of context
 length, and check whether any of those splits accumulate with atomics.
+
+### The port is exact at short context (and the 128-token-coverage theory is wrong)
+
+`paged_attention_triton`'s docstring says
+`max_context_partition_num = ceil(max_context_length / context_partition_size)`,
+and ATOM passes `max_context_partition_num = 1` with `context_partition_size = 128`
+for sliding layers. Read literally that caps sliding-layer coverage at 128 keys
+instead of the 1024-token window, i.e. "the kernel never reads the earlier
+blocks". That was worth testing, so:
+
+284-token prompt (prefix of C-0003), HF eager reference, 64 greedy tokens,
+ATOM compared 5 times:
+
+```
+rep1..rep5: agreement = 1.0000, 64/64, exact sequence 1/1 every time
+```
+
+So the theory is **wrong**: at a context of 284 tokens - well past 128 - ATOM
+reproduces HF bit for bit. The kernel does loop over the whole context; the
+partition count is a parallelism tiling parameter, not a coverage limit.
+
+Two conclusions, both load-bearing:
+
+1. The Mellum integration itself is correct: checkpoint weight mapping, the
+   3:1 sliding/full layer pattern, per-attention-type RoPE and YaRN, QK-norm,
+   and top-8 MoE routing together reproduce HF exactly in the regime where the
+   engine is deterministic. The earlier ~50% numbers were never measuring the
+   port's correctness.
+2. Everything that is still wrong is specifically a **long-context numerics**
+   problem, not a wiring problem. That is a much narrower target.
+
+The ranges line up cleanly:
+
+| prompt tokens | engine determinism | agreement with HF |
+|---------------|--------------------|-------------------|
+| 284 | bit-identical over 5 runs | 100% (64/64) |
+| 997 / 2989 | diverges at the first token | not measurable |
+| 6183 / 7881 / 11889 / 12580 | diverges within 1-3 tokens | 25-59% across repeats |
+
+Next target is therefore the multi-partition softmax combine of the long-context
+decode path: `exp_sums`, `max_logits` and `temporary_output` are allocated with
+`torch.empty` (uninitialised) in `paged_attention_triton`, and the combine over
+up to 8 partitions is where reduction order could vary. That is the concrete
+place to look, and it is now the only place that matters for the gate.
