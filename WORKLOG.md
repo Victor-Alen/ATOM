@@ -71,3 +71,10 @@
 - Answered "what are the actual segment counts" by measuring instead of reading: MI308X has 80 SMs and occupancy 2, so `get_recommended_splits` returns 8 partitions at concurrency 1 and 2 partitions at concurrency 32, each partition 256 tokens; sliding layers always get 1 partition of 128 tokens.
 - Two findings from that. First, the partition count is a function of concurrency, so scenario A (32 concurrent) does not share numerics with scenario B/C (1 concurrent) - correctness measured at one concurrency cannot be assumed at the other. Second, the kernel asserts CONTEXT_PARTITION_SIZE == 256 while ATOM passes 128 for sliding layers; either the assert is in an unused variant or the 128 config is unsupported.
 - The 284 / 997 boundary now has a plausible mechanism: 284 tokens spans at most two partitions and matched HF exactly, while 997 is the first length where four full partitions enter the softmax combine, and 997 is exactly where divergence moves to the first generated token. Logged as correlation, not proof.
+
+### D3 (cont.) - 04:05-04:25 Beijing time
+
+- Ran the agreed order: gating top-k first. G1 (deterministic torch top-k) looked like a clean win - short64 went from 3 distinct streams to 1 - and I nearly reported it as the root cause.
+- Then ran the combination test and, as a control, repeated G1 verbatim as H2. H2 came back with 3 distinct streams on the same patch. So G1 was noise.
+- This is the second lucky-sample trap of the day (the first was the "64-token threshold"). Both had the same shape: n=8 runs, coarse statistic, and a configuration that can look fixed or broken depending on the draw. Recorded that as the methodology conclusion rather than burying it, because it changes how every determinism number in this file should be read.
+- Consequence: stop testing more candidate fixes until the protocol is strong enough to judge them. Next step is n>=40 with a modal-agreement statistic, then re-test the two suspects that survive (gluon kernel reduction, aiter GEMM solution selection).

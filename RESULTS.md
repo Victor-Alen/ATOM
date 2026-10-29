@@ -355,3 +355,42 @@ Process note: the automated variant loop left the source tree patched and a
 server that answered `/health` but returned nothing for a real completion. Both
 were caught only by running an actual generation request, and both were fixed.
 `/health` is not evidence that a server can serve.
+
+### Determinism hunt, round 2: the one positive result did not reproduce
+
+Round 1 ruled out the partition combine. Round 2 tested the MoE gating top-k,
+replacing the aiter `topk_softmax` kernel with a torch reference
+(`softmax` -> `topk` -> renormalise).
+
+| run | patches | short64 | C-0003 |
+|-----|---------|---------|--------|
+| G1 | deterministic gating | **1** distinct / 8 | 2 |
+| G2 | deterministic gating + aiter autotune env off | 2 | 3 |
+| H1 | deterministic gating + single context partition | 3 | 3 |
+| H2 | deterministic gating (identical to G1) | **3** | 3 |
+
+G1 and H2 apply the *same* patch and disagree: 1 distinct stream versus 3. So the
+apparent "gating top-k fixed it" result was a single draw, not a fix. This is the
+second time in this investigation that one lucky run looked like a cause; the
+first was the 64-token threshold.
+
+Confidently ruled out so far (each left the variation in place):
+
+- compile level (0 and 3 both unstable, and level 3 is internally consistent)
+- MoE kernel choice (Triton and aiter both unstable)
+- context partition count and partition size (V1, V2)
+- uninitialised partition buffers (V3)
+- MoE gating top-k (G1/H1/H2)
+- aiter autotune env toggles (G2)
+- a fixed context-length boundary (length sweep: 61 tokens stable through 960
+  decode steps, 997 tokens divergent at the first token)
+- context length alone as the driver (10-token prompt also flips, at step 55)
+
+**Methodology conclusion, which is the real result of this round:** with 8
+identical requests, the distinct-stream count is too coarse an estimator. A step
+whose flip probability is low will show 1 distinct stream most of the time and
+2-3 occasionally, so any single configuration can look either fixed or broken.
+The comparison needs at least ~40 requests per configuration, and the metric
+should be the fraction of runs agreeing with the modal output rather than the raw
+distinct count. Until then, every "this fixed it" observation in this file
+should be treated as provisional - including any that sound encouraging.
