@@ -279,3 +279,43 @@ Consistency check against the measurements: 284 tokens matched HF exactly
 length where four full partitions participate in the softmax combine - and 997
 is exactly where the run-to-run divergence appears at the first token. That is
 correlation, not proof, but it is the sharpest hypothesis on the table.
+
+### Attempting to isolate the sliding-window fix (window=16) - inconclusive
+
+Goal: with the real window of 1024, short prompts never activate the sliding
+mask, and contexts above 1024 are not reproducible, so the off-by-one fix in
+`5b72cc44` could not be validated either way. Plan: copy the config with
+`sliding_window = 16`, use 101-169 token prompts (window active, context still
+small), generate an HF reference under the same config, then compare ATOM with
+the fix against ATOM with the fix reverted.
+
+Results, 3 prompts x 3 runs each, 64 tokens, same HF reference:
+
+| build | agreement per run | first generated token correct | mean common prefix |
+|-------|-------------------|-------------------------------|--------------------|
+| fix present | 0.552 / 0.365 / 0.115 | 3/9 | 14.7 / 64 |
+| fix reverted | 0.026 / 0.115 / 0.318 | 1/9 | 3.8 / 64 |
+
+Verdict: **inconclusive, and the design did not work as intended.**
+
+- Both builds disagree with HF on the first generated token most of the time
+  (6/9 and 8/9 wrong), while the same port at window=1024 and 284 tokens matched
+  HF perfectly 5/5. Dropping the window to 16 therefore introduced a *larger*
+  discrepancy that swamps the one I wanted to isolate. `SLIDING_WINDOW` is a
+  compile-time constexpr inside the decode kernel, so window=16 selects a
+  different kernel variant - I changed the experiment's regime, not just the
+  boundary condition.
+- Same build, same prompts, different runs still disagree (0.115 to 0.552), so
+  the reproducibility problem is not fixed by short prompts either.
+- The direction does favour the fix (first token 3/9 vs 1/9, common prefix 14.7
+  vs 3.8), but 9 samples with this spread is not evidence. Recorded as a hint,
+  not a result.
+- One new lead: prompt SW16-C (169 tokens) produced `atom0=1622` while the HF
+  reference was `1253` in **all six** runs across both builds. That is a
+  repeatable, build-independent disagreement, unlike everything else measured so
+  far. Worth chasing on its own.
+
+What would actually settle the question: make the engine deterministic first
+(then window=1024 with 4k contexts becomes measurable directly), or compare
+logits instead of tokens at a single position, where a one-key window
+difference shows up as a small numeric delta rather than a coin flip.
