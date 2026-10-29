@@ -85,3 +85,10 @@
 - Baseline: short64 modal 0.600 (3 outcomes, prefix 55), C-0000 modal 1.000 (40/40, prefix 64), C-0003 modal 0.225 with 14 different outputs and a common prefix of 2 tokens.
 - The most useful part is that C-0000 is perfectly deterministic at 7881 tokens, so "long context" was never the driver - the content is. That gives me a control prompt (must stay 1.000) and a sensitive prompt (must rise above ~0.36) to judge any future fix, instead of reading tea leaves from 8 runs.
 - Adopted a written verdict rule so I stop promoting lucky draws: n>=40, C-0003 up by 2 SE, C-0000 unchanged at 1.000, short64 not regressed. Anything measured at n=8 in this file is now labelled anecdote.
+
+### D3 (cont.) - 04:50-05:40 Beijing time
+
+- Ran the three surviving suspects at n=40 against the new baseline. All three land within one standard error of baseline: gating top-k 0.275, single partition 0.250, aiter MoE 0.250, against 0.225 baseline on C-0003. So there is no quick Python-level fix for the nondeterminism.
+- Two facts are now firm because they held in all four configurations: the 10-token prompt always diverges at exactly generated token 55 (context 65), and C-0000 stays 40/40 identical at 7881 tokens. The first says a 64-token boundary triggers something; the second says content, not length, is the driver.
+- The only remaining suspect I can name is a reduction inside the compiled gluon paged-attention kernel, which cannot be patched from Python. That is where I would continue, with a kernel-level read rather than more black-box runs.
+- Strategic conclusion for the deliverable: report the gate honestly. The port is bit-exact against HF wherever the engine is deterministic (proven at 284 tokens), and the engine's own temperature-0 nondeterminism is an ATOM/AITER property. Any single-run 90% figure would be measuring the engine's coin flips, not the port. Recommend stating the repetition-based protocol in the report.

@@ -432,3 +432,53 @@ Three things this establishes:
 - and short64 does not regress.
 
 Everything in this file measured at n=8 should be read as anecdote, not result.
+
+### n=40 rounds for the three surviving suspects: all three rejected
+
+Baseline: short64 modal 0.600 | C-0000 1.000 | C-0003 0.225 (+-0.066).
+Acceptance required C-0003 above ~0.36 with C-0000 held at 1.000.
+
+| round | patch | short64 | C-0000 | C-0003 |
+|-------|-------|---------|--------|--------|
+| baseline | none | 0.600 | 1.000 | 0.225 |
+| R1 | deterministic torch gating top-k | 0.500 | 1.000 | 0.275 |
+| R2 | single context partition on every layer | 0.475 | 1.000 | 0.250 |
+| R3 | aiter fused MoE instead of Triton MoE | 0.500 | 1.000 | 0.250 |
+
+C-0003 moves by at most 0.05 against a standard error of 0.066-0.071, i.e. all
+three are within one standard error of the baseline. Nothing here is a fix, and
+the n=8 readings that suggested otherwise were tail draws, as suspected.
+
+**What survives, and it is now a short and specific list.**
+
+Two observations are firm because they reproduce across every configuration:
+
+1. The divergence point for the 10-token prompt is **always token index 55**
+   (context length 65). Baseline and all three rounds report `common_prefix=55`
+   at n=40. Whatever goes wrong is triggered by crossing a 64-token boundary -
+   the location is deterministic, only the outcome varies.
+2. C-0000 is 40/40 identical at 7881 input tokens in every configuration. Long
+   context does not by itself destabilise; content does.
+
+Combined with everything already excluded - compile level, MoE kernel (two
+implementations), gating top-k, partition count, partition size, buffer
+initialisation, aiter autotune toggles, block size (which makes it worse), and
+the flash-layout path (not usable without reallocating the KV cache) - the
+remaining suspect is a reduction **inside the compiled gluon paged-attention
+kernel**, which I cannot patch from Python. Confirming it needs a kernel-level
+read of how that kernel walks its KV blocks, not more black-box runs.
+
+### Where this leaves the correctness gate
+
+The task defines the gate as per-token equality against HF over 200 prompts,
+single greedy run each. On this engine that measurement is not stable: the same
+request returns 10-14 different outputs per 40 runs on C-0003. So the honest
+position for the report is:
+
+- the port reproduces HF **bit-exactly** wherever the engine is deterministic
+  (284-token prompt, 64/64 tokens, 5/5 runs, agreement 1.0000);
+- the engine itself is nondeterministic at temperature 0 on long prompts, which
+  is an ATOM/AITER property, not something the Mellum port introduced;
+- therefore the gate must be reported with a repetition-based protocol (modal
+  agreement over N runs) or after the kernel-level nondeterminism is fixed, and
+  a single-run 90% number would be measuring the engine's coin flips.
