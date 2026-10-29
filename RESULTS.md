@@ -319,3 +319,39 @@ What would actually settle the question: make the engine deterministic first
 (then window=1024 with 4k contexts becomes measurable directly), or compare
 logits instead of tokens at a single position, where a one-key window
 difference shows up as a small numeric delta rather than a coin flip.
+
+### Determinism hunt, round 1: four candidates, all rejected
+
+Judge: 8 identical greedy requests on 3 prompts, counting distinct token
+streams. Baseline today: short64 = 3, C-0000 = 1, C-0003 = 2-3.
+
+| variant | what it changes | short64 | C-0003 | verdict |
+|---------|-----------------|---------|--------|---------|
+| V1 | sliding layers use partition size 256 instead of 128 | 3 | 6 | no effect, worse |
+| V2 | force `max_context_partition_num = 1` on every layer | 2 | 4 | no effect |
+| V3 | partition buffers zero/`-inf` initialised instead of `torch.empty` | 3 | 2 | no effect |
+| V4 | `use_flash_layout = True` (unified attention instead of gluon paged) | - | - | not viable |
+
+What this rules out, which is worth more than the failed fixes:
+
+- **The multi-partition softmax combine is not the cause.** V2 removes partition
+  parallelism entirely and the output still varies run to run. My earlier
+  hypothesis about `exp_sums` / `max_logits` combining 4-8 partitions was wrong.
+- **Uninitialised buffers are not the cause.** V3 gives the buffers defined
+  contents and nothing changes.
+- **The 128 vs 256 partition size is not the cause.** V1 keeps the instability.
+- **`use_flash_layout` is not a switch.** It requires the KV cache to be
+  allocated in flash layout by the backend; flipping the flag alone dies in
+  `fused_qk_rope_reshape_and_cache` with `ValueError: too many values to unpack
+  (expected 4)` because the cache is still 5D. Using that path would mean
+  changing the KV cache builder too.
+
+Still standing as suspects, now a short list: a reduction inside the gluon paged
+kernel over KV blocks, the MoE gating top-k tie-breaking, or aiter's GEMM
+solution selection (the log shows "not found tuned config ... using torch
+solution:0", which means the chosen solution can depend on a runtime lookup).
+
+Process note: the automated variant loop left the source tree patched and a
+server that answered `/health` but returned nothing for a real completion. Both
+were caught only by running an actual generation request, and both were fixed.
+`/health` is not evidence that a server can serve.
