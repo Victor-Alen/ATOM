@@ -65,3 +65,9 @@
 - Result: 64/64 tokens identical to HF, five repetitions, agreement 1.0000. Theory rejected, and the kernel's partition count is a tiling parameter rather than a coverage limit.
 - The by-product is the most useful result of the whole investigation: the Mellum port reproduces HF exactly whenever the engine is deterministic. So the integration (weight mapping, 3:1 layer pattern, per-layer RoPE/YaRN, QK-norm, top-8 MoE) is validated, and the ~50% figures were never a correctness measurement.
 - Reframed the remaining problem as long-context numerics only, and wrote down the specific suspect: the multi-partition softmax combine in `paged_attention_triton`, whose `exp_sums` / `max_logits` / `temporary_output` buffers are `torch.empty` (uninitialised) and which reduces up to 8 partitions.
+
+### D3 (cont.) - 03:45-04:05 Beijing time
+
+- Answered "what are the actual segment counts" by measuring instead of reading: MI308X has 80 SMs and occupancy 2, so `get_recommended_splits` returns 8 partitions at concurrency 1 and 2 partitions at concurrency 32, each partition 256 tokens; sliding layers always get 1 partition of 128 tokens.
+- Two findings from that. First, the partition count is a function of concurrency, so scenario A (32 concurrent) does not share numerics with scenario B/C (1 concurrent) - correctness measured at one concurrency cannot be assumed at the other. Second, the kernel asserts CONTEXT_PARTITION_SIZE == 256 while ATOM passes 128 for sliding layers; either the assert is in an unused variant or the 128 config is unsupported.
+- The 284 / 997 boundary now has a plausible mechanism: 284 tokens spans at most two partitions and matched HF exactly, while 997 is the first length where four full partitions enter the softmax combine, and 997 is exactly where divergence moves to the first generated token. Logged as correlation, not proof.

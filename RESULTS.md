@@ -245,3 +245,37 @@ decode path: `exp_sums`, `max_logits` and `temporary_output` are allocated with
 `torch.empty` (uninitialised) in `paged_attention_triton`, and the combine over
 up to 8 partitions is where reduction order could vary. That is the concrete
 place to look, and it is now the only place that matters for the gate.
+
+### Actual context-partition counts on this GPU (MI308X, 80 SMs, occupancy 2)
+
+`get_recommended_splits` = `min(cdiv(80 * 2, num_seqs * 4 * 1), 8)`:
+
+| attention layer | max_context_partition_num | context_partition_size | covered per grid pass |
+|-----------------|---------------------------|------------------------|-----------------------|
+| full attention, 1 request | 8 | 256 | 2048 tokens |
+| full attention, 32 concurrent (scenario A) | **2** | 256 | 512 tokens |
+| sliding attention, any concurrency | **1** | **128** | 128 tokens, window start = ctx-1024 |
+
+Three things worth flagging, all read out of the code rather than inferred:
+
+1. The partition count depends on **concurrency**, not just context: 8 at one
+   request, 2 at 32. So the reduction grouping - and therefore the numerics -
+   differ between scenario B/C and scenario A. Correctness established at
+   concurrency 1 does not transfer to concurrency 32 by construction.
+2. `pa_decode_gluon`'s kernel body asserts
+   `CONTEXT_PARTITION_SIZE == 256, "Only support CONTEXT_PARTITION_SIZE == 256"`,
+   yet ATOM passes **128** for sliding layers. Either that assert belongs to a
+   variant this path does not hit, or the 128 configuration is unsupported and
+   silently diverted. Needs a runtime check of which kernel actually launches.
+3. The sliding path computes `sequence_partition_idx = (ctx - 1024) // 128 + pid`
+   and then a hardcoded `page_offset` from `sequence_partition_idx % 4`. With
+   one partition the `pid` term is always 0, so only the page containing the
+   window start is visited; the "4" implies a 512-token page for size 128.
+   Whether the dynamic loop then covers the remaining window is not established
+   by reading alone.
+
+Consistency check against the measurements: 284 tokens matched HF exactly
+(the combine spans at most 2 partitions there), while 997 tokens is the first
+length where four full partitions participate in the softmax combine - and 997
+is exactly where the run-to-run divergence appears at the first token. That is
+correlation, not proof, but it is the sharpest hypothesis on the table.
