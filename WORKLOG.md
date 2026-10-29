@@ -52,3 +52,9 @@
 - Ran the block-size discrimination test to check my own "4 blocks = 64 tokens" hypothesis. It failed in an informative way: block size 32 and 64 are unstable from the first decoded token (10 distinct streams / 10 runs), while the default 16 is stable to 64 tokens. So block size changes which attention kernel runs, and my hypothesis is not confirmed - I wrote it up as an open question instead of a cause.
 - Useful by-product: default `block_size=16` is the least unstable of the three, so the KV-block axis is a thing to re-probe after any future change rather than a knob to tune for speed.
 - Restored the canonical Step 0 server (level 0, eager, bf16 KV, default block size, prefix cache off) so the machine is left in the configuration that `RESULTS.md` describes.
+
+### D3 (cont.) - 03:05-03:25 Beijing time
+
+- Swept prompt length instead of trusting one prompt. 21 / 61 / 130 / 294 / 997 / 2989 tokens with 10 identical requests each. The 61-token prompt stayed bit-identical across 960 decode steps while crossing the alleged 65-token boundary, and the 997 / 2989 prompts diverged at the first or second token. So the "64 threshold" I reported an hour ago was a coincidence on one prompt, not a structural edge - corrected in `RESULTS.md` rather than quietly dropped.
+- The graded behaviour (stable at <=300 tokens, immediately divergent at >=1k) points at the split/partition count of the attention reduction growing with context length, which is a much better-fitting hypothesis than KV block boundaries. That is now the stated next probe.
+- On block size, definitively: it is not a fixable knob. Changing it swaps the attention kernel (32/64 diverge from the first token) rather than only changing layout, so it stays at the default and any future tuning that touches it has to re-run the determinism probe first.

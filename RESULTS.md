@@ -163,3 +163,41 @@ why does instability begin exactly when the context passes 64 tokens? Candidates
 not yet excluded: the paged-ASM kernel's partition count as a function of
 context length, and the block-table walk when the row count crosses a kernel
 tile boundary. Answering it needs a kernel-level read, not more black-box runs.
+
+### Prompt-length sweep - the "64 token threshold" was a coincidence
+
+Same server, same 10 identical requests per length, 96 tokens out, prompts are
+prefixes of one long scenario-C prompt so the content stays comparable:
+
+| target prompt tokens | actual prompt tokens | distinct streams / 10 | first unstable generated index | context length there |
+|----------------------|----------------------|-----------------------|-------------------------------|----------------------|
+| 20 | 21 | 3 | 4 | 25 |
+| 60 | 61 | 1 | - | - |
+| 130 | 130 | 1 | - | - |
+| 300 | 294 | 1 | - | - |
+| 1000 | 997 | 4 | 1 | 998 |
+| 3000 | 2989 | 5 | 1 | 2990 |
+
+This kills the "fixed 64-token threshold" reading of the earlier bisect:
+
+- The 61-token prompt runs 96 decode steps, reaching context length 157, and is
+  stable in all 10 runs - it crosses the alleged 65 boundary without a single
+  flip. So there is no universal 65-token edge.
+- At ~1k and ~3k prompt tokens the *first or second* decoded token already
+  differs between runs, while at 130 and 294 tokens a full 960 decode steps are
+  bit-identical. That is not a boundary effect, it is a steep growth of
+  per-step numerical divergence with context length.
+- The earlier "common prefix is exactly 55 for a 10-token prompt" was one
+  prompt's first near-tie, not a structural threshold. The 64 in that run
+  coincided with a real near-tie, which is exactly the kind of coincidence that
+  looks like a cause if you stop after one prompt.
+
+Revised picture: per-step numerical divergence exists at all lengths but only
+changes the output when a step also lands near a tie. At >= ~1k context the
+divergence is large enough to flip the very first token, so ties are no longer
+required. That points at the attention reduction over KV whose split/partition
+count grows with context, not at KV block boundaries or a length constant.
+
+Next probe, if this is picked up again: read how `paged_attention_asm` /
+`paged_attention_triton` choose their split count as a function of context
+length, and check whether any of those splits accumulate with atomics.
