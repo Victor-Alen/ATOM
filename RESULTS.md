@@ -394,3 +394,41 @@ The comparison needs at least ~40 requests per configuration, and the metric
 should be the fraction of runs agreeing with the modal output rather than the raw
 distinct count. Until then, every "this fixed it" observation in this file
 should be treated as provisional - including any that sound encouraging.
+
+### Nondeterminism baseline at n=40 (the measurement protocol that can judge a fix)
+
+Canonical Step 0 server (level 0, eager, bf16 KV, default block size, prefix
+cache off). `temperature=0`, `ignore_eos`, 64 tokens out, 40 identical requests
+per prompt. `modal_rate` = share of runs producing the most frequent output;
+its binomial standard error at n=40 is ~0.08 near p=0.5.
+
+| prompt | input tokens | distinct outputs / 40 | modal_rate | counts (desc) | common prefix |
+|--------|--------------|----------------------|------------|---------------|---------------|
+| short64 | 10 | 3 | **0.600** +- 0.077 | 24, 10, 6 | 55 / 64 |
+| C-0000 | 7881 | 1 | **1.000** | 40 | 64 / 64 |
+| C-0003 | 6183 | **14** | **0.225** +- 0.066 | 9, 7, 6, 3, 3, 3, 2, 1x7 | 2 / 64 |
+
+Three things this establishes:
+
+1. **There is a usable control.** C-0000 is 40/40 identical at 7881 input
+   tokens. So long context alone does not cause instability - content does. A
+   candidate fix must leave C-0000 at 1.000, which makes "fixed it by breaking
+   everything" detectable.
+2. **There is a usable sensitive case.** C-0003 gives 14 different outputs in 40
+   runs with a common prefix of only 2 tokens. Its modal rate 0.225 has SE 0.066,
+   so a real improvement has to clear roughly 0.36.
+3. **The earlier n=8 protocol was indeed too weak.** short64 with 3 outcomes and
+   a 0.600 modal rate means an 8-run sample lands on 1 distinct output about
+   `0.6^8 = 1.7%`... in fact higher once near-ties are counted, but the point
+   stands: the "1 distinct stream" readings that looked like fixes were tail
+   draws, exactly as the G1/H2 contradiction showed.
+
+**Verdict rule for any future determinism change**, adopted from here on:
+
+- run this probe with n>=40 on all three prompts before and after,
+- accept the change only if C-0003 modal_rate rises above baseline + 2 SE
+  (0.225 -> above ~0.36, ideally toward 1.0),
+- and C-0000 stays at 1.000,
+- and short64 does not regress.
+
+Everything in this file measured at n=8 should be read as anecdote, not result.

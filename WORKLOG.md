@@ -78,3 +78,10 @@
 - Then ran the combination test and, as a control, repeated G1 verbatim as H2. H2 came back with 3 distinct streams on the same patch. So G1 was noise.
 - This is the second lucky-sample trap of the day (the first was the "64-token threshold"). Both had the same shape: n=8 runs, coarse statistic, and a configuration that can look fixed or broken depending on the draw. Recorded that as the methodology conclusion rather than burying it, because it changes how every determinism number in this file should be read.
 - Consequence: stop testing more candidate fixes until the protocol is strong enough to judge them. Next step is n>=40 with a modal-agreement statistic, then re-test the two suspects that survive (gluon kernel reduction, aiter GEMM solution selection).
+
+### D3 (cont.) - 04:30-04:50 Beijing time
+
+- Built the stronger protocol the G1/H2 contradiction demanded: 40 identical requests per prompt, report modal_rate with its binomial standard error plus the all-runs common prefix, instead of the distinct count over 8.
+- Baseline: short64 modal 0.600 (3 outcomes, prefix 55), C-0000 modal 1.000 (40/40, prefix 64), C-0003 modal 0.225 with 14 different outputs and a common prefix of 2 tokens.
+- The most useful part is that C-0000 is perfectly deterministic at 7881 tokens, so "long context" was never the driver - the content is. That gives me a control prompt (must stay 1.000) and a sensitive prompt (must rise above ~0.36) to judge any future fix, instead of reading tea leaves from 8 runs.
+- Adopted a written verdict rule so I stop promoting lucky draws: n>=40, C-0003 up by 2 SE, C-0000 unchanged at 1.000, short64 not regressed. Anything measured at n=8 in this file is now labelled anecdote.
