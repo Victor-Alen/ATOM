@@ -138,7 +138,7 @@ def reference_forward(model, input_ids, positions):
     if isinstance(md, dict):
         md = next(iter(md.values()))
     bs_bt = md.block_tables
-    if bs_bt is None:
+    if bs_bt is None and os.environ.get("ATOM_REFERENCE_RECOMPUTE") != "1":
         return None
 
     cfg = model.config
@@ -173,8 +173,10 @@ def reference_forward(model, input_ids, positions):
             flush=True,
         )
 
+    _recomp = False
     if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
-        key = int(bs_bt[0, 0].item())
+        _recomp = True
+        key = int(bs_bt[0, 0].item()) if bs_bt is not None else 0
         hist = _TOKENS.setdefault(key, [])
         new_ids = input_ids.tolist()
         if len(new_ids) > 1:
@@ -190,6 +192,9 @@ def reference_forward(model, input_ids, positions):
 
     ctx_slots = []
     for s in range(bs):
+        if _recomp:
+            ctx_slots.append(torch.arange(int(ctx_lens[s]), device=dev))
+            continue
         p = positions[cu_q[s]:cu_q[s + 1]].long()
         n_ctx = int(p.max().item()) + 1
         q = torch.arange(n_ctx, device=dev)
@@ -230,8 +235,11 @@ def reference_forward(model, input_ids, positions):
         attn = layer.self_attn
         q_w, k_w, v_w = torch.split(attn.qkv_proj.weight, [nH * D, nKV * D, nKV * D], dim=0)
         outs = torch.empty(x.shape[0], cfg.hidden_size, dtype=x.dtype, device=dev)
-        if li not in _KV:
-            max_slot = int(bs_bt.max().item()) * block_size + block_size
+        _need = int(bs_bt.max().item()) * block_size + block_size if bs_bt is not None else 0
+        if _recomp:
+            _need = max(_need, int(ctx_lens[0]) + 1)
+        if li not in _KV or _KV[li][0].shape[0] < _need:
+            max_slot = _need
             _KV[li] = (
                 torch.zeros(max_slot, nKV, D, dtype=x.dtype, device=dev),
                 torch.zeros(max_slot, nKV, D, dtype=x.dtype, device=dev),
