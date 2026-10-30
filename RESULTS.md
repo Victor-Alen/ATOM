@@ -607,3 +607,28 @@ Reviewed the other work in this file (round-2/3 sections plus the Step 0 update,
 **Next discriminator (bounded).** On one frozen layer-0 MoE input, compare three implementations in one process: aiter `fused_moe`, the Triton `matmul_ogs` path, and the per-expert PyTorch reference with the shuffle inverted. If Triton matches the PyTorch reference and aiter does not, the 8.125% comes from elsewhere in the pipeline and the Triton path is usable; if Triton does not match the PyTorch reference, the remap above is wrong and must be fixed before any gate rerun. Only then is a 200-prompt run worth spending.
 
 **State.** Main worktree: only documentation changed by this round. `/workspace/ATOM-tritonmoe` is a detached debug worktree whose `moe.py`/`sampler.py` edits are uncommitted and reproducible from `scripts/patch_triton_moe.py`. The 8000 service was left running; the 8001 service was stopped after these measurements.
+
+### 2026-10-30 (round 5): three-way MoE comparison - Triton matches the fp32 reference at layer 0/1, and breaks at layer 2
+
+Three implementations were compared on the same frozen layer-0 MoE input inside the live Triton-path service (`/workspace/ATOM-tritonmoe`, port 8001, GPU0, level 0, `ATOM_TRITON_MOE_EXPERTS=1`, probe `scripts/patch_moe_triple.py`, log `/workspace/logs/moe_triple.jsonl`): aiter `fused_moe` (2-stage CK, atomic), ATOM's Triton `matmul_ogs` path, and a per-expert FP32 PyTorch reference on the unshuffled weights with a fixed accumulation order.
+
+| path | prefill 10 rows: repeats | 1-row decode: repeats | max abs diff vs fp32 ref (prefill / decode) |
+|---|---|---|---|
+| aiter 2-stage CK | 3 runs -> **3 distinct** (spread 0.015625) | 3 runs -> **3 distinct** | 0.03125 / 0.00390625 |
+| Triton matmul_ogs | 3 runs -> **1 distinct** | 3 runs -> **1 distinct** | **0.0078125** / **0.000244140625** |
+| FP32 per-expert ref | 2 runs -> 1 distinct | 2 runs -> 1 distinct | - |
+
+Reference magnitude at that point is absmax 6.53125, so 0.0078125 is exactly one bf16 step. Two conclusions: the Triton path is reproducible, and it is *closer* to the FP32 reference than aiter is. The weight unshuffle, the `[E,K,N]`/`[E,I,H]` transposes and the `routing_from_topk` reconstruction are therefore self-consistent and accurate at least for layer 0.
+
+**The layer-by-layer gap says the break is not at layer 0.** The same prompt was run once on the Triton path and once on aiter *from the same worktree and the same GPU*, both with the layer trace enabled (`/workspace/logs/layertrace_triton2/`, `/workspace/logs/layertrace_aiter_g0/`). Layer 0's MoE input is bit-identical in both (`L0.mlp.in digest 60d9a6cba3e6`), and the MoE output deltas are:
+
+- L0: mean delta 2.99e-06, absmax delta 0.03125
+- L1: mean delta 7.52e-06, absmax delta 0.01562
+- **L2: mean delta 3.68e-02, absmax delta 1148.0**
+- L3: 6.61e-03 / 87.25, L4: 4.58e-02 / 884.0, ... L26: 2.15e-01 / 588.0, L27: 1.82e+00 / 24642.0
+
+So layers 0 and 1 agree to bf16 noise and **from layer 2 the Triton path diverges catastrophically**. That also explains the earlier full-model result: the 26/320 = 8.125% HF agreement reported in round 4 is not a rounding difference, it is this layer-2-and-beyond bug. The round-4 wording ("numerically wrong") stands, but the fault is localised now: correct at the first two layers, broken afterwards, so a per-layer routing or kernel-configuration condition must differ from layer 2 on rather than a globally wrong weight remap.
+
+**Next step.** Extend the triple probe to layers 0-3 (guard on `.layers.[0-3].`) and check whether the Triton output stops matching the FP32 reference at exactly layer 2, and whether `hist`/`routing_data` or the selected `matmul_ogs` configuration differs there (expert-count histogram, zero-token experts, `M*topk` tile choice). Until that is fixed, the Triton MoE is a reproducible path but not a usable one, and the aiter-side 51% deterministic variants remain the best available reference numbers.
+
+**State.** This round ran entirely in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); `/workspace/ATOM` was not modified, and port 8000 was left untouched. The 8001 service was stopped afterwards.
