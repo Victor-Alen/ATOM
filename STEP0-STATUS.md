@@ -4,7 +4,7 @@
 
 ## 一句话结论
 
-ATOM 与 HF 的**算术差异已经收敛到 0**（≤6144 token 双设备逐位验证）；剩下的差异全部来自**快路径的定序与数值路径**（aiter 两段式 CK MoE 的 `AtomicAdd`、分块 GEMM 累加顺序）。**唯一未完成的一步**是 7881 token 的引擎内 greedy 逐 token 对照——它被两台机器的显存占用卡住，不是代码问题。
+ATOM 与 HF 的**算术差异已经收敛到 0**（512→7881 token 双设备逐位验证，7881 在 A100 上 final hidden 完全相等）；剩下的差异全部来自**快路径的定序与数值路径**（aiter 两段式 CK MoE 的 `AtomicAdd`、分块 GEMM 累加顺序）。**唯一未完成的一步**是 7881 token 的引擎内 greedy 逐 token 对照——它被两台机器的显存占用卡住，不是代码问题。
 
 ## 已完成（有日志、有提交）
 
@@ -13,9 +13,9 @@ ATOM 与 HF 的**算术差异已经收敛到 0**（≤6144 token 双设备逐位
 | 1 | 参数逐位一致 | layer0/2 的 qkv/o/q_norm/k_norm/两层 norm/router/w13/w2 + embed/final_norm/lm_head 全部 `same=True`（与应用 checkpoint 比对） |
 | 2 | 专家 shuffle 可逆 | `unshuffle(shuffle_weight(w)) == w`，w13 [64,1792,2304]、w2 [64,2304,896] |
 | 3 | 层 0 输入逐位一致 | `x_in == embed_tokens[ids]`、`h_ln == hf_norm(x_in)`，0 差异 |
-| 4 | 算术逐位一致 | 512 / 2048 / 4096 / 6144 token：`max abs delta = 0.000000`，argmax 0/8；6144 在 MI308X 与 A100 双设备复现 |
+| 4 | 算术逐位一致 | 512 / 2048 / 4096 / 6144 token：`max abs delta = 0.000000`；**7881 token：final hidden `equal=True, max|delta|=0.0`（A100）** |
 | 5 | 短序列端到端 | 16 token 前缀 → reference 路径采样出 **1622**，即 HF 该前缀 top-1 |
-| 6 | 7881 的 HF 参考 | 已在 A100 上算出（`hf_logits.pt`，2×98304 fp32）|
+| 6 | 7881 的 HF 参考 + 我方对照 | 均在 A100 上算出；final hidden 逐位相等（`equal=True`）|
 
 ## 已修的真实缺陷（5 个）
 
@@ -30,7 +30,7 @@ ATOM 与 HF 的**算术差异已经收敛到 0**（≤6144 token 双设备逐位
 | 项目 | 阻塞原因 |
 |---|---|
 | 7881 token 引擎内 `[801, 1622, ...]` | MI308X 两张卡整夜被其他负载占（空闲 21–25 GiB，需 ~45 GiB）|
-| 7881 token 手写前向对照 | A100 共享 80GB 卡（他占 36GB），我方前向在 lm_head 处 CUDA assert（脚本兼容问题）|
+| ~~7881 token 手写前向对照~~ | ✅ 已完成（改比 final hidden，绕过 lm_head 的 CUDA assert）：**逐位相等** |
 | 场景 A/B/C 的 greedy 重叠率 | 依赖上一条 |
 
 ## 关键环境数值（供复现）
