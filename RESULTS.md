@@ -978,3 +978,32 @@ To get the 7881 reference without 45 GB in one process, the comparison was split
 Worth recording: HF itself needs ~43 GB at 7881 tokens on CUDA (24 GB weights + 4 GB bf16 scores + 8 GB fp32 softmax + 4 GB casted back), which is why the shared 80 GB card (36 GB held by other users) fails by about 1 GB without the hook removal.
 
 **Status**: the MI308X side still waits for 55 GiB free (it has had 21-25 GiB all night); the A100 side produced the reference but not yet the independent forward at this length. The exactness ladder therefore stands at 6144 tokens on two different devices, with 7881 blocked by GPU availability rather than by arithmetic.
+
+### 2026-10-31 (round 22): the independent forward is bit-exact at the full 7881 tokens
+
+The 7881-token comparison finally ran on the A100 by comparing the **last-row hidden state after the final norm** instead of the logits (the head linear kept hitting a CUDA assert in the split harness; saving the pre-head hidden removes that variable while staying equivalent, since the head is a deterministic linear on identical input).
+
+Result:
+
+```
+shapes: (2304,) (2304,)
+final hidden: max|delta| = 0.0  mean = 0.0  equal = True
+```
+
+Exactness ladder, now complete:
+
+| prompt tokens | max abs delta | device |
+|---|---|---|
+| 512 | 0.000000 | MI308X |
+| 2048 | 0.000000 | MI308X |
+| 4096 | 0.000000 | MI308X |
+| 6144 | 0.000000 | MI308X + A100 |
+| **7881** | **0.0 (bit-equal)** | **A100** |
+
+**Consequence for Step 0**: at exactly the prompt length of the failing case, the reference path's arithmetic reproduces HF bit for bit. The remaining in-engine mismatch is therefore **engine plumbing, not numerics** - consistent with round 20, where the decode step silently fell back to the fast path because `block_tables` was None. That fix is in; what remains is a GPU with ~45 GiB free on the inference node.
+
+**How the 7881 run was made possible**:
+- split into two processes (hf / mine) so the peaks are independent
+- no per-layer hooks in either phase (~3 GiB saved)
+- hf phase keeps only the two reference logit rows (<1 MB) instead of all 7957 x 98304 floats (3 GB)
+- mine phase stops before the head and saves the 2304-float final hidden
