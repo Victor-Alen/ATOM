@@ -858,3 +858,27 @@ So imitating HF's MoE accumulation (**bf16, ascending expert id, exactly HF's `i
 **Next.** Implement V4 (HF evaluates `matmul(q,k) * scaling` in bf16 and casts to fp32 only for the softmax; ATOM's MFMA path keeps fp32 scores) and then measure V234 (all three aligned) on the same 20 prompts, followed by a full 200-prompt run of whichever combination is best. If V234 clears the same 20 prompts comfortably above V0, the full scenario-C run becomes the deliverable number, and the remaining gap to 90% is attributable rather than mysterious.
 
 **State.** All switches env-gated and off by default; worktree `dsh/moe-determinism`; shared RESULTS updated; 8000/8002 untouched.
+
+### 2026-10-31 (round 16): per-layer drift profile - where ATOM and HF actually diverge, and why ties are everywhere
+
+Instrumented both sides on the same 7881-token prompt (C-0000): HF eager with forward hooks on every decoder layer's `self_attn` and `mlp` (`scripts/hf_layer_trace.py`), ATOM with the existing 168-hook layer trace (`ATOM_LAYER_TRACE_DIR`), both recording absmax of the whole tensor per layer. Traces: `/workspace/logs/hf_trace_c0.jsonl`, `/workspace/logs/atom_trace_c0/layers.jsonl`.
+
+**Activation magnitudes are the story.** On this model the per-layer outputs grow by three to four orders of magnitude:
+
+| layer | attn absmax ATOM/HF | mlp absmax ATOM/HF |
+|---|---|---|
+| L0 | 4.53 / 4.56 | 5.00 / 5.06 |
+| L4 | 7.09 / 7.13 | 1264 / 1280 |
+| L11 | 52.3 / 52.5 | 1992 / 1768 |
+| L23 | 402 / 412 | 110 / 108 |
+| L27 | 1464 / 1520 | 13632 / 13120 |
+
+In bf16 the representable step at magnitude 1000 is about 4, and at 13632 it is about 64. So a *relative* drift of one or two percent - far below any accuracy concern - already spans several bf16 grid cells, and any position whose top-2 logit margin is smaller than that grid becomes a coin flip for both implementations. This is the quantitative root of "the same model, the same weights, but disagreeing argmaxes".
+
+**Drift profile.** Early layers agree to 0-0.06 absolute (one ulp): L0 attn 0.0312, mlp 0.0625; L1 attn 0.0, mlp 0.0312; L2 attn 0.0, mlp 16 (on 1576, i.e. 1%). The drift then grows monotonically with magnitude: L27 attn 56 (on 1464 = 3.8%), mlp 512 (on 13632 = 3.8%). Worst relative drifts are mlp L11 12.7%, mlp L13 12.3%, attn L22 7.1%, attn L13 7.0%.
+
+**Attribution.** Both components contribute comparably, with the MoE slightly worse in relative terms, which matches the measured effect of aligning the MoE and norm only (round 15: +7.97 points on the 20-prompt subset). Attention is therefore worth a similar amount, but note the ceiling: even with the MoE perfectly imitated, the residual differences in CK/Triton GEMM accumulation would remain, because the same mathematical operation in a different kernel order produces a different last bit, and at these magnitudes a different last bit is a different token.
+
+**What this implies for closing the gap.** Two honest routes remain. (a) Implement an HF-equivalent attention backend (torch, mirroring `eager_attention_forward`: bf16 qk matmul, fp32 softmax, bf16 pv) and measure V234 on the 20-prompt subset; expect a further single-digit-to-low-teens point gain, not 90%. (b) Build the full HF-equivalent reference mode (attention + MoE + norm + rope + head all in torch, HF's exact order), which is the only way to make the literal per-token gate pass everywhere, at the cost of the performance goal - usable as a correctness proof and as a fallback, not as the deliverable.
+
+**State.** Both traces are on disk; the switches from round 14-15 remain env-gated; shared RESULTS updated.
