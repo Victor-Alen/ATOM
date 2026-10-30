@@ -940,3 +940,29 @@ The 7881 case needs ~44.5 GB (24 GB weights + 3.9 GB bf16 scores + 7.9 GB fp32 s
 **Also fixed**: the probe now keeps only the reference logit rows (the full 7957 x 98304 fp32 tensor cost 3 GB), and the historical failure at 7881 on the shared card is purely coexistence memory, not arithmetic.
 
 **Status of Step 0.** The correctness chain is: parameters bitwise identical (round 18) -> layer-0 inputs bitwise identical (round 18) -> independent forward bitwise identical to HF up to 6144 tokens (this round) -> the engine's 16-token request already samples HF's exact token. What remains is one full-length (7881) run on a card with ~45 GB free, which is being set up on the A100 node (torch 2.10 + transformers 5.2 + the checkpoint) since the MI308X node is occupied.
+
+### 2026-10-31 (round 20): the [801, 0, 0, 0] answer was a fallback, not arithmetic
+
+Running the 7881-token prompt through the in-engine reference path returned `[801, 0, 0, 0]` against HF's `[801, 1622, 1622, 1020]`. The crash traceback points at `mellum.py:517 hidden_states = self.model(...)`, i.e. ATOM's own fast path, not the reference path. The cause: the decode step arrives with `attn_metadata.block_tables is None`, and `reference_forward` began with
+
+```python
+bs_bt = md.block_tables
+if bs_bt is None:
+    return None
+```
+
+so on every decode step the reference path silently declined and the engine fell back to the fast path, which then died on the 7882-token context. The first token was correct only because the prefill call does have a block table.
+
+**Fix (commit `8be3cf71`)**: recompute mode does not need the engine's block table at all. It now keeps its own sequential KV slots (`0..len(hist)-1`), grows the flat KV buffer when the history grows, and only takes the block-table path when it is present. `block_tables is None` therefore no longer disables the reference path in recompute mode.
+
+**Also landed this round**: `/tmp/watch_inengine.sh` on the inference node polls both GPUs every 2 minutes and, as soon as one has 55 GiB free, starts the `ATOM_REFERENCE_MODE=1 ATOM_REFERENCE_RECOMPUTE=1` server, runs the 4-token 7881 test, saves the log as `test_long_<HHMM>.log`, stops the server and retries until the tokens match. The A100 node holds a matching environment (torch 2.10.0+cu128, transformers 5.2.0, `grouped_mm=True`) and the downloaded checkpoint, but its shared 80 GiB card is currently 36 GiB occupied by other users, so the 7881 single-shot comparison needs about 7 GiB more than is free; the extract is armed to run there as well.
+
+**State of the arithmetic ladder** (single-shot, independent forward vs HF, same prompt prefix):
+
+| prompt tokens | max abs delta | argmax mismatches |
+|---|---|---|
+| 512 | 0.000000 | 0/8 |
+| 2048 | 0.000000 | 0/8 |
+| 4096 | 0.000000 | 0/8 |
+| 6144 | 0.000000 | 0/8 |
+| 7881 | pending (memory) | pending |
