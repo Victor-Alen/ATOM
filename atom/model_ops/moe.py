@@ -593,6 +593,14 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
             fused_shared_experts_scoring_func=fused_shared_experts_scoring_func,
             routed_scaling_factor=layer.routed_scaling_factor,
         )
+        if (__import__('os').environ.get('ATOM_MOE_SCALE')
+                and '.layers.2.' in str(getattr(layer, 'layer_name', ''))
+                and x.shape[0] == 10):
+            return _atom_moe_scale_test(
+                layer, x, topk_weights, topk_ids, activation, expert_map,
+                __import__('os').environ['ATOM_MOE_SCALE'],
+            )
+
         if (__import__('os').environ.get('ATOM_MOE_TRIPLE')
                 and re.search(r'\.layers\.[0-3]\.', str(getattr(layer, 'layer_name', '')))
                 and x.shape[0] <= 64):
@@ -3327,6 +3335,46 @@ def _atom_moe_torch_ref_skip_top(layer, x, topk_weights, topk_ids):
             _row = _row + _o[0] * float(topk_weights[_t, _s])
         _acc[_t] = _row
     return _acc.to(x.dtype)
+
+
+def _atom_moe_scale_test(layer, x, topk_weights, topk_ids, activation, expert_map, path):
+    import hashlib as _hl
+    import json as _json
+    import torch as _torch
+
+    def _mad(a, b):
+        return float((a.float() - b.float()).abs().max())
+
+    _rec = {'layer': str(getattr(layer, 'layer_name', '?')), 'rows': int(x.shape[0]),
+            'scales': []}
+    for _scale in (1.0, 0.125, 0.015625):
+        _xs = (x.float() * _scale).to(x.dtype)
+        _tri = _atom_triton_moe_apply(layer, _xs, topk_weights, topk_ids, activation, -1, expert_map)
+        _ref = _atom_moe_torch_ref(layer, _xs, topk_weights, topk_ids)
+        _ait = fused_moe(hidden_states=_xs, w1=layer.w13_weight, w2=layer.w2_weight,
+                         topk_weight=topk_weights, topk_ids=topk_ids,
+                         expert_mask=expert_map, activation=activation)
+        _refmax = float(_ref.float().abs().max())
+        _d_tri = _mad(_tri, _ref)
+        _d_ait = _mad(_ait, _ref)
+        _per_row = [float((_tri.float()[i] - _ref.float()[i]).abs().max()) for i in range(_ref.shape[0])]
+        _rec['scales'].append({
+            'scale': _scale,
+            'ref_absmax': _refmax,
+            'triton_absmax': float(_tri.float().abs().max()),
+            'aiter_absmax': float(_ait.float().abs().max()),
+            'd_triton_vs_ref': _d_tri,
+            'rel_triton': _d_tri / _refmax if _refmax else 0.0,
+            'd_aiter_vs_ref': _d_ait,
+            'rel_aiter': _d_ait / _refmax if _refmax else 0.0,
+            'per_row_d_triton': _per_row,
+        })
+    _torch.cuda.synchronize()
+    with open(path, 'a') as _fh:
+        _fh.write(_json.dumps(_rec) + chr(10))
+    return fused_moe(hidden_states=x, w1=layer.w13_weight, w2=layer.w2_weight,
+                     topk_weight=topk_weights, topk_ids=topk_ids,
+                     expert_mask=expert_map, activation=activation)
 
 
 def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, path, router_logits=None):

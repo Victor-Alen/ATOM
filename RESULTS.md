@@ -655,3 +655,21 @@ Every variant is reproducible here (triton 1 distinct over repeats at every laye
 **Practical verdict.** The Triton MoE remains a reproducibility win and is exact at L0/L1, but it is not usable until this L2 fault is understood. The aiter-based deterministic variants (160-166/320 in the sections above) therefore remain the best reference numbers, and no further 200-prompt run is worth spending on the Triton path yet.
 
 **State.** All work in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); `/workspace/ATOM` untouched apart from this shared document; 8001 stopped after the runs, 8000 untouched.
+
+### 2026-10-30 (round 7): the layer-2 Triton failure is a pure magnitude effect on one row
+
+Magnitude-scaling probe on the frozen layer-2 prefill input (`ATOM_MOE_SCALE`, log `/workspace/logs/moe_scale.jsonl`): the same weights, routing and 10 rows, with `x` multiplied by 1, 2^-3 and 2^-6 before the MoE, comparing the Triton path and aiter against the fp32 reference.
+
+| scale | ref absmax | triton absmax | d(triton,ref) | relative | d(aiter,ref) | relative | triton per-row error |
+|---|---|---|---|---|---|---|---|
+| 1 | 1280.0 | 132.0 | 1148.0 | **0.897** | 0.25 | 0.000195 | **1148.0**, then 0.016 ... 0.001 |
+| 2^-3 | 18.5 | 18.4 | 0.125 | **0.0068** | 0.0039 | 0.00021 | 0.125, then <= 1e-4 |
+| 2^-6 | 0.182 | 0.181 | 0.001 | 0.0054 | 0.0000 | 0.00017 | 0.001, then 0.0 |
+
+Two things are now certain. First, the failure is confined to **row 0** - the only row whose reference output reaches 1280; every other row agrees to bf16 noise at every scale. Second, it is a **magnitude** effect, not a routing or indexing effect: scaling by an exact power of two changes the relative error from 0.897 to 0.0068, and a power-of-two scale cannot change the relative rounding of a bf16 computation, so the mechanism has to be saturation/overflow of an internal intermediate rather than ordinary bf16 rounding. aiter's own relative error is flat (2e-4) across the same scales, so this is specific to the Triton path.
+
+Practical consequence: the Triton MoE cannot be used as-is for this model, because Mellum's layer 2 produces a genuine 1280-magnitude outlier in prefill and the Triton path silently truncates it (deterministic, no NaN, 90% wrong on that row). A "fall back to aiter when absmax is large" guard would only reintroduce the atomic nondeterminism exactly in the cases that matter.
+
+**Next, two candidate tests.** (1) Inspect what `matmul_ogs` uses for the gathered intermediate - if it is fp16 rather than bf16, the threshold near 6.5e4 explains everything and a bf16/fp32 intermediate option would be the fix. (2) Check whether the 1280 outlier itself is legitimate: run the same prefill through the HF reference and compare layer 2's post-attention/MoE magnitudes. If HF does not show a 1280 outlier, the outlier is an ATOM-side numerical problem that should be fixed at its source, and the Triton path may be innocent once the outlier is gone.
+
+**State.** Work confined to `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); shared RESULTS updated; 8001 stopped, 8000 untouched.
