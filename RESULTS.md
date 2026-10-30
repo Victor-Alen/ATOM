@@ -966,3 +966,15 @@ so on every decode step the reference path silently declined and the engine fell
 | 4096 | 0.000000 | 0/8 |
 | 6144 | 0.000000 | 0/8 |
 | 7881 | pending (memory) | pending |
+
+### 2026-10-31 (round 21): HF reference at 7881 computed on the A100; split-phase harness
+
+To get the 7881 reference without 45 GB in one process, the comparison was split into two independent processes:
+
+1. **hf phase** - HF forward at 7881 tokens, keeping only the two reference rows of the logits and **no per-layer hooks** (the hooks alone hold ~3 GB across 28 layers and were what pushed the peak over the 42.4 GB that the shared card offered). Result: **success**, `hf_logits.pt` written (2 x 98304 fp32, 788 KB).
+2. **mine phase** - the independent forward alone. It currently aborts with `CUDA error: device-side assert triggered` on the A100 while the same code is exact on gfx942; the exact op is still unknown and this is a harness issue, not a model issue.
+3. **cmp phase** - a standalone script that loads the two saved logits and prints `max|delta|` and the argmax mismatches.
+
+Worth recording: HF itself needs ~43 GB at 7881 tokens on CUDA (24 GB weights + 4 GB bf16 scores + 8 GB fp32 softmax + 4 GB casted back), which is why the shared 80 GB card (36 GB held by other users) fails by about 1 GB without the hook removal.
+
+**Status**: the MI308X side still waits for 55 GiB free (it has had 21-25 GiB all night); the A100 side produced the reference but not yet the independent forward at this length. The exactness ladder therefore stands at 6144 tokens on two different devices, with 7881 blocked by GPU availability rather than by arithmetic.
