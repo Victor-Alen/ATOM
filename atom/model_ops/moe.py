@@ -609,6 +609,20 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
                 __import__('os').environ['ATOM_MOE_TRIPLE'], router_logits,
             )
 
+        if __import__('os').environ.get('ATOM_MOE_SEPARATE') == '1':
+            import torch as _t
+            _terms = []
+            for _slot in range(int(topk_weights.shape[1])):
+                _terms.append(
+                    fused_moe(
+                        hidden_states=x, w1=layer.w13_weight, w2=layer.w2_weight,
+                        topk_weight=topk_weights[:, _slot:_slot + 1].contiguous(),
+                        topk_ids=topk_ids[:, _slot:_slot + 1].contiguous(),
+                        expert_mask=expert_map, activation=activation,
+                    )
+                )
+            return _t.stack([_term.float() for _term in _terms], dim=0).sum(dim=0).to(x.dtype)
+
         if __import__('os').environ.get('ATOM_TRITON_MOE_EXPERTS') == '1':
             return _atom_triton_moe_apply(
                 layer, x, topk_weights, topk_ids, activation,
@@ -3286,6 +3300,7 @@ def _atom_triton_moe_apply(
         topk=int(topk_weights.shape[1]), activation=_act, w1_bias=None, w2_bias=None,
         apply_router_weight_on_input=False, global_num_experts=_n_tot, expert_map=expert_map,
         swiglu_limit=1e30,
+        swiglu_alpha=float(__import__('os').environ.get('ATOM_TRITON_ALPHA') or 1.702),
     )
 
 

@@ -694,3 +694,34 @@ The remaining 8.0 is normal bf16 accumulation noise at that magnitude (aiter is 
 **Operational lesson for this port.** Any ATOM code path that reaches `triton_kernel_fused_experts` must pass an explicit `swiglu_limit` for models without an activation clamp; the 7.0 default is silently active and only shows up on the rare large-activation rows.
 
 **State.** Fix and probes live in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); shared RESULTS updated; 8001 stopped after the run, 8000 untouched.
+
+### 2026-10-30 (round 9): two deterministic implementations disagree with each other on 76% of tokens - the per-token HF gate measures tie-breaks, not the port
+
+Ran the variant matrix on port 8001 (same 5 Scenario-C prompts, 64 tokens, level 0), three repeats of the short prompt per variant:
+
+| variant | deterministic? | HF agreement | exact sequences |
+|---|---|---|---|
+| Triton matmul_ogs, clamp disabled | 1 stream over 3 runs | 103/320 = 32.19% | 1 |
+| same + explicit `swiglu_alpha=1.0` | 1 stream | 103/320 = 32.19% | 1 |
+| aiter, one call per top-k slot, FP32 sum | 1 stream | **164/320 = 51.25%** | 2 |
+
+Two things this settles. First, the explicit alpha makes no difference, which confirms the clamp was the only swiglu parameter that mattered. Second, the aiter-separate variant reproduces the 51.25% reported elsewhere in this file exactly, from an independent worktree, so that number is solid.
+
+**The important new measurement is ATOM against ATOM.** Comparing the token streams of the two deterministic variants on the same five prompts, token by token:
+
+| prompt | Triton vs aiter-separate | common prefix |
+|---|---|---|
+| C-0000 | 64/64 | 64 |
+| C-0001 | 5/64 | 3 |
+| C-0002 | 1/64 | 0 |
+| C-0003 | 2/64 | 2 |
+| C-0004 | 5/64 | 5 |
+| **total** | **77/320 = 24.06%** | - |
+
+Both are reproducible, both implement the same model, and they differ only in floating-point accumulation order - yet they agree on only 24% of generated tokens. The mechanism is visible in the same table: one prompt is bit-identical over all 64 tokens, and every other prompt splits within the first five tokens and then never re-converges, because autoregressive continuation after a single different token can never match again.
+
+**Consequence for the correctness gate.** The task's gate is "200 prompts, single greedy run, per-token equality against HF, 90%". The measurements in this file give the effective noise floor of that metric: HF sdpa vs HF eager agree on 27.1% of positions (earlier section), the two deterministic ATOM paths agree on 24.1%, and the best ATOM-vs-HF number is 51.25%. A single frozen HF token stream cannot be reproduced to 90% by any implementation whose summation order differs from HF's, no matter how correct it is, because a single near-tie in the first few positions destroys the whole continuation. Reporting 90% therefore requires either arithmetic identical to the oracle (not achievable across CK/Triton/HF kernels) or a different protocol.
+
+**Recommended protocol change for the report.** (1) Compare logits under teacher forcing instead of free-running tokens: at each position, feed the HF prefix and compare the top-1 token plus the top-two margin; count only positions whose HF top-two gap exceeds a threshold as gateable, and report the rest as ties. (2) Or fix the attention/MoE accumulation order in HF and ATOM to the same reference implementation and gate on that. (3) Free-running per-token equality can still be reported, but alongside its measured noise floor (24-27%) so a 51.25% number is interpretable.
+
+**State.** Variants live in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); shared RESULTS committed separately; 8001 stopped after the runs, 8000 untouched throughout. No 200-prompt run was spent, because the protocol question has to be settled first.
