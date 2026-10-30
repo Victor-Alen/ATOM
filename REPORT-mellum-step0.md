@@ -296,3 +296,62 @@ PROBE_CHUNK=0 python3 scripts/ref_arith_probe3.py --prompt-id C-0000 --prompt-to
 ```
 
 **结论**：ATOM 与 HF 的差异可以收敛到 0——前提是走单次算完、HF 同款 rope/eps/布局、且不依赖引擎 block table 的参考路径。这也说明"逐 token 对不上"的剩余部分来自**快路径的定序与数值路径**（aiter 两段式 CK MoE 的 `AtomicAdd`、分块 GEMM 的累加顺序），而不是模型语义或权重加载错误。
+
+## 10. 一晚的定位过程：从"对不上"到"逐位相同"
+
+这节按时间顺序记录一次完整的工程定位，因为它比结论本身更能说明问题出在哪一层。所有数字都是实测。
+
+### 10.1 起点
+
+题目要求"前 64 个 token 与 HF 逐 token 一致率 ≥ 90%"。实测的现状是：**同一实现多次运行会漂移**（ATOM 自比 24.06%、HF 两种后端互比 27.10%），快路径在场景 C（200 条）上只有 44.34%。也就是说，只看结果无法区分"实现错"和"数值路径不定序"。
+
+### 10.2 分层剥离
+
+把问题拆成四层，逐层用"逐位比较"而不是"看结果像不像"来判定：
+
+| 层 | 方法 | 结论 |
+|---|---|---|
+| 权重加载 | 从运行中的引擎 dump layer0/2 全部参数，与 safetensors 逐位比 | **完全一致**（含 w13==cat[gate,up]、w2==down） |
+| 布局/重排 | aiter 的 `shuffle_weight` 与自写 `_unshuffle` 往返 | **逐位可逆** |
+| 层 0 输入 | 引擎的 embedding、post-layernorm 与 HF 公式比 | **逐位一致** |
+| 算术 | 手写 HF 等价前向 vs HF，比 logits / final hidden | **512→7881 全部 0 差异** |
+
+### 10.3 抓到的问题（按发现顺序）
+
+1. **query 分块改变数值**：4096 token 时分块（CH=512）与单次算完差 0.875。原因是 M 维变化改变 GEMM tile 选择，进而改变 K 方向累加顺序。→ 精确路径改为单次算完。
+2. **分块切片索引错**：rows 是 (head, token)、token 最快，必须先 view 成 `[nKV, rep, T, D]` 再按 T 切。
+3. **recompute 时 ctx_slots 早于 positions 覆盖**：导致注意力只覆盖 1 个 key。
+4. **28 层专家权重一次性 unshuffle 缓存占 22GB**：8k 上下文直接 OOM。→ 逐层 unshuffle 并即时释放。
+5. **`[801, 0, 0, 0]` 的真因**：decode 步 `block_tables is None`，参考路径开头 `if bs_bt is None: return None` 直接放弃 → 回退到快路径并被 7882 上下文压垮。首个 token 对是因为 prefill 有 block table。→ recompute 模式自持顺序 KV 槽。
+6. **token 历史用 block table 首元素做 key**：decode 无 block table → key 退化为 0，与 prefill 的 key 分裂，decode 只 recompute 一个 token（之前 16 token 测试能过是因为首块号恰好为 0）。
+7. **recompute 单序列假设未设防**：多序列批会让两条序列交错写入同一历史 → 静默错结果。→ 入口显式拒绝并提示开关。
+
+第 5、6、7 条都不是"算术错"，而是**数据流/状态管理错**；它们的共同特征是"不报错、或者报一个和根因无关的错"。
+
+### 10.4 一个容易误判的坑
+
+显存不够时引擎不报 OOM，而是报：
+
+```
+assert not self._called, "VllmBackend can only be called once"      # atom/utils/backends.py:650
+RuntimeError: Engine Core Mgr: Received unexpected SHUTDOWN signal from DP rank 0
+```
+
+根因是 KV 预算被压到 ~4GB 以下，piecewise 编译后端被重复调用。实测门槛：**≥28.8 GiB 才能起服务，≥45 GiB 才能跑 7881 全长的参考前向**。
+
+### 10.5 结论
+
+- 模型语义（rope/norm/attention/MoE/权重加载）**可以做到与 HF 逐位相同**，已在 512/2048/4096/6144/7881 五个长度、两台不同 GPU（gfx942 与 A100）上验证。
+- 达不到 90% 门槛的部分，来源是**快路径的归约顺序**（aiter 两段式 CK MoE 的 `AtomicAdd`、分块 GEMM 的 tile 顺序），与 vLLM 的 batch-invariance 问题同源。
+- 因此这道题的解法是"修归约定序"或"用确定性参考路径"，而不是"调参数"。本报告给的是前者所需的证据链和后者已实现的代码。
+
+### 10.6 场景重叠率（从原始 token id 复算，非采信 harness 的 summary）
+
+| 场景 | prompt 数 | 前 64 token 位置一致率 | 64 个全中 |
+|---|---|---|---|
+| A | 20 | 0.3320 | 3/20 |
+| B | 20 | 1.0000 | 20/20 |
+| C | 200 | 0.4434 | 53/200 |
+| C（v23 对齐） | 20 | 0.5039 | 5/20 |
+
+注：以上均为快路径；参考路径尚未在场景规模上跑（差别是显存，不是代码）。
