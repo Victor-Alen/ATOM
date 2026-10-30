@@ -125,6 +125,14 @@ def reference_forward(model, input_ids, positions):
     fwd_ctx = get_forward_context()
     if os.environ.get("ATOM_REFERENCE_SKIP") == "1":
         return None
+    if "frac" not in _ROT:
+        try:
+            _frac = float(os.environ.get("ATOM_REFERENCE_MEM_FRACTION", "0.85"))
+            torch.cuda.set_per_process_memory_fraction(_frac, input_ids.device.index or 0)
+            print(f"[ref] allocator fraction lifted to {_frac}", flush=True)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[ref] could not lift allocator fraction: {exc}", flush=True)
+        _ROT["frac"] = True
 
     md = fwd_ctx.attn_metadata
     if isinstance(md, dict):
@@ -287,12 +295,15 @@ def reference_forward(model, input_ids, positions):
                     mask = mask & ((qi - ki) < W)
                 qc = qh[:, :, c0:c1, :].reshape(nKV, rep * (c1 - c0), D)
                 sc = torch.matmul(qc, kk.transpose(1, 2)) * scale
-                sc = sc.masked_fill(
-                    ~mask.repeat(rep, 1).view(1, (c1 - c0) * rep, ctx), float("-inf")
-                )
-                pr = F.softmax(sc, dim=-1, dtype=torch.float32).to(q.dtype)
+                neg = ~mask.repeat(rep, 1).view(1, (c1 - c0) * rep, ctx)
+                sc.masked_fill_(neg, float("-inf"))
+                del neg
+                pr32 = F.softmax(sc, dim=-1, dtype=torch.float32)
+                del sc
+                pr = pr32.to(q.dtype)
+                del pr32
                 o_all[:, :, c0:c1, :] = torch.matmul(pr, vv).view(nKV, rep, c1 - c0, D)
-                del sc, pr, qc
+                del pr, qc
             o = o_all.permute(2, 0, 1, 3).reshape(n_new, nH * D)
             outs[lo:hi] = F.linear(o, attn.o_proj.weight)
             del o, o_all, kk, vv

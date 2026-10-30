@@ -128,7 +128,7 @@ def main():
             kk = k.repeat_interleave(rep, dim=1)   # [1, nH, T, D]
             vv = v.repeat_interleave(rep, dim=1)
             ki = torch.arange(T, device=dev).view(1, -1)
-            CH = 512
+            CH = int(__import__("os").environ.get("PROBE_CHUNK", "0")) or T
             o_all = torch.empty(1, nH, T, D, dtype=q.dtype, device=dev)
             for c0 in range(0, T, CH):
                 c1 = min(c0 + CH, T)
