@@ -922,3 +922,21 @@ Verification chain now complete down to the layer:
 **Fixes landed this round**: single-shot attention by default (`ATOM_REFERENCE_ATTN_CHUNK` to opt out), corrected query-chunk slicing, corrected ordering of the recompute block relative to `ctx_slots`, per-layer expert unshuffle instead of caching 22 GB of copies, and rope now taken from HF's own `MellumRotaryEmbedding`.
 
 **Next**: run the full-length case when a card has ~25 GB free; expected result `[801, 1622, ...]`. Then run scenario C through the reference path.
+
+### 2026-10-31 (round 19): exact arithmetic confirmed up to 6144 tokens; 7881 blocked only by coexistence memory
+
+Single-shot (no query chunking) offline comparison of the independent forward against HF on the same prompt prefix:
+
+| prompt tokens | max abs delta vs HF logits | argmax mismatches |
+|---|---|---|
+| 512 | 0.000000 | 0/8 |
+| 2048 | 0.000000 | 0/8 |
+| **4096** | **0.000000** | **0/8** |
+| **6144** | **0.000000** | **0/8** |
+| 7881 | blocked | blocked |
+
+The 7881 case needs ~44.5 GB (24 GB weights + 3.9 GB bf16 scores + 7.9 GB fp32 softmax + KV), while the shared card currently leaves ~43.6 GB free (the other workload holds 150-183 GB), so it fails by 7.4 GB. The earlier 0.875 reading at 4096 came from query chunking and disappears completely with a single shot - chunking changes the GEMM tiling and therefore the bits.
+
+**Also fixed**: the probe now keeps only the reference logit rows (the full 7957 x 98304 fp32 tensor cost 3 GB), and the historical failure at 7881 on the shared card is purely coexistence memory, not arithmetic.
+
+**Status of Step 0.** The correctness chain is: parameters bitwise identical (round 18) -> layer-0 inputs bitwise identical (round 18) -> independent forward bitwise identical to HF up to 6144 tokens (this round) -> the engine's 16-token request already samples HF's exact token. What remains is one full-length (7881) run on a card with ~45 GB free, which is being set up on the A100 node (torch 2.10 + transformers 5.2 + the checkpoint) since the MI308X node is occupied.

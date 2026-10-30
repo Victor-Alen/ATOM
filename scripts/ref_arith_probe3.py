@@ -86,10 +86,12 @@ def main():
         handles.append(layer.register_forward_hook(mk(i, "block")))
     with torch.no_grad():
         out = model(input_ids=ids, logits_to_keep=int(T))
-    hf_logits = out.logits[0].float()
+    sel = torch.arange(P - 1, P + len(ref_tokens) - 1, device=args.device)
+    hf_logits = out.logits[0][sel].float()
+    del out
+    logits = None
     for h in handles:
         h.remove()
-    del out
     torch.cuda.empty_cache()
     print("HF done", flush=True)
 
@@ -173,12 +175,11 @@ def main():
             torch.cuda.empty_cache()
 
         x = hf_norm(x, model.model.norm.weight, eps)
-        mine = F.linear(x.view(-1, cfg.hidden_size), model.lm_head.weight).view(T, -1)
+        mine = F.linear(x[sel].view(-1, cfg.hidden_size), model.lm_head.weight)
 
-    sel = torch.arange(P - 1, P + len(ref_tokens) - 1, device=dev)
-    d = (mine[sel].float() - hf_logits[sel]).abs()
+    d = (mine.float() - hf_logits).abs()
     print(f"max|delta| logits: {d.max().item():.6f}  mean: {d.mean().item():.8f}")
-    print(f"argmax mismatches: {int((mine[sel].argmax(-1) != hf_logits[sel].argmax(-1)).sum())}/{len(sel)}")
+    print(f"argmax mismatches: {int((mine.argmax(-1) != hf_logits.argmax(-1)).sum())}/{mine.shape[0]}")
     print("### DONE", flush=True)
 
 
