@@ -774,3 +774,18 @@ Against the aiter-separate variant's 278/279 = 99.64%, the Triton path is one po
 5. Established that the task's stated gate measures tie-break cascades, with a 24-27% measured noise floor, and supplied the teacher-forced protocol that answers the actual question.
 
 **State.** Branch `dsh/moe-determinism` in `/workspace/ATOM-tritonmoe`; shared `RESULTS.md` updated and committed in `/workspace/ATOM` (branch `mellum-step0`); 8001 stopped; 8000 and the port-8002 service left untouched throughout.
+
+### 2026-10-30 (round 12): 200-prompt teacher-forced gate launched
+
+The 200-prompt run is now executing in the background on the idle GPU:
+
+- harness: `/workspace/ATOM-tritonmoe/scripts/teacher_forced_gate.py` (incremental + resumable: writes a summary after every prompt and skips prompts already present)
+- reference set: `/workspace/correctness/hf_scenario_c_200_eager.jsonl` (200 prompts, each with `prompt_token_ids` and 64 HF greedy tokens)
+- variant: deterministic Triton MoE (clamp disabled), service on port 8001, `HIP_VISIBLE_DEVICES=1`, level 0, enforce-eager
+- output: `/workspace/correctness/gate200_triton.json` (rewritten after each prompt)
+- logs: `/workspace/logs/gate200.log` (per-prompt lines) and `/workspace/logs/gate200_runner.log`
+- expected duration: roughly 2.5 minutes per prompt on the first five, so 200 prompts is about 8 hours; the file is resumable if the machine restarts
+
+Collection command once it finishes: `python3 -c "import json;d=json.load(open('/workspace/correctness/gate200_triton.json'));print(d['prompts'], d['confident_matched'], d['confident_positions'], d['confident_rate'], d['all_rate'])"`.
+
+**Status of Step 0 while this runs.** Determinism is solved (1 stream over repeats for the deterministic variants). Correctness against the oracle is solved on the five-prompt sample: 279/279 = 100.00% at HF margins >= 1.0 and 315/320 = 98.4% overall (Triton), 278/279 and 313/320 (aiter-separate). The literal gate - 200 prompts, one greedy run each, per-token agreement >= 90% - is *not* satisfied and cannot be by any implementation whose accumulation order differs from HF's, because the measured noise floor of that metric is 24-27% (ATOM-vs-ATOM 24.06%, HF-sdpa-vs-HF-eager 27.10%). The 200-prompt teacher-forced number is what should be reported for correctness; the free-running number should only be reported alongside its noise floor.
