@@ -1007,3 +1007,30 @@ Exactness ladder, now complete:
 - no per-layer hooks in either phase (~3 GiB saved)
 - hf phase keeps only the two reference logit rows (<1 MB) instead of all 7957 x 98304 floats (3 GB)
 - mine phase stops before the head and saves the 2304-float final hidden
+
+### 2026-10-31 (round 23): measured startup thresholds of the reference engine
+
+Two experiments on the inference node pin down what the engine actually needs, so the gate can be scheduled instead of guessed:
+
+| configuration | free VRAM | outcome |
+|---|---|---|
+| 12B bf16 weights only (24 GB) + engine overhead | 25.4 GiB | cannot start |
+| `--max-model-len 2048 --gpu-memory-utilization 0.130 --max-num-seqs 1` | 25.4 GiB | dies during init |
+| `--max-model-len 32768 --gpu-memory-utilization 0.135` | 25.4 GiB | dies during init |
+| `--max-model-len 32768 --gpu-memory-utilization 0.15` (earlier successful runs) | >= 28.8 GiB | starts, serves requests |
+
+The failure mode is not a clean OOM: the model runner aborts with
+
+```
+assert not self._called, "VllmBackend can only be called once"
+RuntimeError: Engine Core Mgr: Received unexpected SHUTDOWN signal from DP rank 0 during initialization
+```
+
+`VllmBackend.__call__` in `atom/utils/backends.py:650` asserts that each piecewise-compilation backend instance is invoked once; with a KV budget squeezed below roughly 4 GB the capture loop re-enters the same instance and the runner dies. **Operational takeaway**: a KV budget that is too small does not surface as "out of memory" but as this assertion, so if the engine dies at init, check free VRAM before chasing the assertion.
+
+Thresholds for scheduling the gate:
+
+- **>= 28.8 GiB free**: engine starts, short checks (1024-token prompt, 8 steps) are possible.
+- **>= 45 GiB free**: the 7881-token reference forward plus KV fits, so the full `[801, 1622, 1622, 1020]` check can run.
+
+The same measurement explains why the night's automation never fired: both cards have sat at 21-25.4 GiB free, i.e. consistently just under the 28.8 GiB start threshold.
