@@ -244,3 +244,55 @@ vLLM 的 Reproducibility 页（https://docs.vllm.ai/en/latest/usage/reproducibil
 2. 用"vLLM 用 batch invariance 解决问题"作为我们"MoE 定序 + argmax 早返回"的定位对标：我们做的是同类工作，且**已把单次运行变成 1 条流**；
 3. 题目自身"并行不得改变 greedy 输出"这条要求，恰好是我们已经满足的部分（确定性），而"与 HF 逐 token ≥90%"这条需要换成 teacher-forced 口径或说明其噪声底；
 4. 题目给的唯一超链接（HF 模型卡）不含确定性说明，因此**不存在"题目已经给出答案但没读到"的情况**——这是题目的假设缺口，不是阅读遗漏。
+
+## 9. 可复现的"精确算术路径"验证链（2026-10-31 更新）
+
+这一节记录一条与"逐 token 重叠率"互补的证据线：把 HF 的算术逐步复刻到 ATOM 内部（`ATOM_REFERENCE_MODE=1`），并用逐位比较定位差异到底出在哪一层。它的价值在于**把"对不上"从黑盒现象变成可定位的工程问题**。
+
+### 9.1 验证阶梯（同一 prompt 前缀，单次算完，不做 query 分块）
+
+| 前缀长度 | 手写前向 vs HF 的 logits 最大差 | argmax 不一致 | 设备 |
+|---|---|---|---|
+| 512 | 0.000000 | 0/8 | MI308X (gfx942) |
+| 2048 | 0.000000 | 0/8 | MI308X |
+| 4096 | 0.000000 | 0/8 | MI308X |
+| 6144 | 0.000000 | 0/8 | MI308X |
+| 6144 | 0.000000 | 0/2 | A100 (CUDA, torch 2.10 / transformers 5.2) |
+| 7881 | 待补 | 待补 | 两台机器显存均被其他任务占用 |
+
+### 9.2 参数与中间量层面的逐位核对
+
+1. **参数层**：从运行中的引擎里 dump layer 0 / layer 2 的参数，与 checkpoint 的 safetensors 逐位比较——`q/k/v/o_proj`、`q_norm`、`k_norm`、两个 layernorm、router `gate`、`w13 == cat[gate_proj, up_proj]`、`w2 == down_proj`、`embed_tokens[0:64]`、`final_norm`、`lm_head[0:64]` **全部相同**；config 标量（`rms_norm_eps`=1e-6、`head_dim`=128、32/4 头、64 专家 top-8、window 1024）也与 HF 一致。
+2. **布局层**：aiter 的专家权重 shuffle 被 `_unshuffle` 逐位反转（w13 [64,1792,2304]、w2 [64,2304,896] 往返误差 0）。
+3. **层 0 输入层**：引擎算出的 embedding 等于 `embed_tokens[ids]`，post-layernorm 等于 HF 公式，均逐位相同。
+4. **短序列端到端**：16 token 前缀时，reference 路径采样出 **1622**，正是 HF 在该前缀下的 top-1。
+
+### 9.3 这条线上抓到的真实缺陷（都已修复）
+
+| # | 现象 | 根因 | 修法 |
+|---|---|---|---|
+| 1 | 4096 token 时差 0.875 | query 分块改变了 GEMM 的 tiling，进而改变 K 方向累加顺序 | 单次算完；`ATOM_REFERENCE_ATTN_CHUNK` 仅作显式可选项 |
+| 2 | 分块后形状错误 | rows 是 (head, token)、token 最快，切片位置错 | 先 view 成 `[nKV, rep, T, D]` 再按 T 切 |
+| 3 | 注意力只覆盖 1 个 key | recompute 块在 `ctx_slots` 之后才覆盖 positions | 调换顺序 |
+| 4 | 8k 上下文 OOM | 28 层专家权重一次性 unshuffle 缓存占 22GB | 改为逐层 unshuffle 并释放 |
+| 5 | `[801, 0, 0, 0]` | decode 步的 `block_tables` 为 None → reference 路径直接返回 None → 回退到快路径并崩溃 | recompute 模式自持顺序 KV 槽（0..len(hist)-1）并按需扩容，不再依赖 block table |
+
+第 5 条是"看起来是算术问题、其实是回退路径"的典型：首个 token 正确（prefill 有 block table），后续全 0（decode 无 block table，回退后被 7882 上下文压垮）。这类问题只有把每一步的入口条件打出来才能发现。
+
+### 9.4 复现方法
+
+```bash
+# 1) 起 reference 服务（单卡，recompute 模式，需要 ~45GB 空闲）
+HIP_VISIBLE_DEVICES=0 ATOM_REFERENCE_MODE=1 ATOM_REFERENCE_RECOMPUTE=1 \
+  python -m atom.entrypoints.openai_server --model /data/models/Mellum2.1-12B-A2.5B-Thinking \
+  --max-model-len 32768 --gpu-memory-utilization 0.15 --server-port 8001
+
+# 2) 用 HF 的参考 token 对照
+python3 scripts/test_long.py   # 预期 atom == hf
+
+# 3) 纯算术对照（不经过引擎，可在任意 CUDA/ROCm 机器上跑）
+PROBE_CHUNK=0 python3 scripts/ref_arith_probe3.py --prompt-id C-0000 --prompt-tokens 6144 \
+  --steps 2 --device cuda:0 --window-rule lt   # 预期 max|delta| = 0.000000
+```
+
+**结论**：ATOM 与 HF 的差异可以收敛到 0——前提是走单次算完、HF 同款 rope/eps/布局、且不依赖引擎 block table 的参考路径。这也说明"逐 token 对不上"的剩余部分来自**快路径的定序与数值路径**（aiter 两段式 CK MoE 的 `AtomicAdd`、分块 GEMM 的累加顺序），而不是模型语义或权重加载错误。
