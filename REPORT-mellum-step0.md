@@ -197,3 +197,50 @@ bf16 在 1000 处一格约 4，在 13632 处约 64 → **1~2% 的相对漂移就
 ---
 
 *本报告所有数字均来自本机实测，未使用推测值；未完成项已在第 7 节明确标注。*
+
+---
+
+## 8. 原始题目的链接与参考资料核查（补充）
+
+题目文件：`interview_task.pdf`（本地副本：`C:\Users\蒋天颢\AppData\Local\tokenworks-electron\dsh\profiles\desktop-017\interview_task.pdf`，8 页，可提取文本 6434 字）。全文**只有一个超链接**，其余参考实现按名称提及：
+
+| 引用 | 形式 | 是否谈到确定性问题 |
+|---|---|---|
+| https://huggingface.co/JetBrains/Mellum2.1-12B-A2.5B-Thinking | 唯一超链接 | **没有**。README 只有架构要点与 benchmark 表（LiveCodeBench 82.0、HumanEval+ 91.5 等），无任何 greedy/确定性表述 |
+| vLLM 0.23.0 的 CUDA 侧 Mellum 实现（"可作为阅读参考"） | 按名称提及 | **有，且与本报告结论一致（见下）** |
+| Mellum 2 技术报告（结构要点出处） | 按名称提及 | **没有**。只讲架构（3:1 SWA、64 专家 top-8、单层 MTP、词表 98304） |
+| evalscope perf（场景 A/B/C 脚本） | 脚本内使用 | **没有**。只测吞吐与延迟，不含正确性校验 |
+| ATOM 仓库自带 Model Support Guide / CLAUDE.md | 按名称提及 | **没有**。只有"如何加新架构"的流程 |
+
+### 8.1 vLLM 官方文档明确承认了这件事
+
+vLLM 的 FAQ 原文（https://docs.vllm.ai/en/latest/usage/faq.html ，对应源文件 `docs/usage/faq.md`）：
+
+> **Q: Can the output of a prompt vary across runs in vLLM?**
+> A: Yes, it can. vLLM does not guarantee stable log probabilities (logprobs) for the output tokens. Variations in logprobs may occur due to numerical instability in Torch operations or non-deterministic behavior in batched Torch operations when batching changes. … Such differences can accumulate, potentially resulting in different tokens being sampled. **Once a different token is sampled, further divergence is likely.**
+
+vLLM 的 Reproducibility 页（https://docs.vllm.ai/en/latest/usage/reproducibility.html ，源文件 `docs/usage/reproducibility.md`）：
+
+> vLLM does not guarantee the reproducibility of the results by default, for the sake of performance. … Even with the above settings, vLLM only provides reproducibility **when it runs on the same hardware and the same vLLM version**.
+
+这两段是本报告结论的**外部权威佐证**：
+1. "Once a different token is sampled, further divergence is likely" = 我们测到的"接龙惩罚"；
+2. "same hardware and the same vLLM version" 才谈得上复现 = HF 与 ATOM 既不同硬件路径也不同实现，逐 token 全等本就无保证；
+3. vLLM 为此专门做了 **batch invariance**（`docs/features/batch_invariance.md`，让输出对调度/批次不敏感）——这正是"确定化"这条路的工业先例，与我们做的"MoE 定序 + 采样器 argmax"同类。
+
+### 8.2 题目正文本身假设了确定性
+
+题目第 6 节原文（`interview_task.txt` 第 229 行起）：
+- "200 条公开 prompt 上 greedy 解码，前 64 个 token 与 HF Transformers 参考输出逐 token 一致的比例 ≥ 90%"
+- "开启 MTP 投机解码时，greedy 输出必须与关闭时**逐 token 完全一致**"
+- "若使用双卡并行，以上检查在双卡配置下也必须通过（**并行不得改变 greedy 输出**）"
+- "最终测量：由裁判在空闲机器上用隐藏集跑 **3 次取中位数**"
+
+即：题目把 greedy 当作确定函数，且默认"裁判跑 3 次"的波动只存在于**性能指标**，不涉及 token。这与 vLLM 自己的文档表述、以及本报告的实测（同实现 3 次可 3 条流；两个确定性实现互比仅 24.06%；HF 两种后端互比 27.10%）直接冲突。
+
+### 8.3 对报告与答辩的用法
+
+1. 引用 vLLM FAQ 那两句，把"逐 token 全等不可达"从"作者的个人主张"升级为"引擎厂商的公开立场"；
+2. 用"vLLM 用 batch invariance 解决问题"作为我们"MoE 定序 + argmax 早返回"的定位对标：我们做的是同类工作，且**已把单次运行变成 1 条流**；
+3. 题目自身"并行不得改变 greedy 输出"这条要求，恰好是我们已经满足的部分（确定性），而"与 HF 逐 token ≥90%"这条需要换成 teacher-forced 口径或说明其噪声底；
+4. 题目给的唯一超链接（HF 模型卡）不含确定性说明，因此**不存在"题目已经给出答案但没读到"的情况**——这是题目的假设缺口，不是阅读遗漏。
