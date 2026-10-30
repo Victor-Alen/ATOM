@@ -3285,6 +3285,7 @@ def _atom_triton_moe_apply(
         _out, x, layer._triton_w13, layer._triton_w2, _routing, _gather, _scatter,
         topk=int(topk_weights.shape[1]), activation=_act, w1_bias=None, w2_bias=None,
         apply_router_weight_on_input=False, global_num_experts=_n_tot, expert_map=expert_map,
+        swiglu_limit=1e30,
     )
 
 
@@ -3417,7 +3418,7 @@ def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, p
                 x, layer._triton_w13, layer._triton_w2, router_logits,
                 topk=int(topk_weights.shape[1]), renormalize=True,
                 activation='silu', global_num_experts=layer.w13_weight.shape[0],
-                expert_map=expert_map,
+                expert_map=expert_map, swiglu_limit=1e30,
             ))
     except Exception as _exc:
         _direct = [x]

@@ -673,3 +673,24 @@ Practical consequence: the Triton MoE cannot be used as-is for this model, becau
 **Next, two candidate tests.** (1) Inspect what `matmul_ogs` uses for the gathered intermediate - if it is fp16 rather than bf16, the threshold near 6.5e4 explains everything and a bf16/fp32 intermediate option would be the fix. (2) Check whether the 1280 outlier itself is legitimate: run the same prefill through the HF reference and compare layer 2's post-attention/MoE magnitudes. If HF does not show a 1280 outlier, the outlier is an ATOM-side numerical problem that should be fixed at its source, and the Triton path may be innocent once the outlier is gone.
 
 **State.** Work confined to `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); shared RESULTS updated; 8001 stopped, 8000 untouched.
+
+### 2026-10-30 (round 8): found and fixed - the Triton path was clamping the activation at swiglu_limit=7.0
+
+The layer-2 magnitude failure was not a kernel bug. ATOM's `triton_kernel_fused_experts` wrapper defaults to `swiglu_limit=7.0` (`atom/model_ops/fused_moe_triton.py:289-290`), and `triton_kernels.swiglu.compute_swiglu` applies `gelu = min(gelu, limit)` and `linear = clamp(linear, -limit, limit)` whenever `limit is not None`. That limit exists for GPT-OSS style models; Mellum has no such clamp. The round-7 wiring did not override it, so every layer whose activation exceeded 7 was silently truncated, which is exactly the 1280 -> 132 row at layer 2 prefill, and exactly why scaling the input by 2^-3 made the error disappear (the intermediates fell below the clamp).
+
+**Fix and verification.** Passing `swiglu_limit=1e30` (no clamp) in the Triton call sites (`scripts/patch_swiglu_fix.py`) changes the layer-2 prefill comparison to:
+
+| | ref absmax | triton absmax | d(triton,ref) | relative |
+|---|---|---|---|---|
+| before | 1280.0 | 132.0 | 1148.0 | 0.897 |
+| after | 1280.0 | 1272.0 | **8.0** | **0.00625** |
+
+The remaining 8.0 is normal bf16 accumulation noise at that magnitude (aiter is 2.0 there). The other rows are unchanged at 1e-2 to 1e-3 absolute.
+
+**Effect on the whole model.** With the clamp disabled, three identical requests return one stream, and the first eight generated tokens are **[255, 99, 523, 321, 233, 233, 910, 14189]** - byte-identical to the aiter path's opening tokens from the very first measurement in this file - so the Triton path now reproduces aiter's arithmetic apart from accumulation-order noise. HF agreement against `hf_scenario_c_first5_eager.jsonl` rises from 8.125% to **103/320 = 32.19%** with `exact_sequence_ratio = 0.2` (one of the five prompts fully exact).
+
+**Where this leaves the gate.** 32.19% is still far from 90%, and it is *below* the aiter-8-call deterministic variant's 51.25%, even though both are reproducible. The difference is accumulation-order drift under an argmax-sensitive measurement, and the oracle itself is known to disagree with itself by backend (the SDpa-vs-eager finding in the sections above, 27.1% position agreement). So determinism is now solved for the Triton path, correctness-vs-oracle is not, and the next useful work is on defining a stable oracle / near-tie protocol rather than on more MoE variants.
+
+**Operational lesson for this port.** Any ATOM code path that reaches `triton_kernel_fused_experts` must pass an explicit `swiglu_limit` for models without an activation clamp; the 7.0 default is silently active and only shows up on the rare large-activation rows.
+
+**State.** Fix and probes live in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); shared RESULTS updated; 8001 stopped after the run, 8000 untouched.
