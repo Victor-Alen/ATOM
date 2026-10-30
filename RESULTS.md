@@ -833,3 +833,28 @@ Three env-gated switches were added in `/workspace/ATOM-tritonmoe` (`scripts/pat
 **Next after this:** if V2 moves the first-20 number, extend it to 200 prompts and add the attention-scores-bf16 variant (the largest remaining precision surface: HF computes `matmul(q,k)*scaling` in bf16 and only the softmax in fp32, while ATOM's MFMA path keeps fp32 scores). If V2 does not move it, the residual difference is entirely in the attention and MoE kernels' accumulation order, which points at the "HF-equivalent reference mode" (all-torch, bit-identical, slow) as the only route to a literal 100%.
 
 **State.** Patches and switches live in the `dsh/moe-determinism` worktree only; shared RESULTS updated; port 8000 and 8002 untouched.
+
+### 2026-10-31 (round 15): aligning HF's MoE combine and norm precision gains +8 points on the same 20 prompts
+
+Ran variants (2) and (3) together on the first 20 scenario-C prompts, same prompts, same deterministic Triton attention path, only the MoE and norm arithmetic changed to imitate HF:
+
+| variant | first-20 C prompts | exact |
+|---|---|---|
+| V0 deterministic Triton, clamp fixed | 543/1280 = 42.42% | 5/20 |
+| V23 + HF-order bf16 MoE + HF bf16 norm weight multiply | **645/1280 = 50.39%** | 5/20 |
+
+Per prompt (`V0 -> V23`): C-0001 4->28, C-0003 2->29, **C-0004 5->64**, **C-0005 6->64**, C-0006 0->9, **C-0007 51->64**, C-0017 11->59, C-0010 3->7, C-0008 5->6, C-0014 3->5 - but also C-0011 64->19, C-0015 51->5, C-0019 64->39, C-0009 64->52, C-0012 23->10, C-0016 12->10.
+
+So imitating HF's MoE accumulation (**bf16, ascending expert id, exactly HF's `index_add_` loop**) plus HF's norm (**fp32 normalise, cast to bf16, then multiply the weight in bf16**) is worth about **+8 percentage points net** on this subset, with several prompts jumping from near-total mismatch to 64/64. The regressions are equally informative: they show that aligning only two of the four precision points is not monotone - a prompt that happened to be exact under V0 lands one grid cell away once the MoE/norm arithmetic moves, so the ladder has to be completed rather than stopped at a partial alignment.
+
+**Status of the ladder**
+
+| variant | effect |
+|---|---|
+| V1 bf16 logits argmax | no effect (ATOM head already bf16) |
+| V2/V3 HF-order bf16 MoE + HF bf16 norm | **+7.97 points on the same 20 prompts** |
+| V4 attention scores bf16 before softmax | not yet implemented (largest remaining surface) |
+
+**Next.** Implement V4 (HF evaluates `matmul(q,k) * scaling` in bf16 and casts to fp32 only for the softmax; ATOM's MFMA path keeps fp32 scores) and then measure V234 (all three aligned) on the same 20 prompts, followed by a full 200-prompt run of whichever combination is best. If V234 clears the same 20 prompts comfortably above V0, the full scenario-C run becomes the deliverable number, and the remaining gap to 90% is attributable rather than mysterious.
+
+**State.** All switches env-gated and off by default; worktree `dsh/moe-determinism`; shared RESULTS updated; 8000/8002 untouched.
