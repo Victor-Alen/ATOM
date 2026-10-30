@@ -609,6 +609,9 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
                 __import__('os').environ['ATOM_MOE_TRIPLE'], router_logits,
             )
 
+        if __import__('os').environ.get('ATOM_MOE_HF_ORDER') == '1':
+            return _atom_moe_hf_order(layer, x, topk_weights, topk_ids)
+
         if __import__('os').environ.get('ATOM_MOE_SEPARATE') == '1':
             import torch as _t
             _terms = []
@@ -3483,3 +3486,44 @@ def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, p
     with open(path, 'a') as _fh2:
         _fh2.write(_json.dumps(_rec) + chr(10))
     return _aiter[0]
+
+
+def _atom_moe_hf_order(layer, x, topk_weights, topk_ids):
+    """Bit-for-bit imitation of HF Mellum's sparse MoE combine.
+
+    HF keeps the accumulator in bf16 and adds each expert's contribution in
+    ascending expert id via index_add_. aiter ships shuffled weights, so the
+    (16,16) shuffle is inverted and cached on the layer once.
+    """
+    import torch as _torch
+
+    if not getattr(layer, '_hf_moe_ready', False):
+        with _torch.no_grad():
+            def _unshuffle(w):
+                E, n, k = w.shape
+                return (
+                    w.view(E, n // 16, k // 32, 4, 16, 8)
+                    .permute(0, 1, 4, 2, 3, 5)
+                    .contiguous()
+                    .view(E, n, k)
+                )
+
+            layer._hf_w13 = _unshuffle(layer.w13_weight)  # [E, 2I, H]
+            layer._hf_w2 = _unshuffle(layer.w2_weight)    # [E, H, I]
+            layer._hf_moe_ready = True
+
+    _final = _torch.zeros_like(x)
+    _n_experts = layer._hf_w13.shape[0]
+    for _e in range(_n_experts):
+        _mask = topk_ids == _e
+        if not bool(_mask.any()):
+            continue
+        _tok_idx, _slot_idx = _torch.where(_mask)
+        _cur = x[_tok_idx]
+        _gate_up = _cur @ layer._hf_w13[_e].transpose(-1, -2)
+        _gate, _up = _gate_up.chunk(2, dim=-1)
+        _inter = _torch.nn.functional.silu(_gate) * _up
+        _out = _inter @ layer._hf_w2[_e].transpose(-1, -2)
+        _out = _out * topk_weights[_tok_idx, _slot_idx, None]
+        _final.index_add_(0, _tok_idx, _out.to(_final.dtype))
+    return _final

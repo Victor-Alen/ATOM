@@ -1,3 +1,4 @@
+import torch as _torch
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2024-2025, Advanced Micro Devices, Inc. All rights reserved.
 
@@ -253,6 +254,16 @@ class RMSNorm(nn.Module):
         residual: torch.Tensor | None = None,
         x_scale: Optional[torch.Tensor] = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+        if __import__('os').environ.get('ATOM_NORM_HF_BF16') == '1':
+            _x = x if residual is None else x + residual
+            _f = _x.float()
+            _var = _f.pow(2).mean(-1, keepdim=True)
+            _norm = (_f * _torch.rsqrt(_var + self.eps)).to(_x.dtype)
+            _out = self.weight * _norm
+            if residual is None:
+                return _out
+            return _out, _x
+
         if self.x_pad_to_multiple > 0:
             assert (
                 not self.fused_allreduce

@@ -1,3 +1,4 @@
+import os
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2024-2025, Advanced Micro Devices, Inc. All rights reserved.
 
@@ -76,6 +77,8 @@ class Sampler(nn.Module):
         # Temperature 0 must be a true argmax: the plain-temperature path
         # below runs a Gumbel race with fresh noise on every call.
         if all_greedy:
+            if os.environ.get('ATOM_LOGITS_BF16_ARGMAX') == '1':
+                logits = logits.to(torch.bfloat16).float()
             return logits.argmax(dim=-1).to(torch.int)
 
         # No Top-K Top-P parameters, perform temperature-based sampling

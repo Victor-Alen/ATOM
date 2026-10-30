@@ -809,3 +809,27 @@ HF references were generated for A and B with the native HF Mellum in eager mode
 **What the three-scenario table therefore says.** The gate as written is passed where the model has no near-ties (B: 100%) and fails where it does (A/C: 33-44%), and the failing rate matches the measured noise floor of the metric rather than any porting defect. Reported correctly, the deliverable is: B 100% / C 44.34% / A 33.20% for the literal metric, plus the teacher-forced decomposition (round 10-11: 100% of decidable positions, 5-prompt sample) which explains the difference. The 200-prompt teacher-forced run is being restarted to extend that decomposition to the full scenario C set.
 
 **State.** All artifacts in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`): `scripts/make_hf_refs.py`, references and per-scenario summaries above. Shared RESULTS updated. The deterministic server on 8001 was left running for the teacher-forced job; 8000 and the port-8002 service untouched.
+
+### 2026-10-31 (round 14): precision-ladder attribution - bf16 logits was a no-op, MoE order and norm are running
+
+Three env-gated switches were added in `/workspace/ATOM-tritonmoe` (`scripts/patch_hf_match.py`) so each of HF's precision-loss points can be imitated one at a time:
+
+1. `ATOM_LOGITS_BF16_ARGMAX=1` - argmax on bf16-quantised logits
+2. `ATOM_MOE_HF_ORDER=1` - per-expert bf16 accumulate in ascending expert id, exactly HF's loop
+3. `ATOM_NORM_HF_BF16=1` - RMSNorm casts to bf16 before the weight multiply
+
+**Result for (1): no effect at all, and the reason is clean.** Scenario C 200 prompts and scenario B 20 prompts return *identical* numbers with the switch on and off (C 5676/12800 = 44.34%, 53 exact, median first mismatch 8; B 1280/1280 = 100.00%). The cause is visible in the code: ATOM's logits already come from `tgemm.mm(x, self.weight)` with a bf16 weight (`atom/model_ops/embed_head.py:181`), so they are bf16 before the sampler, exactly like HF's `self.lm_head(hidden)`. The hypothesis "ATOM resolves ties that HF cannot see at the head" is therefore refuted, not merely unhelpful - there was nothing to quantise.
+
+**Running now:** variants (2) and (3) together on the first 20 scenario-C prompts (the Python HF-order MoE is slow, roughly a minute per prompt, so attribution uses a 20-prompt subset before any full run).
+
+**Ladder so far.**
+
+| variant | C (200) | B (20) |
+|---|---|---|
+| V0 deterministic Triton, clamp fixed | 44.34% (53 exact) | 100.00% (20/20) |
+| V1 + bf16 logits argmax | 44.34% (53 exact) | 100.00% (20/20) |
+| V2 + HF-order bf16 MoE, + HF bf16 norm | running on first 20 | - |
+
+**Next after this:** if V2 moves the first-20 number, extend it to 200 prompts and add the attention-scores-bf16 variant (the largest remaining precision surface: HF computes `matmul(q,k)*scaling` in bf16 and only the softmax in fp32, while ATOM's MFMA path keeps fp32 scores). If V2 does not move it, the residual difference is entirely in the attention and MoE kernels' accumulation order, which points at the "HF-equivalent reference mode" (all-torch, bit-identical, slow) as the only route to a literal 100%.
+
+**State.** Patches and switches live in the `dsh/moe-determinism` worktree only; shared RESULTS updated; port 8000 and 8002 untouched.
