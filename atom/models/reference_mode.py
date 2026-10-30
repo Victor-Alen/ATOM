@@ -190,6 +190,14 @@ def reference_forward(model, input_ids, positions):
 
     cu_q = md.cu_seqlens_q.tolist()
     bs = len(cu_q) - 1
+    if bs > 1 and os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
+        # the recompute history is single-sequence by construction
+        print(
+            f"[ref] refusing recompute with bs={bs} (single-sequence mode); "
+            "set ATOM_REFERENCE_RECOMPUTE=0 for batched runs",
+            flush=True,
+        )
+        return None
     ctx_lens = md.context_lens.tolist()[:bs]
     rot, layer_types, W = _rotary(cfg, dev)
     if os.environ.get("ATOM_REFERENCE_DEBUG") in ("0", "1", "2"):
