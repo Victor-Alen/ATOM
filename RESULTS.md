@@ -1034,3 +1034,20 @@ Thresholds for scheduling the gate:
 - **>= 45 GiB free**: the 7881-token reference forward plus KV fits, so the full `[801, 1622, 1622, 1020]` check can run.
 
 The same measurement explains why the night's automation never fired: both cards have sat at 21-25.4 GiB free, i.e. consistently just under the 28.8 GiB start threshold.
+
+### 2026-10-31 (round 24): scenario overlap rates recomputed from the raw outputs
+
+The scenario numbers had only existed as `summary.json` files written by the harness that produced them. `scripts/scenario_table.py` now recomputes them **from the per-prompt token ids** (`atom_outputs.jsonl` against `hf_scenario_*_eager.jsonl`), so the figures can be checked without trusting the original summary:
+
+| scenario | prompts | token positions (first 64) | position agreement | prompts with all 64 equal |
+|---|---|---|---|---|
+| A (20) | 20 | 1280 | **0.3320** | 3/20 |
+| B (20) | 20 | 1280 | **1.0000** | 20/20 |
+| C (200) | 200 | 12800 | **0.4434** | 53/200 |
+| C, v23 alignment (20) | 20 | 1280 | **0.5039** | 5/20 |
+
+These reproduce `summary.json` exactly (0.332 / 1.0 / 0.4434 / 0.5039), which confirms the harness was reporting what it claimed.
+
+**Important framing**: all four rows are the **fast path** (aiter CK MoE + fused kernels), not the exact reference path. B saturates at 1.0 because those prompts are long enough that the first 64 generated tokens are dominated by a deterministic pattern; A and C sit at 33-44%, i.e. far below the 90% gate. The v23 column is the same 20 C prompts after HF-order bf16 MoE plus HF bf16 norm: +7.17 points of alignment on that subset, but still nowhere near the gate.
+
+The reference path is the only configuration proven to be identical to HF (512 -> 7881 tokens, `max abs delta = 0`), and running it at scenario scale is what the pending GPU window is for. So the honest conclusion for the gate is: **fast path 33-44%, reference path exact but not yet measured at scale.**
