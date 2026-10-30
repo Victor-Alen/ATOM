@@ -506,6 +506,14 @@ class MellumForCausalLM(nn.Module):
         inputs_embeds: torch.Tensor | None = None,
         **model_kwargs: dict[str, Any] | None,
     ) -> Union[torch.Tensor, IntermediateTensors]:
+        self._reference_used = False
+        if __import__("os").environ.get("ATOM_REFERENCE_MODE") == "1" and inputs_embeds is None:
+            from atom.models.reference_mode import reference_forward
+
+            _ref = reference_forward(self, input_ids, positions)
+            self._reference_used = _ref is not None
+            if _ref is not None:
+                return _ref
         hidden_states = self.model(
             input_ids=input_ids,
             positions=positions,
@@ -519,6 +527,21 @@ class MellumForCausalLM(nn.Module):
         self,
         hidden_states: torch.Tensor,
     ) -> Optional[torch.Tensor]:
+        if __import__("os").environ.get("ATOM_REFERENCE_MODE") == "1" and getattr(
+            self, "_reference_used", False
+        ):
+            import torch.nn.functional as _F
+
+            _logits = _F.linear(hidden_states, self.lm_head.weight)
+            if __import__("os").environ.get("ATOM_REFERENCE_DEBUG") in ("1", "2"):
+                _top = _logits.float().topk(2, dim=-1)
+                print(
+                    f"[ref-logits] shape={tuple(_logits.shape)} dtype={_logits.dtype} "
+                    f"top1={_top.indices[0].tolist()} top1v={_top.values[0].tolist()} "
+                    f"absmax={float(_logits.float().abs().max()):.4f}",
+                    flush=True,
+                )
+            return _logits
         logits = self.lm_head(hidden_states)
         return logits
 

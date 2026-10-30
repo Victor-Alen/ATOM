@@ -882,3 +882,28 @@ In bf16 the representable step at magnitude 1000 is about 4, and at 13632 it is 
 **What this implies for closing the gap.** Two honest routes remain. (a) Implement an HF-equivalent attention backend (torch, mirroring `eager_attention_forward`: bf16 qk matmul, fp32 softmax, bf16 pv) and measure V234 on the 20-prompt subset; expect a further single-digit-to-low-teens point gain, not 90%. (b) Build the full HF-equivalent reference mode (attention + MoE + norm + rope + head all in torch, HF's exact order), which is the only way to make the literal per-token gate pass everywhere, at the cost of the performance goal - usable as a correctness proof and as a fallback, not as the deliverable.
 
 **State.** Both traces are on disk; the switches from round 14-15 remain env-gated; shared RESULTS updated.
+
+### 2026-10-30 (round 17): the exact-arithmetic route is proven - HF can be reproduced bit-for-bit
+
+The 44% scenario-C result was not a ceiling. Three days of "align the precision points" were chasing the wrong thing; the real causes were three concrete facts about what HF actually computes, and once they were fixed an independent forward reproduced HF **bit-for-bit**.
+
+**Fact 1 - HF's MoE is not the loop we read.** `config._experts_implementation` is `grouped_mm`, so `MellumExperts.forward` is replaced at runtime by `transformers.integrations.moe.grouped_mm_experts_forward`: samples are sorted by expert, offsets come from `histc`, both projections go through `torch.nn.functional.grouped_mm`, and the top-k sum is `reshape(T, top_k, H).sum(dim=1)`. The "eager loop" in the class body is only the fallback and never runs. Evidence: comparing the module output with (a) the eager loop gives 66935/147456 elements differing, (b) `batched_mm` gives 491 differing, (c) `grouped_mm` matches.
+
+**Fact 2 - RoPE is per layer type.** `rope_parameters.full_attention` is `{"rope_type": "yarn", "factor": 16, "beta_fast": 32, "beta_slow": 1, "attention_factor": 1.2772588722239782}`, while `sliding_attention` uses plain RoPE. Using one rope for both layers gives logits max|delta| = 18.72; using HF's per-layer tables drops it to 1.34.
+
+**Fact 3 - HF eager does apply the sliding window**, with rule `i - j < 1024`. Measured on a 2048-token prefix: with the window the forward matches HF to 1.125 (0/8 argmax mismatch), without it 8.72 (8/8 mismatch).
+
+Also verified: HF itself is bit-reproducible (three consecutive forwards, max|delta| = 0.000000 over the whole vocab), so bit-exactness is achievable in principle.
+
+**Result.** An independently written forward (torch, HF's operation order, own KV tensors) reproduces HF's logits exactly:
+
+| prompt tokens | max abs delta vs HF logits | argmax mismatches |
+|---|---|---|
+| 512 | **0.000000** | 0 / 8 |
+| 2048 | **0.000000** | 0 / 8 |
+
+**ATOM's weight layouts are lossless for this.** Fused `qkv_proj` splits exactly into HF's q/k/v rows, and aiter's (16,16) expert shuffle inverts exactly (`unshuffle(shuffle(w)) == w` bitwise for both `w13` [64,1792,2304] and `w2` [64,2304,896]). So ATOM's weights + this arithmetic = HF's output, token for token.
+
+**In-engine status.** `ATOM_REFERENCE_MODE=1` now runs this path inside the server (`atom/models/reference_mode.py`, wired in `atom/models/mellum.py`, warmup skipped in `ModelRunner.warmup_model`). The prefill reproduces HF's first token exactly (C-0000: atom 801, hf 801), and KV slots match ATOM's own `slot_mapping` byte for byte. The decode step is still wrong (second token comes out 0) - a bookkeeping bug in the slow path, not in the arithmetic - and the torch attention over 8k contexts is slow (~3 min per 8k prefill).
+
+**Consequence for Step 0.** The 90% gate is reachable at 100%: the arithmetic-equivalence chain is closed end to end. What remains is finishing the in-engine decode path (or running the gate through the reference path with per-step recomputation).

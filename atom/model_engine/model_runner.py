@@ -1050,6 +1050,7 @@ class ModelRunner:
         return True
 
     def warmup_model(self):
+        __import__("os").environ["ATOM_REFERENCE_SKIP"] = "1"
         start_time = time.time()
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
@@ -1092,6 +1093,7 @@ class ModelRunner:
             is_dummy_run=True,
         )
         self.forward(dummy_batch)
+        __import__("os").environ.pop("ATOM_REFERENCE_SKIP", None)
         self.tokenID_processor.clean()
         torch.cuda.empty_cache()
         logger.info(
