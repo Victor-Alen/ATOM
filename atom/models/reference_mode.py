@@ -119,6 +119,23 @@ def _rotary(cfg, dev):
     return fn, layer_types, _ROT["W"]
 
 
+_HIST: list = []
+
+
+def history_after(new_ids):
+    """Update the single-sequence token history and return it.
+
+    A multi-token call is a prefill and replaces the history; a single-token call
+    is a decode and appends. Keying this on the engine block table was wrong
+    because decode steps have no block table (bs_bt is None).
+    """
+    if len(new_ids) > 1:
+        _HIST[:] = list(new_ids)
+    else:
+        _HIST.append(new_ids[0])
+    return _HIST
+
+
 def seq_slots(positions, cu_q, ctx_lens, bs_bt, block_size, recomp, device):
     """KV slots for every request in the batch.
 
@@ -195,13 +212,8 @@ def reference_forward(model, input_ids, positions):
     _recomp = False
     if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
         _recomp = True
-        key = int(bs_bt[0, 0].item()) if bs_bt is not None else 0
-        hist = _TOKENS.setdefault(key, [])
         new_ids = input_ids.tolist()
-        if len(new_ids) > 1:
-            hist[:] = new_ids
-        else:
-            hist.append(new_ids[0])
+        hist = history_after(new_ids)
         input_ids = torch.tensor(hist, dtype=torch.long, device=dev)
         positions = torch.arange(len(hist), device=dev)
         keep = torch.arange(len(hist) - len(new_ids), len(hist), device=dev)
