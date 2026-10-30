@@ -18,6 +18,7 @@ import torch
 import torch.nn.functional as F
 
 _KV = {}
+_TOKENS = {}
 _ROT = {}
 
 
@@ -77,33 +78,45 @@ def _moe_grouped(w13, w2, gate_w, x, num_experts, top_k, norm_topk):
 
 
 def _rotary(cfg, dev):
+    """HF's own per-layer-type rotary embedding, loaded from the reference tree."""
     if "fn" in _ROT:
         return _ROT["fn"], _ROT["types"], _ROT["W"]
-    from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS
+    import importlib.util
+    import sys
+    import types
+    from pathlib import Path
 
-    types = list(cfg.layer_types)
-    head_dim = int(getattr(cfg, "head_dim", cfg.hidden_size // cfg.num_attention_heads))
-    tables = {}
-    for lt in sorted(set(types)):
-        params = cfg.rope_parameters[lt]
-        if params["rope_type"] == "default":
-            inv = 1.0 / (
-                params["rope_theta"] ** (torch.arange(0, head_dim, 2, device=dev).float() / head_dim)
-            )
-            scaling = 1.0
-        else:
-            inv, scaling = ROPE_INIT_FUNCTIONS[params["rope_type"]](cfg, dev, layer_type=lt)
-        tables[lt] = (inv.to(dev).float(), float(scaling))
+    src = Path(__file__).resolve().parents[2] / "reference" / "hf_mellum"
+    pkg_name = "transformers.models.mellum"
+    if pkg_name not in sys.modules:
+        pkg = types.ModuleType(pkg_name)
+        pkg.__path__ = [str(src)]
+        pkg.__package__ = pkg_name
+        sys.modules[pkg_name] = pkg
+        for name in ("configuration_mellum", "modeling_mellum"):
+            full = f"{pkg_name}.{name}"
+            spec = importlib.util.spec_from_file_location(full, src / f"{name}.py")
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[full] = mod
+            spec.loader.exec_module(mod)
+    MellumConfig = sys.modules[pkg_name + ".configuration_mellum"].MellumConfig
+    modeling = sys.modules[pkg_name + ".modeling_mellum"]
+    hf_cfg = MellumConfig.from_pretrained(os.environ["ATOM_REFERENCE_MODEL_DIR"])
+    rot = modeling.MellumRotaryEmbedding(config=hf_cfg).to(dev)
+    layer_types = list(hf_cfg.layer_types)
+    hidden = hf_cfg.hidden_size
 
     def fn(li, pos, dtype):
-        lt = types[li]
-        inv, scaling = tables[lt]
-        freqs = pos.float()[:, None] * inv[None, :]
-        emb = torch.cat((freqs, freqs), dim=-1)
-        return (emb.cos() * scaling).to(dtype), (emb.sin() * scaling).to(dtype)
+        lt = layer_types[li]
+        cos, sin = rot(
+            torch.zeros(1, pos.numel(), hidden, dtype=dtype, device=dev),
+            pos.view(1, -1),
+            lt,
+        )
+        return cos[0], sin[0]
 
-    _ROT.update(fn=fn, types=types, W=getattr(cfg, "sliding_window", None))
-    return fn, types, _ROT["W"]
+    _ROT.update(fn=fn, types=layer_types, W=getattr(hf_cfg, "sliding_window", None))
+    return fn, layer_types, _ROT["W"]
 
 
 def reference_forward(model, input_ids, positions):
@@ -135,15 +148,75 @@ def reference_forward(model, input_ids, positions):
     bs = len(cu_q) - 1
     ctx_lens = md.context_lens.tolist()[:bs]
     rot, layer_types, W = _rotary(cfg, dev)
+    if os.environ.get("ATOM_REFERENCE_DEBUG") in ("0", "1", "2"):
+        print(
+            f"[ref] pos={positions.tolist()[:4]}..{positions.tolist()[-2:]} "
+            f"n={positions.numel()} cu_q={cu_q[:3]} ctx={ctx_lens[:3]}",
+            flush=True,
+        )
 
     x = F.embedding(input_ids, model.model.embed_tokens.weight)
     if x.dim() == 1:
         x = x[None, :]
+    if os.environ.get("ATOM_REFERENCE_DEBUG") in ("0", "1", "2"):
+        print(
+            f"[ref] ids={input_ids[:4].tolist()} n={input_ids.numel()} "
+            f"emb_absmax={float(x.abs().max()):.4f}",
+            flush=True,
+        )
+
+    if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
+        key = int(bs_bt[0, 0].item())
+        hist = _TOKENS.setdefault(key, [])
+        new_ids = input_ids.tolist()
+        if len(new_ids) > 1:
+            hist[:] = new_ids
+        else:
+            hist.append(new_ids[0])
+        input_ids = torch.tensor(hist, dtype=torch.long, device=dev)
+        positions = torch.arange(len(hist), device=dev)
+        keep = torch.arange(len(hist) - len(new_ids), len(hist), device=dev)
+        cu_q = [0, len(hist)]
+        bs = 1
+        ctx_lens = [len(hist)]
 
     ctx_slots = []
     for s in range(bs):
-        p = torch.arange(ctx_lens[s], device=dev)
-        ctx_slots.append(bs_bt[s, p // block_size].long() * block_size + (p % block_size))
+        p = positions[cu_q[s]:cu_q[s + 1]].long()
+        n_ctx = int(p.max().item()) + 1
+        q = torch.arange(n_ctx, device=dev)
+        ctx_slots.append(bs_bt[s, q // block_size].long() * block_size + (q % block_size))
+
+    if os.environ.get("ATOM_REFERENCE_DUMP") == "1" and "dumped" not in _ROT:
+        import torch as _t
+
+        blob = {}
+        for li in (0, 2):
+            lay = model.model.layers[li]
+            a = lay.self_attn
+            q_w, k_w, v_w = torch.split(a.qkv_proj.weight, [nH * D, nKV * D, nKV * D], dim=0)
+            blob[f"L{li}.q"] = q_w.detach().cpu()
+            blob[f"L{li}.k"] = k_w.detach().cpu()
+            blob[f"L{li}.v"] = v_w.detach().cpu()
+            blob[f"L{li}.o"] = a.o_proj.weight.detach().cpu()
+            blob[f"L{li}.q_norm"] = a.q_norm.weight.detach().cpu()
+            blob[f"L{li}.k_norm"] = a.k_norm.weight.detach().cpu()
+            blob[f"L{li}.in_ln"] = lay.input_layernorm.weight.detach().cpu()
+            blob[f"L{li}.post_ln"] = lay.post_attention_layernorm.weight.detach().cpu()
+            blob[f"L{li}.gate"] = lay.mlp.gate.weight.detach().cpu()
+            blob[f"L{li}.w13"] = _unshuffle(lay.mlp.experts.w13_weight).detach().cpu()
+            blob[f"L{li}.w2"] = _unshuffle(lay.mlp.experts.w2_weight).detach().cpu()
+        blob["cfg"] = {
+            "eps": float(eps), "head_dim": int(D), "nH": int(nH), "nKV": int(nKV),
+            "n_experts": int(n_experts), "top_k": int(top_k),
+            "sliding_window": None if W is None else int(W),
+        }
+        blob["embed"] = model.model.embed_tokens.weight[:64].detach().cpu()
+        blob["final_norm"] = model.model.norm.weight.detach().cpu()
+        blob["lm_head"] = model.lm_head.weight[:64].detach().cpu()
+        _t.save(blob, "/workspace/logs/atom_params.pt")
+        _ROT["dumped"] = True
+        print("[ref] dumped ATOM params -> /workspace/logs/atom_params.pt", flush=True)
 
     for li, layer in enumerate(model.model.layers):
         attn = layer.self_attn
@@ -161,6 +234,20 @@ def reference_forward(model, input_ids, positions):
         for s in range(bs):
             lo, hi = cu_q[s], cu_q[s + 1]
             h = _hf_norm(x[lo:hi], layer.input_layernorm.weight, eps)
+            if li == 0 and os.environ.get("ATOM_REFERENCE_DUMP2") == "1" and "d2" not in _ROT:
+                import torch as _t2
+
+                _t2.save(
+                    {
+                        "ids": input_ids.detach().cpu(),
+                        "x_in": x.detach().cpu(),
+                        "h_ln": h.detach().cpu(),
+                        "ln_w": layer.input_layernorm.weight.detach().cpu(),
+                    },
+                    "/workspace/logs/atom_l0_in.pt",
+                )
+                _ROT["d2"] = True
+                print("[ref] dumped layer0 inputs", flush=True)
             q = F.linear(h, q_w).view(-1, nH, D)
             k = F.linear(h, k_w).view(-1, nKV, D)
             v = F.linear(h, v_w).view(-1, nKV, D)
@@ -172,11 +259,10 @@ def reference_forward(model, input_ids, positions):
             q = q * cos + _rotate_half(q) * sin
             k = k * cos + _rotate_half(k) * sin
 
-            ctx = ctx_lens[s]
             n_new = hi - lo
             new_pos = positions[lo:hi].long()
-            new_p = torch.arange(ctx - n_new, ctx, device=dev)
-            write_slots = bs_bt[s, new_p // block_size].long() * block_size + (new_p % block_size)
+            ctx = int(new_pos.max().item()) + 1
+            write_slots = bs_bt[s, new_pos // block_size].long() * block_size + (new_pos % block_size)
             if os.environ.get("ATOM_REFERENCE_DEBUG") in ("1", "2") and li == 0 and s == 0:
                 sm = getattr(md, "slot_mapping", None)
                 smv = None if sm is None else sm[lo:hi].tolist()[:8]
@@ -188,28 +274,26 @@ def reference_forward(model, input_ids, positions):
             kk = k_flat[sl].transpose(0, 1)  # [nKV, ctx, D]
             vv = v_flat[sl].transpose(0, 1)
             rep = nH // nKV
-            qh = q.transpose(0, 1).reshape(nKV, rep * n_new, D)
+            qh = q.transpose(0, 1).view(nKV, rep, n_new, D)
             ki = torch.arange(ctx, device=dev).view(1, -1)
-            CH = 512
-            o_all = torch.empty(nKV, rep * n_new, D, dtype=q.dtype, device=dev)
+            _ch = int(os.environ.get("ATOM_REFERENCE_ATTN_CHUNK", "0"))
+            CH = n_new if _ch <= 0 else _ch
+            o_all = torch.empty(nKV, rep, n_new, D, dtype=q.dtype, device=dev)
             for c0 in range(0, n_new, CH):
                 c1 = min(c0 + CH, n_new)
                 qi = new_pos[c0:c1].view(-1, 1)
                 mask = ki <= qi
                 if lt == "sliding_attention" and W is not None:
                     mask = mask & ((qi - ki) < W)
-                qc = qh[:, c0 * rep:(c1) * rep, :]
+                qc = qh[:, :, c0:c1, :].reshape(nKV, rep * (c1 - c0), D)
                 sc = torch.matmul(qc, kk.transpose(1, 2)) * scale
-                sc = sc.masked_fill(~mask.repeat(rep, 1).view(1, (c1 - c0) * rep, ctx), float("-inf"))
+                sc = sc.masked_fill(
+                    ~mask.repeat(rep, 1).view(1, (c1 - c0) * rep, ctx), float("-inf")
+                )
                 pr = F.softmax(sc, dim=-1, dtype=torch.float32).to(q.dtype)
-                o_all[:, c0 * rep:c1 * rep, :] = torch.matmul(pr, vv)
+                o_all[:, :, c0:c1, :] = torch.matmul(pr, vv).view(nKV, rep, c1 - c0, D)
                 del sc, pr, qc
-            o = (
-                o_all.view(nKV, rep, n_new, D)
-                .permute(2, 0, 1, 3)
-                .reshape(n_new, nH * D)
-            )
-            o = o_all.reshape(-1, nH * D)
+            o = o_all.permute(2, 0, 1, 3).reshape(n_new, nH * D)
             outs[lo:hi] = F.linear(o, attn.o_proj.weight)
             del o, o_all, kk, vv
         x = x + outs
@@ -217,18 +301,23 @@ def reference_forward(model, input_ids, positions):
         h2 = _hf_norm(x, layer.post_attention_layernorm.weight, eps)
         exp = getattr(layer.mlp, "experts", None)
         if exp is not None and hasattr(exp, "w13_weight"):
-            if not hasattr(exp, "_ref_w13"):
-                exp._ref_w13 = _unshuffle(exp.w13_weight)
-                exp._ref_w2 = _unshuffle(exp.w2_weight)
-            moe = _moe_grouped(exp._ref_w13, exp._ref_w2, layer.mlp.gate.weight, h2,
+            _w13 = _unshuffle(exp.w13_weight)
+            _w2 = _unshuffle(exp.w2_weight)
+            moe = _moe_grouped(_w13, _w2, layer.mlp.gate.weight, h2,
                                n_experts, top_k, bool(getattr(cfg, "norm_topk_prob", True)))
+            del _w13, _w2
         else:
             moe = F.linear(
                 F.silu(F.linear(h2, layer.mlp.gate_proj.weight)) * F.linear(h2, layer.mlp.up_proj.weight),
                 layer.mlp.down_proj.weight,
             )
         x = x + moe
-        if os.environ.get("ATOM_REFERENCE_DEBUG") == "2" and li < 3:
-            print(f"[ref] layer {li} absmax={float(x.abs().max()):.4f}", flush=True)
+        if os.environ.get("ATOM_REFERENCE_DEBUG") == "2" and li < 8:
+            print(f"[ref] L{li} last_absmax={float(x[-1].abs().max()):.4f}", flush=True)
 
-    return _hf_norm(x, model.model.norm.weight, eps)
+    if os.environ.get("ATOM_REFERENCE_DEBUG") in ("0", "1", "2"):
+        print(f"[ref] final_absmax={float(x.abs().max()):.4f}", flush=True)
+    out = _hf_norm(x, model.model.norm.weight, eps)
+    if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
+        return out[keep]
+    return out

@@ -907,3 +907,18 @@ Also verified: HF itself is bit-reproducible (three consecutive forwards, max|de
 **In-engine status.** `ATOM_REFERENCE_MODE=1` now runs this path inside the server (`atom/models/reference_mode.py`, wired in `atom/models/mellum.py`, warmup skipped in `ModelRunner.warmup_model`). The prefill reproduces HF's first token exactly (C-0000: atom 801, hf 801), and KV slots match ATOM's own `slot_mapping` byte for byte. The decode step is still wrong (second token comes out 0) - a bookkeeping bug in the slow path, not in the arithmetic - and the torch attention over 8k contexts is slow (~3 min per 8k prefill).
 
 **Consequence for Step 0.** The 90% gate is reachable at 100%: the arithmetic-equivalence chain is closed end to end. What remains is finishing the in-engine decode path (or running the gate through the reference path with per-step recomputation).
+
+### 2026-10-30 (round 18): in-engine reference path verified on parameters and short inputs
+
+Verification chain now complete down to the layer:
+
+1. **ATOM's loaded parameters are bitwise identical to the checkpoint.** Dumped layer 0 and 2 from the running server and compared against the safetensors: `q_proj`, `k_proj`, `v_proj`, `o_proj`, `q_norm`, `k_norm`, `input_layernorm`, `post_attention_layernorm`, router `gate`, `w13 == cat[gate_proj, up_proj]` and `w2 == down_proj` for experts 0 and 1 - all `same=True`. Also `embed_tokens[0:64]`, `final_norm` and `lm_head[0:64]` are identical, and the config scalars match HF's (`rms_norm_eps` 1e-6, `head_dim` 128, 32/4 heads, 64 experts, top-8, window 1024).
+2. **aiter's expert shuffle is exactly inverted by the reference path's `_unshuffle`**: `unshuffle(shuffle_weight(w))` reproduces `w` bitwise for `w13` [64,1792,2304] and `w2` [64,2304,896].
+3. **Layer-0 inputs are exact**: the engine's embedding equals `embed_tokens[ids]`, and its post-layernorm value equals the HF formula on the same input, both bitwise.
+4. **Short-sequence end-to-end match**: with a 16-token prefix the reference path samples token **1622** as its first output, which is exactly HF's top-1 for that prefix (`hf top3: [1622, 2147, 849]`).
+
+**What is left is memory, not arithmetic.** The full 7881-token prompt needs the single-shot attention tensor (`nH x T x T` bf16 ≈ 4 GB) plus its fp32 softmax (≈ 8 GB) on top of the model and KV; with the other workload holding 183 GB of the 192 GB card (9 GB free) the forward raises `torch.OutOfMemoryError` at `outs[lo:hi] = F.linear(o, attn.o_proj.weight)`. Chunking the queries would fit but changes the result (measured 0.875 at 4096 tokens), so it is not an option for the exact path.
+
+**Fixes landed this round**: single-shot attention by default (`ATOM_REFERENCE_ATTN_CHUNK` to opt out), corrected query-chunk slicing, corrected ordering of the recompute block relative to `ctx_slots`, per-layer expert unshuffle instead of caching 22 GB of copies, and rope now taken from HF's own `MellumRotaryEmbedding`.
+
+**Next**: run the full-length case when a card has ~25 GB free; expected result `[801, 1622, ...]`. Then run scenario C through the reference path.
