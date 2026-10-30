@@ -119,6 +119,25 @@ def _rotary(cfg, dev):
     return fn, layer_types, _ROT["W"]
 
 
+def seq_slots(positions, cu_q, ctx_lens, bs_bt, block_size, recomp, device):
+    """KV slots for every request in the batch.
+
+    In recompute mode the reference path owns the KV buffer, so slots are simply
+    0..ctx-1 and the engine block table is not consulted at all (it is None on
+    decode steps, which is what used to disable the reference path).
+    """
+    slots = []
+    for s in range(len(ctx_lens)):
+        if recomp:
+            slots.append(torch.arange(int(ctx_lens[s]), device=device))
+            continue
+        p = positions[cu_q[s] : cu_q[s + 1]].long()
+        n_ctx = int(p.max().item()) + 1
+        q = torch.arange(n_ctx, device=device)
+        slots.append(bs_bt[s, q // block_size].long() * block_size + (q % block_size))
+    return slots
+
+
 def reference_forward(model, input_ids, positions):
     from atom.utils.forward_context import get_forward_context
 
@@ -190,15 +209,7 @@ def reference_forward(model, input_ids, positions):
         bs = 1
         ctx_lens = [len(hist)]
 
-    ctx_slots = []
-    for s in range(bs):
-        if _recomp:
-            ctx_slots.append(torch.arange(int(ctx_lens[s]), device=dev))
-            continue
-        p = positions[cu_q[s]:cu_q[s + 1]].long()
-        n_ctx = int(p.max().item()) + 1
-        q = torch.arange(n_ctx, device=dev)
-        ctx_slots.append(bs_bt[s, q // block_size].long() * block_size + (q % block_size))
+    ctx_slots = seq_slots(positions, cu_q, ctx_lens, bs_bt, block_size, _recomp, dev)
 
     if os.environ.get("ATOM_REFERENCE_DUMP") == "1" and "dumped" not in _ROT:
         import torch as _t
