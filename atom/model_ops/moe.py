@@ -1,3 +1,4 @@
+import re
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2024-2025, Advanced Micro Devices, Inc. All rights reserved.
 
@@ -593,11 +594,11 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
             routed_scaling_factor=layer.routed_scaling_factor,
         )
         if (__import__('os').environ.get('ATOM_MOE_TRIPLE')
-                and '.layers.0.' in str(getattr(layer, 'layer_name', ''))
+                and re.search(r'\.layers\.[0-3]\.', str(getattr(layer, 'layer_name', '')))
                 and x.shape[0] <= 64):
             return _atom_moe_triple(
                 layer, x, topk_weights, topk_ids, activation, expert_map,
-                __import__('os').environ['ATOM_MOE_TRIPLE'],
+                __import__('os').environ['ATOM_MOE_TRIPLE'], router_logits,
             )
 
         if __import__('os').environ.get('ATOM_TRITON_MOE_EXPERTS') == '1':
@@ -3302,7 +3303,33 @@ def _atom_moe_torch_ref(layer, x, topk_weights, topk_ids):
     return _acc.to(x.dtype)
 
 
-def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, path):
+def _atom_moe_torch_ref_skip_top(layer, x, topk_weights, topk_ids):
+    """fp32 reference that drops each row's dominant slot, to test slot loss."""
+    import torch as _torch
+    import torch.nn.functional as _F
+
+    _w13 = layer._triton_w13.transpose(-1, -2).float()
+    _w2 = layer._triton_w2.transpose(-1, -2).float()
+    _n, _slots = topk_ids.shape
+    _acc = _torch.zeros(x.shape[0], x.shape[1], dtype=_torch.float32, device=x.device)
+    _xf = x.float()
+    for _t in range(_n):
+        _skip = int(_torch.argmax(topk_weights[_t]))
+        _row = _torch.zeros(x.shape[1], dtype=_torch.float32, device=x.device)
+        for _s in range(_slots):
+            if _s == _skip:
+                continue
+            _e = int(topk_ids[_t, _s])
+            _g = _F.linear(_xf[_t:_t + 1], _w13[_e])
+            _gate, _up = _g.chunk(2, dim=-1)
+            _inter = _F.silu(_gate) * _up
+            _o = _F.linear(_inter, _w2[_e])
+            _row = _row + _o[0] * float(topk_weights[_t, _s])
+        _acc[_t] = _row
+    return _acc.to(x.dtype)
+
+
+def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, path, router_logits=None):
     """Compare aiter, Triton matmul_ogs and the fp32 per-expert reference."""
     import hashlib as _hl
     import json as _json
@@ -3317,6 +3344,13 @@ def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, p
     def _mad(a, b):
         return float((a.float() - b.float()).abs().max())
 
+    _n_tot = layer.w13_weight.shape[0]
+    _routing_hist = torch.bincount(
+        topk_ids.reshape(-1).long(), minlength=_n_tot
+    )
+    _rec_dbg = {
+        'hist_head': [int(v) for v in _routing_hist[:16]],
+    }
     _aiter = [
         fused_moe(hidden_states=x, w1=layer.w13_weight, w2=layer.w2_weight,
                   topk_weight=topk_weights, topk_ids=topk_ids,
@@ -3327,10 +3361,25 @@ def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, p
         _atom_triton_moe_apply(layer, x, topk_weights, topk_ids, activation, -1, expert_map)
         for _ in range(3)
     ]
+    _direct = []
+    try:
+        from atom.model_ops.fused_moe_triton import triton_kernel_moe_forward as _tkmf
+        for _ in range(2):
+            _direct.append(_tkmf(
+                x, layer._triton_w13, layer._triton_w2, router_logits,
+                topk=int(topk_weights.shape[1]), renormalize=True,
+                activation='silu', global_num_experts=layer.w13_weight.shape[0],
+                expert_map=expert_map,
+            ))
+    except Exception as _exc:
+        _direct = [x]
+        _rec_dbg['direct_err'] = f'{type(_exc).__name__}: {_exc}'
+    _skipref = _atom_moe_torch_ref_skip_top(layer, x, topk_weights, topk_ids)
     _ref = [
         _atom_moe_torch_ref(layer, x, topk_weights, topk_ids) for _ in range(2)
     ]
-    _rec = {
+    _rec = dict(_rec_dbg)
+    _rec.update({
         'layer': getattr(layer, 'layer_name', '?'),
         'rows': int(x.shape[0]),
         'topk_ids_head': [int(v) for v in topk_ids[0].tolist()],
@@ -3346,8 +3395,27 @@ def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, p
         'd_triton_vs_aiter': _mad(_trit[0], _aiter[0]),
         'aiter_spread': max(_mad(_aiter[0], t) for t in _aiter),
         'triton_spread': max(_mad(_trit[0], t) for t in _trit),
-    }
+        'direct_distinct': len({_dg(t) for t in _direct}),
+        'd_direct_vs_ref': _mad(_direct[0], _ref[0]),
+        'absmax_aiter': float(_aiter[0].float().abs().max()),
+        'absmax_triton': float(_trit[0].float().abs().max()),
+        'absmax_ref': float(_ref[0].float().abs().max()),
+        'nonfinite_aiter': int((~_torch.isfinite(_aiter[0].float())).sum()),
+        'nonfinite_triton': int((~_torch.isfinite(_trit[0].float())).sum()),
+        'nonfinite_ref': int((~_torch.isfinite(_ref[0].float())).sum()),
+        'ref_argmax_flat': int(_ref[0].float().abs().reshape(-1).argmax()),
+        'x_absmax': float(x.float().abs().max()),
+        'ref_skip_top_absmax': float(_skipref.float().abs().max()),
+        'd_triton_vs_ref_skip_top': _mad(_trit[0], _skipref),
+        'd_aiter_vs_ref_skip_top': _mad(_aiter[0], _skipref),
+        'topk_ids_per_row': [[int(v) for v in row] for row in topk_ids.tolist()],
+        'topk_w_per_row': [[round(float(v), 5) for v in row] for row in topk_weights.tolist()],
+    })
     _torch.cuda.synchronize()
-    with open(path, 'a') as _fh:
-        _fh.write(_json.dumps(_rec) + chr(10))
-    return _trit[0]
+    _rec['hist'] = [int(v) for v in _routing_hist]
+    _rec['zero_experts'] = int((_routing_hist == 0).sum())
+    _rec['n_expts_tot'] = int(_n_tot)
+    _rec['expert_map_none'] = expert_map is None
+    with open(path, 'a') as _fh2:
+        _fh2.write(_json.dumps(_rec) + chr(10))
+    return _aiter[0]

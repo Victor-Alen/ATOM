@@ -632,3 +632,26 @@ So layers 0 and 1 agree to bf16 noise and **from layer 2 the Triton path diverge
 **Next step.** Extend the triple probe to layers 0-3 (guard on `.layers.[0-3].`) and check whether the Triton output stops matching the FP32 reference at exactly layer 2, and whether `hist`/`routing_data` or the selected `matmul_ogs` configuration differs there (expert-count histogram, zero-token experts, `M*topk` tile choice). Until that is fixed, the Triton MoE is a reproducible path but not a usable one, and the aiter-side 51% deterministic variants remain the best available reference numbers.
 
 **State.** This round ran entirely in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); `/workspace/ATOM` was not modified, and port 8000 was left untouched. The 8001 service was stopped afterwards.
+
+### 2026-10-30 (round 6): the Triton MoE gap is a reproducible kernel-level fault at layer 2, not the routing bridge
+
+Extended the probe to layers 0-3 (`ATOM_MOE_TRIPLE`, logs `/workspace/logs/moe_triple2.jsonl`), prefill = 10 rows, and added a fourth variant: ATOM's own `triton_kernel_moe_forward` (triton computes the routing itself, no `routing_from_topk` bridge). The probe now returns the aiter result so the rest of the forward stays comparable.
+
+| layer (prefill) | ref absmax | aiter absmax | triton absmax | d(aiter,ref) | d(triton,ref) | d(direct,ref) |
+|---|---|---|---|---|---|---|
+| L0 | 6.53 | 6.50 | 6.53 | 0.03125 | **0.0078** | 0.0039 |
+| L1 | 2.19 | 2.19 | 2.19 | 0.0078 | 0.0156 | 0.0156 |
+| L2 | **1280** | 1288 | **132** | 0.25 | **1156** | **1156** |
+| L3 | 152 | 151 | 48.5 | 1.0 | 103.5 | 102.5 |
+
+Every variant is reproducible here (triton 1 distinct over repeats at every layer), no NaN/Inf anywhere, and `x` at L2 is ordinary (absmax 2.125). The reference and aiter both produce the 1280 element (aiter to 0.25, i.e. 0.02%), while the Triton path produces 132: it does not merely round differently, it loses the dominant contribution at that layer.
+
+**The bridge is not the cause.** ATOM's own `triton_kernel_moe_forward` - which builds routing inside triton instead of using `routing_from_topk` - returns the *same* wrong value at L2 (d vs ref 1156, identical digits). So the fault is inside the Triton `matmul_ogs` expert computation or its usage, not in the routing reconstruction.
+
+**Hypotheses tested so far.** Zero-token experts are common at every layer (34/64 at L0, 33/64 at L2, 56/64 for the 1-row decode) and cannot be the trigger, since L0/L1 are fine with the same sparsity. Dropping each row's dominant top-k slot was also tested explicitly (a reference recomputed without the argmax-weight slot): triton at L2 is 131.5 away from that variant too, so the dominant contribution is not simply skipped - it comes out wrong. Decode rows (1 row) agree at every layer, so the fault is specific to multi-row prefill.
+
+**What is left, and it is now narrow.** The L2 prefill case is the only one with an extreme activation: row 0 carries weight 0.948 on a single expert and the reference output reaches 1280, versus 2-6 at L0/L1. The natural next test is a magnitude probe on the same frozen input: feed the L2 input scaled by 2^-3 and 2^-6. If the Triton path's relative error collapses when the input magnitude is reduced, the kernel path is overflowing or losing precision in a bf16 intermediate for this spiky case; if the error stays at the same relative size, the failure is structural (index/segment handling for this expert histogram) rather than magnitude-related.
+
+**Practical verdict.** The Triton MoE remains a reproducibility win and is exact at L0/L1, but it is not usable until this L2 fault is understood. The aiter-based deterministic variants (160-166/320 in the sections above) therefore remain the best reference numbers, and no further 200-prompt run is worth spending on the Triton path yet.
+
+**State.** All work in `/workspace/ATOM-tritonmoe` (branch `dsh/moe-determinism`); `/workspace/ATOM` untouched apart from this shared document; 8001 stopped after the runs, 8000 untouched.
