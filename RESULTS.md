@@ -1188,3 +1188,19 @@ Scenario A was scored twice: once against the recorded reference file (0.2328) a
 **Consequence for the gate**: overall ~64% against the 90% requirement, with B already perfect. Closing the gap needs the decode step to be bit-exact too, which means comparing per-step logits with HF at the first flip rather than only comparing prefill output.
 
 **Cost**: 5.4x (1k prompt) to 37x (7.9k prompt) slower than the fast path, measured in round 30.
+
+### 2026-10-31 (round 32): the per-step diagnostic is blocked on this node
+
+The planned next step was to dump per-step logits for a prompt that flips early
+(A-0012, 1470 tokens, flips at token 2) and compare with HF step by step.
+
+`ref_arith_probe3` cannot run that comparison on this machine right now: after the
+first four layers (all reporting d_attn = d_mlp = d_block = 0.000000) the process
+aborts with HSA_STATUS_ERROR_EXCEPTION and dumps core. The same crash appeared at
+12580 tokens earlier and was absent when the probe ran at 1574 / 6183 tokens in
+earlier rounds, so the node ROCm/HSA state degraded over the session rather than the
+prompt length triggering it.
+
+Workaround for the next session: dump the engine's per-step logits with
+ATOM_REFERENCE_DUMP and compute HF's per-step logits on the A100 node (CUDA, which
+never showed this fault), then diff the two files offline.
