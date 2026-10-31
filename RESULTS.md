@@ -1102,3 +1102,21 @@ Also fixed: the KV **write** path indexed `block_tables` (None on decode) which 
 **Still mismatching** (deterministic, so not sampler noise): A-0002 (3849 tokens) diverges at step 3, A-0003 (1574) at step 4, C-0001 (12580) at step 0. A-0002 reproduced identically across two runs, so this is a real difference in the reference path for those prompts, not nondeterminism. Next step is to re-derive HF's greedy tokens for those three prompts from their full prompt text (the recorded reference files may have been generated on truncated prompts) and compare before changing more code.
 
 **Operational note**: an overly broad `pkill -f openai_server` used to clean up my own server also killed the co-tenant's 8000 service; it was restored with their own `/workspace/ATOM-kvtrace/scripts/start_mellum.sh`. Cleanup must be scoped to `server-port 8001` only.
+
+### 2026-10-31 (round 27): two of the three "mismatches" were bad reference data
+
+Recomputing HF's greedy tokens on the node itself (eager, full prompt) for the three prompts that disagreed with the recorded references settled it:
+
+| prompt | engine output | HF recomputed now | recorded reference file |
+|---|---|---|---|
+| A-0002 (3849) | `[233, 233, 37, 26828, 23, 233, 2116, 895]` | identical | `[233, 233, 37, 24285, 233, 47, 307, 470]` **wrong** |
+| A-0003 (1574) | `[233, 233, 889, 2335, 233, 1203, 5522, 60]` | identical | `[233, 233, 889, 2335, 233, 910, 815, 97]` **wrong** |
+| C-0001 (12580) | `[978, 1365, 1020, ...]` | `[233, 233, 37, 6539, 233, 910, 1132, 97]` | wrong as well |
+
+So the engine's reference path reproduces freshly computed HF output for A-0002 and A-0003; the entries in `hf_scenario_a_20_eager.jsonl` for those prompts do not correspond to the full prompt (they were produced with a different prefix or configuration). A-0004 (3895) and C-0003 (6183) had already matched, and C-0000 (7881, 64 tokens), C-0002 (11889, 64 tokens) and all five B prompts (1049, 64 tokens each) match the recorded files, so those files are trustworthy in general - the stale rows are the exception, not the rule.
+
+**Still genuinely open: C-0001 (12580 tokens).** The engine answers `[978, 1365, 1020, ...]` where HF answers `[233, 233, 37, 6539, ...]`, i.e. it diverges at step 0. The remaining suspect is the chunked-prefill history at that length (12580 needs three chunks under the scheduler's token budget) - the history is now keyed on the first position, which fixed C-0003 (6183), so the boundary condition at 12580 still needs one more look.
+
+**Net state of Step 0**: the acceptance behaviour is demonstrated - the engine's `ATOM_REFERENCE_MODE` path reproduces HF's greedy tokens token-for-token at 1024, 7881 (4 steps), 7881 (64 steps), 11889 (64 steps), 6183, 3895, 3849 and 1574 tokens. The only known disagreement is the 12580-token prompt.
+
+**Method note for future harness work**: scenario reference files must be regenerated and checksummed together with the prompts they belong to; comparing an engine run against a stale reference produces false failures, which is exactly what happened here for two of three cases.
