@@ -1078,3 +1078,27 @@ The decode step has `block_tables=None` and the KV **write** path still indexed 
 2. On the next step `prepare_input_ids` then does `self.input_ids.gpu[:1] = self.prev_token_ids` with a 16-element `prev_token_ids` and dies with `RuntimeError: The expanded size of the tensor (1) must match the existing size (16)`.
 
 So the remaining work is a **row-semantics alignment** between `reference_forward`/compute_logits and ATOM's `last_token_indices`/deferred-token bookkeeping - not arithmetic. Note that the arithmetic itself is proven bit-exact against HF at 512-7881 tokens on two GPUs (rounds 19/22), so this is plumbing on the engine boundary.
+
+### 2026-10-31 (round 26): the engine reference path reproduces HF greedy output
+
+After three integration fixes the in-engine reference path matches HF token for token:
+
+| case | prompt tokens | steps | atom | HF | verdict |
+|---|---|---|---|---|---|
+| long prompt | 7881 | 4 | `[801, 1622, 1622, 1020]` | same | **identical**, 8.6 s |
+| window boundary | 1024 | 8 | `[1020, 537, 1253, 537, 587, 1622, 995, 1365]` | same | **identical**, 1.6 s |
+| scenario C-0000 | 7881 | 64 | - | - | **64/64** |
+| scenario C-0002 | 11889 | 64 | - | - | **64/64** |
+| scenario B (5 prompts) | 1049 each | 64 | - | - | **5/5 prompts, 64/64 each = 100%** |
+
+The three fixes that made it work (all on the engine boundary, none in the arithmetic):
+
+1. **logits row semantics** - the reference path returned one logits row per token (`[16, 98304]`), while ATOM's sampler expects one row per request. Reducing with `cu_seqlens_q` produced `shape=(1, 98304) top1=[1622, 2147] top1v=[26.75, 24.5]`, exactly HF's top-2.
+2. **single-request prefill** - the first version of that reduction required more than one request, so `cu_seqlens_q=[0,16]` was left unreduced.
+3. **re-embed after the recompute history** - a decode call had a 1-row `x` while the layer loop wrote `len(hist)` rows (`[1,2304] vs [17,2304]`).
+
+Also fixed: the KV **write** path indexed `block_tables` (None on decode) which is what actually killed the model runner and made every earlier attempt look like a timeout; and the token history is now keyed on the first position, so chunked prefill no longer resets it.
+
+**Still mismatching** (deterministic, so not sampler noise): A-0002 (3849 tokens) diverges at step 3, A-0003 (1574) at step 4, C-0001 (12580) at step 0. A-0002 reproduced identically across two runs, so this is a real difference in the reference path for those prompts, not nondeterminism. Next step is to re-derive HF's greedy tokens for those three prompts from their full prompt text (the recorded reference files may have been generated on truncated prompts) and compare before changing more code.
+
+**Operational note**: an overly broad `pkill -f openai_server` used to clean up my own server also killed the co-tenant's 8000 service; it was restored with their own `/workspace/ATOM-kvtrace/scripts/start_mellum.sh`. Cleanup must be scoped to `server-port 8001` only.
