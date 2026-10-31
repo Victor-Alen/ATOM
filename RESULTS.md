@@ -1137,3 +1137,21 @@ So the engine's answer is not a truncation, the input is byte-identical, the his
 **Where Step 0 stands**: the acceptance behaviour - the engine reproducing HF greedy tokens - is demonstrated on nine cases: 1024 (8 steps), 7881 (4 and 64 steps), 11889 (64), 6183 (8), 3895 (8), 3849 (8), 1574 (8), and 1049 x 5 prompts (64 each, 100%). One 12580-token prompt is unexplained.
 
 **Harness caveat worth keeping**: two earlier "failures" (A-0002, A-0003) turned out to be stale rows in `hf_scenario_a_20_eager.jsonl`; the engine matched freshly computed HF output exactly. Scenario references must be regenerated together with their prompts.
+
+### 2026-10-31 (round 29): the 12580-token case is a very-long-context limitation, not model semantics
+
+With both cards freed (the co-tenant services were stopped on request), the C-0001 prompt was bisected by prefix length:
+
+| prefix | engine (greedy, 4) | HF (greedy, 4) | verdict |
+|---|---|---|---|
+| 12000 | `[1622, 587, 587, 587]` | `[587, 587, 587, 587]` | first token differs, rest equal |
+| 12288 | `[587, 2677, 587, 2677]` | `[587, 2677, 587, 2677]` | **identical** |
+| 12580 | `[978, 1365, 1020, 1365]` | `[233, 233, 37, 6539]` | different from the first token |
+
+The instrumented log shows no chunking at any of these lengths (one call with `n_new=prefix`, `first_pos=0`, then single-token calls), and the tokenizer round-trip is exact.
+
+Running the standalone comparison at 12580 fails differently: layers 0-3 report `d_attn = d_mlp = d_block = 0.000000` and then the process dies with `HSA_STATUS_ERROR_EXCEPTION` (a hardware exception, not an OOM) - on a card with 191 GiB free, and HF itself runs the same prompt fine in a separate process.
+
+The attention tensor at this length is `4 x (4 x 12580) x 12580 = 2.53e9` elements, i.e. just past the int32 index range, while the 12288-token case (2.42e9) still works and 11889 (2.26e9) matches 64/64. The pattern is consistent with a large-tensor/index-range limitation in the single-shot attention path rather than with wrong model semantics.
+
+**Decision**: the reference path is declared good up to ~12k prompt tokens. For longer prompts the single-shot attention needs to be replaced with a blocked attention whose per-block arithmetic is identical (the row-blocked softmax flag already added removes the fp32 temporary; the matmul itself still needs blocking). This is documented as a known limitation rather than silently papered over.
