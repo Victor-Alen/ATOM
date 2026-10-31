@@ -532,7 +532,25 @@ class MellumForCausalLM(nn.Module):
         ):
             import torch.nn.functional as _F
 
-            _logits = _F.linear(hidden_states, self.lm_head.weight)
+            _hs = hidden_states
+            try:
+                from atom.utils.forward_context import get_forward_context as _gfc
+
+                _md = _gfc().attn_metadata
+                if isinstance(_md, dict):
+                    _md = next(iter(_md.values()))
+                _cu = _md.cu_seqlens_q.tolist()
+                _n_req = len(_cu) - 1
+                if _n_req >= 1 and int(_cu[-1]) == _hs.shape[0]:
+                    _idx = [_cu[i + 1] - 1 for i in range(_n_req)]
+                    _hs = _hs[_idx]
+                else:
+                    _hs = hidden_states[-1:]
+            except Exception:  # noqa: BLE001
+                _hs = hidden_states[-1:]
+            if _hs.shape[0] != 1 and len(getattr(_hs, "shape", ())) > 0:
+                pass
+            _logits = _F.linear(_hs, self.lm_head.weight)
             if __import__("os").environ.get("ATOM_REFERENCE_DEBUG") in ("1", "2"):
                 _top = _logits.float().topk(2, dim=-1)
                 print(

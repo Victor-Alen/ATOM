@@ -231,6 +231,9 @@ def reference_forward(model, input_ids, positions):
         cu_q = [0, len(hist)]
         bs = 1
         ctx_lens = [len(hist)]
+        x = F.embedding(input_ids, model.model.embed_tokens.weight)
+        if x.dim() == 1:
+            x = x[None, :]
 
     ctx_slots = seq_slots(positions, cu_q, ctx_lens, bs_bt, block_size, _recomp, dev)
 
