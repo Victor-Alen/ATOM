@@ -224,7 +224,13 @@ def reference_forward(model, input_ids, positions):
     if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
         _recomp = True
         new_ids = input_ids.tolist()
-        hist = history_after(new_ids, int(positions[0].item()) if positions.numel() else 0)
+        _fp = int(positions[0].item()) if positions.numel() else 0
+        hist = history_after(new_ids, _fp)
+        if os.environ.get("ATOM_REFERENCE_DEBUG") not in (None, "0"):
+            print(
+                f"[ref-chunk] n_new={len(new_ids)} first_pos={_fp} hist={len(hist)}",
+                flush=True,
+            )
         input_ids = torch.tensor(hist, dtype=torch.long, device=dev)
         positions = torch.arange(len(hist), device=dev)
         keep = torch.arange(len(hist) - len(new_ids), len(hist), device=dev)
@@ -354,10 +360,21 @@ def reference_forward(model, input_ids, positions):
                 neg = ~mask.repeat(rep, 1).view(1, (c1 - c0) * rep, ctx)
                 sc.masked_fill_(neg, float("-inf"))
                 del neg
-                pr32 = F.softmax(sc, dim=-1, dtype=torch.float32)
-                del sc
-                pr = pr32.to(q.dtype)
-                del pr32
+                _smb = int(os.environ.get("ATOM_REFERENCE_SM_BLOCK", "0"))
+                if _smb > 0:
+                    _rows = sc.reshape(-1, ctx)
+                    pr = torch.empty_like(sc)
+                    _prow = pr.reshape(-1, ctx)
+                    for _r0 in range(0, _rows.shape[0], _smb):
+                        _r1 = min(_r0 + _smb, _rows.shape[0])
+                        _prow[_r0:_r1] = F.softmax(_rows[_r0:_r1], dim=-1, dtype=torch.float32)
+                    del _rows, _prow
+                    del sc
+                else:
+                    pr32 = F.softmax(sc, dim=-1, dtype=torch.float32)
+                    del sc
+                    pr = pr32.to(q.dtype)
+                    del pr32
                 o_all[:, :, c0:c1, :] = torch.matmul(pr, vv).view(nKV, rep, c1 - c0, D)
                 del pr, qc
             o = o_all.permute(2, 0, 1, 3).reshape(n_new, nH * D)

@@ -1120,3 +1120,20 @@ So the engine's reference path reproduces freshly computed HF output for A-0002 
 **Net state of Step 0**: the acceptance behaviour is demonstrated - the engine's `ATOM_REFERENCE_MODE` path reproduces HF's greedy tokens token-for-token at 1024, 7881 (4 steps), 7881 (64 steps), 11889 (64 steps), 6183, 3895, 3849 and 1574 tokens. The only known disagreement is the 12580-token prompt.
 
 **Method note for future harness work**: scenario reference files must be regenerated and checksummed together with the prompts they belong to; comparing an engine run against a stale reference produces false failures, which is exactly what happened here for two of three cases.
+
+### 2026-10-31 (round 28): C-0001 (12580 tokens) narrowed down
+
+The single remaining disagreement is the 12580-token prompt. What has been ruled out so far:
+
+| candidate cause | test | result |
+|---|---|---|
+| prompt text differs (tokenizer round-trip) | decode -> encode the 12580 ids | **exact**, 12580 ids back, first diff = None |
+| chunked prefill resetting the history | instrumented log of every reference call | **not chunked**: one call with n_new=12580, first_pos=0, hist=12580, then n_new=1 |
+| capacity / OOM giving garbage | rerun on a 128 GiB-free card | runs in 58.8 s, still `[978, 1365, 1020, 1365, 2147, 669, 2677, 1277]` |
+| being the HF answer for a truncated prefix | HF greedy at prefix 8192 and at 12580 | 8192 gives `[587, 2677, 587, 2677, ...]`, 12580 gives `[233, 233, 37, 6539, ...]` - **neither matches** the engine |
+
+So the engine's answer is not a truncation, the input is byte-identical, the history is intact and it is deterministic across runs. The remaining suspects are the position/rope path at ctx > 11k (C-0002 at 11889 matches, so it is not simply "long"), or the sliding-window mask at that specific context length.
+
+**Where Step 0 stands**: the acceptance behaviour - the engine reproducing HF greedy tokens - is demonstrated on nine cases: 1024 (8 steps), 7881 (4 and 64 steps), 11889 (64), 6183 (8), 3895 (8), 3849 (8), 1574 (8), and 1049 x 5 prompts (64 each, 100%). One 12580-token prompt is unexplained.
+
+**Harness caveat worth keeping**: two earlier "failures" (A-0002, A-0003) turned out to be stale rows in `hf_scenario_a_20_eager.jsonl`; the engine matched freshly computed HF output exactly. Scenario references must be regenerated together with their prompts.
