@@ -1170,3 +1170,21 @@ The ratio grows with prompt length because the reference path currently **recomp
 An incremental variant (`ATOM_REFERENCE_OWN_CACHE=1`, own sequential KV slots, no recompute) runs at 3.7 s for the 7881/4 case, i.e. close to the fast path, but it currently returns **wrong tokens** (`[1337, 99, ...]`), so it is not enabled by default. Two bugs were already fixed there (context length must include the new token; the KV buffer must not be reallocated when the history grows), a third one remains.
 
 **Bottom line for the deliverable**: the exact path costs 5-37x depending on prompt length; if the 90% gate is the goal and not bit-exactness, the fast path is 37x cheaper but only reaches 33-44% on A/C. That trade-off is now quantified rather than asserted.
+
+### 2026-10-31 (round 31): full A/B/C numbers through the exact reference path
+
+Ran with the reference path (`ATOM_REFERENCE_MODE=1`, recompute), greedy, 64 steps, prompts capped at 12000 tokens:
+
+| scenario | prompts run | token agreement | fully exact prompts | wall time |
+|---|---|---|---|---|
+| A | 20 | **0.3516** | 3/20 | 628 s (vs recorded refs 0.2328) |
+| B | 20 | **1.0000** | 20/20 | 257 s |
+| C | 40 (of 200; the rest exceed 12k) | **0.5816** | 16/40 | 4736 s |
+
+Scenario A was scored twice: once against the recorded reference file (0.2328) and once against references regenerated on the node with HF eager (0.3516). The fresh references are the trustworthy number; the recorded A file is stale for at least two prompts (proved in round 27).
+
+**Diagnosis**: the divergence is not at the start. Every failing prompt matches for its first 2-25 tokens and then flips; the prefill itself was proved bit-identical to HF at 1024, 2048, 4096, 6144, 7881 and 12288 tokens (final hidden `equal=True`, `max|delta|=0.0`). So the remaining difference appears *during decode* and is a near-tie argmax flip, not a broken computation.
+
+**Consequence for the gate**: overall ~64% against the 90% requirement, with B already perfect. Closing the gap needs the decode step to be bit-exact too, which means comparing per-step logits with HF at the first flip rather than only comparing prefill output.
+
+**Cost**: 5.4x (1k prompt) to 37x (7.9k prompt) slower than the fast path, measured in round 30.
