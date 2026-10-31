@@ -164,8 +164,11 @@ def reference_forward(model, input_ids, positions):
     if "frac" not in _ROT:
         try:
             _frac = float(os.environ.get("ATOM_REFERENCE_MEM_FRACTION", "0.85"))
-            torch.cuda.set_per_process_memory_fraction(_frac, input_ids.device.index or 0)
-            print(f"[ref] allocator fraction lifted to {_frac}", flush=True)
+            if _frac > 0:
+                torch.cuda.set_per_process_memory_fraction(_frac, input_ids.device.index or 0)
+                print(f"[ref] allocator fraction lifted to {_frac}", flush=True)
+            else:
+                print("[ref] allocator fraction unchanged (disabled)", flush=True)
         except Exception as exc:  # noqa: BLE001
             print(f"[ref] could not lift allocator fraction: {exc}", flush=True)
         _ROT["frac"] = True
@@ -266,9 +269,10 @@ def reference_forward(model, input_ids, positions):
         attn = layer.self_attn
         q_w, k_w, v_w = torch.split(attn.qkv_proj.weight, [nH * D, nKV * D, nKV * D], dim=0)
         outs = torch.empty(x.shape[0], cfg.hidden_size, dtype=x.dtype, device=dev)
-        _need = int(bs_bt.max().item()) * block_size + block_size if bs_bt is not None else 0
         if _recomp:
-            _need = max(_need, int(ctx_lens[0]) + 1)
+            _need = int(ctx_lens[0]) + 1
+        else:
+            _need = int(bs_bt.max().item()) * block_size + block_size
         if li not in _KV or _KV[li][0].shape[0] < _need:
             max_slot = _need
             _KV[li] = (
@@ -278,6 +282,8 @@ def reference_forward(model, input_ids, positions):
         k_flat, v_flat = _KV[li]
         lt = layer_types[li]
         cos_cache, sin_cache = None, None
+        if os.environ.get("ATOM_REFERENCE_DEBUG") == "2":
+            print(f"[ref] L{li} start x={tuple(x.shape)}", flush=True)
         for s in range(bs):
             lo, hi = cu_q[s], cu_q[s + 1]
             h = _hf_norm(x[lo:hi], layer.input_layernorm.weight, eps)
@@ -309,11 +315,17 @@ def reference_forward(model, input_ids, positions):
             n_new = hi - lo
             new_pos = positions[lo:hi].long()
             ctx = int(new_pos.max().item()) + 1
-            write_slots = bs_bt[s, new_pos // block_size].long() * block_size + (new_pos % block_size)
+            if _recomp:
+                write_slots = new_pos
+            else:
+                write_slots = (
+                    bs_bt[s, new_pos // block_size].long() * block_size + (new_pos % block_size)
+                )
             if os.environ.get("ATOM_REFERENCE_DEBUG") in ("1", "2") and li == 0 and s == 0:
                 sm = getattr(md, "slot_mapping", None)
                 smv = None if sm is None else sm[lo:hi].tolist()[:8]
-                print(f"[ref] slots_mine={write_slots.tolist()[:8]} slots_atom={smv} bt={bs_bt[s].tolist()[:6]} bs={block_size}", flush=True)
+                bt_dbg = None if bs_bt is None else bs_bt[s].tolist()[:6]
+                print(f"[ref] slots_mine={write_slots.tolist()[:8]} slots_atom={smv} bt={bt_dbg} bs={block_size}", flush=True)
             k_flat[write_slots] = k
             v_flat[write_slots] = v
 
@@ -326,6 +338,8 @@ def reference_forward(model, input_ids, positions):
             _ch = int(os.environ.get("ATOM_REFERENCE_ATTN_CHUNK", "0"))
             CH = n_new if _ch <= 0 else _ch
             o_all = torch.empty(nKV, rep, n_new, D, dtype=q.dtype, device=dev)
+            if os.environ.get("ATOM_REFERENCE_DEBUG") == "2":
+                print(f"[ref] L{li} proj q={tuple(q.shape)}", flush=True)
             for c0 in range(0, n_new, CH):
                 c1 = min(c0 + CH, n_new)
                 qi = new_pos[c0:c1].view(-1, 1)
@@ -351,11 +365,18 @@ def reference_forward(model, input_ids, positions):
         h2 = _hf_norm(x, layer.post_attention_layernorm.weight, eps)
         exp = getattr(layer.mlp, "experts", None)
         if exp is not None and hasattr(exp, "w13_weight"):
-            _w13 = _unshuffle(exp.w13_weight)
-            _w2 = _unshuffle(exp.w2_weight)
+            if os.environ.get("ATOM_REFERENCE_CACHE_W") == "1":
+                if not hasattr(exp, "_ref_w13"):
+                    exp._ref_w13 = _unshuffle(exp.w13_weight)
+                    exp._ref_w2 = _unshuffle(exp.w2_weight)
+                _w13, _w2 = exp._ref_w13, exp._ref_w2
+            else:
+                _w13 = _unshuffle(exp.w13_weight)
+                _w2 = _unshuffle(exp.w2_weight)
             moe = _moe_grouped(_w13, _w2, layer.mlp.gate.weight, h2,
                                n_experts, top_k, bool(getattr(cfg, "norm_topk_prob", True)))
-            del _w13, _w2
+            if os.environ.get("ATOM_REFERENCE_CACHE_W") != "1":
+                del _w13, _w2
         else:
             moe = F.linear(
                 F.silu(F.linear(h2, layer.mlp.gate_proj.weight)) * F.linear(h2, layer.mlp.up_proj.weight),
