@@ -122,17 +122,17 @@ def _rotary(cfg, dev):
 _HIST: list = []
 
 
-def history_after(new_ids):
+def history_after(new_ids, first_pos=0):
     """Update the single-sequence token history and return it.
 
-    A multi-token call is a prefill and replaces the history; a single-token call
-    is a decode and appends. Keying this on the engine block table was wrong
-    because decode steps have no block table (bs_bt is None).
+    A request starts at position 0 (prefill, possibly split into several chunks);
+    everything else continues the current sequence. Using 'multi-token means a new
+    request' was wrong because chunked prefill sends several multi-token chunks.
     """
-    if len(new_ids) > 1:
+    if int(first_pos) == 0:
         _HIST[:] = list(new_ids)
     else:
-        _HIST.append(new_ids[0])
+        _HIST.extend(list(new_ids))
     return _HIST
 
 
@@ -224,7 +224,7 @@ def reference_forward(model, input_ids, positions):
     if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
         _recomp = True
         new_ids = input_ids.tolist()
-        hist = history_after(new_ids)
+        hist = history_after(new_ids, int(positions[0].item()) if positions.numel() else 0)
         input_ids = torch.tensor(hist, dtype=torch.long, device=dev)
         positions = torch.arange(len(hist), device=dev)
         keep = torch.arange(len(hist) - len(new_ids), len(hist), device=dev)
