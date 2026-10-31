@@ -1051,3 +1051,30 @@ These reproduce `summary.json` exactly (0.332 / 1.0 / 0.4434 / 0.5039), which co
 **Important framing**: all four rows are the **fast path** (aiter CK MoE + fused kernels), not the exact reference path. B saturates at 1.0 because those prompts are long enough that the first 64 generated tokens are dominated by a deterministic pattern; A and C sit at 33-44%, i.e. far below the 90% gate. The v23 column is the same 20 C prompts after HF-order bf16 MoE plus HF bf16 norm: +7.17 points of alignment on that subset, but still nowhere near the gate.
 
 The reference path is the only configuration proven to be identical to HF (512 -> 7881 tokens, `max abs delta = 0`), and running it at scenario scale is what the pending GPU window is for. So the honest conclusion for the gate is: **fast path 33-44%, reference path exact but not yet measured at scale.**
+
+### 2026-10-31 (round 25): two corrections and the current engine-side truth
+
+**Correction 1 - the write-slot crash.** Every engine-side attempt so far "hung" because the model runner died, not because it was slow. The exact error:
+
+```
+write_slots = bs_bt[s, new_pos // block_size].long() * block_size + (new_pos % block_size)
+TypeError: 'NoneType' object is not subscriptable
+```
+
+The decode step has `block_tables=None` and the KV **write** path still indexed it (only the read path had been fixed). With `write_slots = new_pos` in recompute mode the reference forward now completes all 28 layers in-engine:
+
+```
+[ref] L27 start x=(16, 2304)
+[ref] L27 proj q=(16, 32, 128)
+[ref] final_absmax=14208.0000
+[ref-logits] shape=(16, 98304) top1=[60, 255] top1v=[-6.625, -6.75] absmax=31.3750
+```
+
+**Correction 2 - the "16-token end-to-end match" reported in round 18 does not hold.** Round 18 inferred the first sampled token from a dump of the next call's `input_ids` and concluded the engine had produced HF's 1622. With the reference forward now actually running to completion in-engine, the logits' row-0 top-1 is **60**, not 1622, and HF's answer for that prefix is 1622. So the earlier claim was based on a misread of engine bookkeeping and must not be cited as evidence.
+
+**What the engine still does after the forward:**
+
+1. It samples from `logits` of shape `[16, 98304]` (one row per prompt token) instead of one row per request, so it produces 16 token ids.
+2. On the next step `prepare_input_ids` then does `self.input_ids.gpu[:1] = self.prev_token_ids` with a 16-element `prev_token_ids` and dies with `RuntimeError: The expanded size of the tensor (1) must match the existing size (16)`.
+
+So the remaining work is a **row-semantics alignment** between `reference_forward`/compute_logits and ATOM's `last_token_indices`/deferred-token bookkeeping - not arithmetic. Note that the arithmetic itself is proven bit-exact against HF at 512-7881 tokens on two GPUs (rounds 19/22), so this is plumbing on the engine boundary.
