@@ -176,8 +176,9 @@ def reference_forward(model, input_ids, positions):
     md = fwd_ctx.attn_metadata
     if isinstance(md, dict):
         md = next(iter(md.values()))
+    _own = os.environ.get("ATOM_REFERENCE_OWN_CACHE") == "1"
     bs_bt = md.block_tables
-    if bs_bt is None and os.environ.get("ATOM_REFERENCE_RECOMPUTE") != "1":
+    if bs_bt is None and os.environ.get("ATOM_REFERENCE_RECOMPUTE") != "1" and not _own:
         return None
 
     cfg = model.config
@@ -241,7 +242,11 @@ def reference_forward(model, input_ids, positions):
         if x.dim() == 1:
             x = x[None, :]
 
-    ctx_slots = seq_slots(positions, cu_q, ctx_lens, bs_bt, block_size, _recomp, dev)
+    if _own:
+        ctx_lens = [
+            int(positions[cu_q[_s]:cu_q[_s + 1]].max().item()) + 1 for _s in range(bs)
+        ]
+    ctx_slots = seq_slots(positions, cu_q, ctx_lens, bs_bt, block_size, _recomp or _own, dev)
 
     if os.environ.get("ATOM_REFERENCE_DUMP") == "1" and "dumped" not in _ROT:
         import torch as _t
@@ -278,7 +283,9 @@ def reference_forward(model, input_ids, positions):
         attn = layer.self_attn
         q_w, k_w, v_w = torch.split(attn.qkv_proj.weight, [nH * D, nKV * D, nKV * D], dim=0)
         outs = torch.empty(x.shape[0], cfg.hidden_size, dtype=x.dtype, device=dev)
-        if _recomp:
+        if _own:
+            _need = int(getattr(cfg, "max_position_embeddings", 32768)) + 1
+        elif _recomp:
             _need = int(ctx_lens[0]) + 1
         else:
             _need = int(bs_bt.max().item()) * block_size + block_size
@@ -324,7 +331,7 @@ def reference_forward(model, input_ids, positions):
             n_new = hi - lo
             new_pos = positions[lo:hi].long()
             ctx = int(new_pos.max().item()) + 1
-            if _recomp:
+            if _recomp or _own:
                 write_slots = new_pos
             else:
                 write_slots = (
@@ -355,6 +362,23 @@ def reference_forward(model, input_ids, positions):
                 mask = ki <= qi
                 if lt == "sliding_attention" and W is not None:
                     mask = mask & ((qi - ki) < W)
+                _hl = os.environ.get("ATOM_REFERENCE_HEAD_LOOP") == "1"
+                if _hl:
+                    neg2 = ~mask.repeat(rep, 1)
+                    for _hk in range(nKV):
+                        _qc = qh[_hk, :, c0:c1, :].reshape(rep * (c1 - c0), D)
+                        _sc = torch.matmul(_qc, kk[_hk].transpose(0, 1)) * scale
+                        _sc.masked_fill_(neg2, float("-inf"))
+                        _pr32 = F.softmax(_sc, dim=-1, dtype=torch.float32)
+                        del _sc
+                        _prb = _pr32.to(q.dtype)
+                        del _pr32
+                        o_all[_hk, :, c0:c1, :] = torch.matmul(_prb, vv[_hk]).view(
+                            rep, c1 - c0, D
+                        )
+                        del _prb, _qc
+                    del neg2
+                    continue
                 qc = qh[:, :, c0:c1, :].reshape(nKV, rep * (c1 - c0), D)
                 sc = torch.matmul(qc, kk.transpose(1, 2)) * scale
                 neg = ~mask.repeat(rep, 1).view(1, (c1 - c0) * rep, ctx)

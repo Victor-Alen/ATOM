@@ -1155,3 +1155,18 @@ Running the standalone comparison at 12580 fails differently: layers 0-3 report 
 The attention tensor at this length is `4 x (4 x 12580) x 12580 = 2.53e9` elements, i.e. just past the int32 index range, while the 12288-token case (2.42e9) still works and 11889 (2.26e9) matches 64/64. The pattern is consistent with a large-tensor/index-range limitation in the single-shot attention path rather than with wrong model semantics.
 
 **Decision**: the reference path is declared good up to ~12k prompt tokens. For longer prompts the single-shot attention needs to be replaced with a blocked attention whose per-block arithmetic is identical (the row-blocked softmax flag already added removes the fp32 temporary; the matmul itself still needs blocking). This is documented as a known limitation rather than silently papered over.
+
+### 2026-10-31 (round 30): measured cost of the exact reference path
+
+Two servers side by side on the same node (same model, same flags except the reference path), greedy, temperature 0:
+
+| case | fast path | reference path | ratio | tokens identical |
+|---|---|---|---|---|
+| 1024-token prompt, 64 steps | 2.4 s | 13.1 s | **5.4x** | yes |
+| 7881-token prompt, 16 steps | 0.8 s | 29.2 s | **37x** | yes |
+
+The ratio grows with prompt length because the reference path currently **recomputes the whole prefix on every decode step** (that is what makes it exact: no KV reuse means no cache-layout/batching difference). The cost is therefore ~O(T) per token instead of O(1), so the slowdown scales with context length.
+
+An incremental variant (`ATOM_REFERENCE_OWN_CACHE=1`, own sequential KV slots, no recompute) runs at 3.7 s for the 7881/4 case, i.e. close to the fast path, but it currently returns **wrong tokens** (`[1337, 99, ...]`), so it is not enabled by default. Two bugs were already fixed there (context length must include the new token; the KV buffer must not be reallocated when the history grows), a third one remains.
+
+**Bottom line for the deliverable**: the exact path costs 5-37x depending on prompt length; if the 90% gate is the goal and not bit-exactness, the fast path is 37x cheaper but only reaches 33-44% on A/C. That trade-off is now quantified rather than asserted.
