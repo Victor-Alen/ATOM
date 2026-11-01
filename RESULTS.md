@@ -1290,3 +1290,19 @@ The engine's request layout can be `[new | deferred]`, not only `[deferred | new
 So the reference path must decide the true prompt length from something that distinguishes scheduled prompt tokens from deferred continuation tokens. Until that is fixed, any measurement that sends more than one request to the same engine is contaminated - which also means the A/B/C agreement numbers from round 31 are **lower bounds**, not final values.
 
 This is the most concrete lead yet on the gap to the 90% gate: it is a request-plumbing defect, not a numerical one.
+
+### 2026-11-01 (round 37): engine-side request plumbing, and a caution about HF's own numerics
+
+Confirmed by experiment: when several requests go through one engine process, the batch handed to the model can carry one extra token on a new prefill - on three different prompts the extra token was exactly the previous request's **first generated token** (C-0000: `[801, 1622, 1622]` -> appended `801`; A-0012 -> `233`; A-0004 -> `233`).
+
+Implemented a prompt capture at the HTTP layer (`llm_engine.generate` writes the tokenized prompt to a file the model-runner process reads) plus a prefix check and a one-shot delete, so the reference path can trim any token the engine appended. The trim is a no-op when the batch already matches the captured prompt.
+
+**Important measurement caveat discovered at the end**: `TORCH_BLAS_PREFER_HIPBLASLT=0` changes HF's own greedy output. A control run of A-0006 with that variable set produced `[233, 233, 23, 233, 2116, 895, 333, 5458]`, while the same prompt with the default backend gives `[233, 233, 37, 24285, 233, 47, 307, 950]`. Any engine-vs-HF comparison must therefore pin the same BLAS environment on both sides, or it measures the environment instead of the implementation.
+
+**Where Step 0 stands (unchanged acceptance numbers)**: B = 1.0000 (20/20 prompts, 64/64 tokens each), A = 0.3516 against freshly generated references (3/20 exact), C = 0.5816 over 40 prompts below the 12k limit (16/40 exact). The gate requires 90% over 200 public prompts, so Step 0 is **not passed**.
+
+Open items, in the order they should be attacked:
+
+1. pin one BLAS/backend environment for both the engine and the HF reference, then re-measure A and C - part of the current gap may be this alone;
+2. finish the request-plumbing fix (the capture file must be written before the runner consumes the request; a stale file makes the engine answer the previous prompt, which was observed once);
+3. after 1-2, re-run the full 200-prompt gate instead of the 40-prompt subset.

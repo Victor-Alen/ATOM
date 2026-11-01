@@ -136,6 +136,10 @@ def _rotary(cfg, dev):
 
 
 _HIST: list = []
+_LAST_PRED = [None]
+_PROMPT = {"ids": None}
+_FIRST_OUT = [None]
+_PENDING_FIRST = [False]
 _DUMPED: set = set()
 
 
@@ -241,16 +245,71 @@ def reference_forward(model, input_ids, positions):
     _recomp = False
     if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
         _recomp = True
-        _ctxs = None
         try:
-            _ctxs = [int(v) for v in md.context_lens.tolist()]
+            _ntok = int(md.cu_seqlens_q[-1])
         except Exception:  # noqa: BLE001
-            _ctxs = None
+            _ntok = int(input_ids.numel())
+        if 0 < _ntok < int(input_ids.numel()):
+            input_ids = input_ids[:_ntok]
+            if positions.numel() > _ntok:
+                positions = positions[:_ntok]
         new_ids = input_ids.tolist()
         _fp = int(positions[0].item()) if positions.numel() else 0
-        if _fp == 0 and _ctxs and _ctxs[0] == len(new_ids) - 1:
+        if _fp == 0 and _PROMPT["ids"] is None:
+            try:
+                import json as _json
+                from pathlib import Path as _P
+
+                _pf = os.environ.get(
+                    "ATOM_REFERENCE_PROMPT_FILE", "/tmp/atom_reference_prompt.json"
+                )
+                _pp = _P(_pf)
+                _PROMPT["ids"] = _json.loads(_pp.read_text(encoding="utf-8"))["ids"]
+                _pp.unlink(missing_ok=True)
+            except Exception:  # noqa: BLE001
+                _PROMPT["ids"] = []
+        _pfile = _PROMPT["ids"] if _fp == 0 else None
+        if (
+            _pfile
+            and len(_pfile) < len(new_ids)
+            and new_ids[: len(_pfile)] == _pfile
+        ):
+            new_ids = new_ids[: len(_pfile)]
+            input_ids = input_ids[: len(_pfile)]
+            if positions.numel() > len(new_ids):
+                positions = positions[: len(new_ids)]
+            if os.environ.get("ATOM_REFERENCE_DEBUG") not in (None, "0"):
+                print(
+                    f"[ref] trimmed input_ids to captured prompt {len(_pfile)} "
+                    f"(dropped {len(_pfile) and 1})",
+                    flush=True,
+                )
+        if (
+            _fp == 0
+            and len(new_ids) > 1
+            and _FIRST_OUT[0] is not None
+            and new_ids[-1] == _FIRST_OUT[0]
+        ):
             new_ids = new_ids[:-1]
-            positions = positions[:-1]
+            input_ids = input_ids[:-1]
+            if positions.numel() > len(new_ids):
+                positions = positions[: len(new_ids)]
+            if os.environ.get("ATOM_REFERENCE_DEBUG") not in (None, "0"):
+                print(
+                    f"[ref] trimmed engine-appended token {_FIRST_OUT[0]} "
+                    f"({len(new_ids) + 1} -> {len(new_ids)} tokens)",
+                    flush=True,
+                )
+        if _fp == 0:
+            _PENDING_FIRST[0] = True
+        cu_q = [0, len(new_ids)]
+        ctx_lens = [len(new_ids)]
+        bs = 1
+        if int(x.shape[0]) != int(input_ids.numel()):
+            x = F.embedding(input_ids, model.model.embed_tokens.weight)
+            if x.dim() == 1:
+                x = x[None, :]
+
         hist = history_after(new_ids, _fp)
         if os.environ.get("ATOM_REFERENCE_DEBUG") not in (None, "0"):
             print(
@@ -313,6 +372,12 @@ def reference_forward(model, input_ids, positions):
         "ids_head": input_ids[:4].detach().cpu().tolist(),
         "ids_tail": input_ids[-4:].detach().cpu().tolist(),
         "pos_head": positions[:4].detach().cpu().tolist() if positions.numel() else [],
+        "pos_tail": positions[-4:].detach().cpu().tolist() if positions.numel() else [],
+        "cu_q": cu_q.tolist() if hasattr(cu_q, "tolist") else list(cu_q),
+        "ctx_lens_raw": (
+            md.context_lens.tolist() if hasattr(md.context_lens, "tolist") else None
+        ),
+        "n_positions": int(positions.numel()),
     }
     _dump_dir = os.environ.get("ATOM_REFERENCE_DUMPL")
     _dump_ok = bool(_dump_dir) and int(x.shape[0]) > 1

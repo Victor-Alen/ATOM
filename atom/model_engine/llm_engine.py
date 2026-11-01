@@ -3,6 +3,7 @@
 
 import itertools
 import logging
+import os
 import time
 from dataclasses import fields
 from typing import List, Optional, Union
@@ -304,6 +305,17 @@ class InputOutputProcessor:
             if isinstance(prompt_or_tokens, str)
             else prompt_or_tokens
         )
+        if os.environ.get("ATOM_REFERENCE_MODE") == "1":
+            try:
+                import json as _json
+
+                _pf = os.environ.get(
+                    "ATOM_REFERENCE_PROMPT_FILE", "/tmp/atom_reference_prompt.json"
+                )
+                with open(_pf, "w", encoding="utf-8") as _fh:
+                    _json.dump({"ids": [int(t) for t in tokens]}, _fh)
+            except Exception:  # noqa: BLE001
+                pass
         mrope_positions = None
         mrope_position_delta = 0
         if multimodal_data is not None:

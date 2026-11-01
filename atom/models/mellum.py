@@ -551,6 +551,16 @@ class MellumForCausalLM(nn.Module):
                 _hs = hidden_states[-1:]
             if _hs.shape[0] != 1 and len(getattr(_hs, "shape", ())) > 0:
                 pass
+            try:
+                import atom.models.reference_mode as _rm
+
+                _pred = int(_logits[-1].argmax().item())
+                _rm._LAST_PRED[0] = _pred
+                if _rm._PENDING_FIRST[0]:
+                    _rm._FIRST_OUT[0] = _pred
+                    _rm._PENDING_FIRST[0] = False
+            except Exception:  # noqa: BLE001
+                pass
             _dmp = None
             try:
                 import os as _os3
