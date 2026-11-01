@@ -120,6 +120,7 @@ def _rotary(cfg, dev):
 
 
 _HIST: list = []
+_DUMPED: set = set()
 
 
 def history_after(new_ids, first_pos=0):
@@ -212,12 +213,6 @@ def reference_forward(model, input_ids, positions):
         )
 
     x = F.embedding(input_ids, model.model.embed_tokens.weight)
-    _ldir0 = os.environ.get("ATOM_REFERENCE_DUMPL")
-    if _ldir0 and int(x.shape[0]) > 1:
-        torch.save(x[-1].detach().float().cpu(), f"{_ldir0}/emb.pt")
-        torch.save(
-            torch.tensor(input_ids[-8:].tolist(), dtype=torch.long), f"{_ldir0}/last8.pt"
-        )
     if x.dim() == 1:
         x = x[None, :]
     if os.environ.get("ATOM_REFERENCE_DEBUG") in ("0", "1", "2"):
@@ -309,6 +304,21 @@ def reference_forward(model, input_ids, positions):
         for s in range(bs):
             lo, hi = cu_q[s], cu_q[s + 1]
             h = _hf_norm(x[lo:hi], layer.input_layernorm.weight, eps)
+            _d1 = os.environ.get("ATOM_REFERENCE_DUMPL")
+            _do_dump = bool(_d1) and li == 0 and (hi - lo) > 1 and "l0" not in _DUMPED
+            if _do_dump:
+                _DUMPED.add("l0")
+                torch.save(
+                    {
+                        "emb_last": x[hi - 1].detach().float().cpu(),
+                        "h_ln_last": h[-1].detach().float().cpu(),
+                        "ln_w": layer.input_layernorm.weight.detach().float().cpu(),
+                        "eps": torch.tensor([float(eps)]),
+                        "ids_last8": torch.tensor(input_ids[-8:].tolist(), dtype=torch.long),
+                        "n_new": torch.tensor([hi - lo]),
+                    },
+                    f"{_d1}/l0_in.pt",
+                )
             if li == 0 and os.environ.get("ATOM_REFERENCE_DUMP2") == "1" and "d2" not in _ROT:
                 import torch as _t2
 
@@ -333,6 +343,16 @@ def reference_forward(model, input_ids, positions):
             sin = sin.unsqueeze(1)
             q = q * cos + _rotate_half(q) * sin
             k = k * cos + _rotate_half(k) * sin
+            if _do_dump:
+                torch.save(
+                    {
+                        "q_last": q[-1].detach().float().cpu(),
+                        "k_last": k[-1].detach().float().cpu(),
+                        "cos_last": cos[-1].detach().float().cpu(),
+                        "sin_last": sin[-1].detach().float().cpu(),
+                    },
+                    f"{_d1}/l0_qk.pt",
+                )
 
             n_new = hi - lo
             new_pos = positions[lo:hi].long()

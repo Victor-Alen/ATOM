@@ -1247,3 +1247,27 @@ Candidates left, in order: (a) the dtype handed to the rotary embedding in-engin
 Next step: dump q and k (post-rope) for the last position of layer 0 in-engine and diff against HF's, which separates (a)/(b) from (c).
 
 Note: `ref_arith_probe3` still aborts with an HSA exception after the first four layers on this node; the L0-L3 lines above are printed before the abort, so the comparison is valid for them but the run does not complete.
+
+### 2026-11-01 (round 35): layer-0 inputs and q/k are exact; the delta is after them
+
+Installed a latched one-shot dump (`ATOM_REFERENCE_DUMPL`, first prefill only) so every dumped tensor provably comes from the same forward pass, and checked it fully offline:
+
+| check | result |
+|---|---|
+| `n_new` of the dump | 1470 (the A-0012 prefill) |
+| eps used | 9.9838e-07 (HF: 1e-06) |
+| dumped embedding vs HF `hidden_states[0]` | **0.000000** |
+| LN(dumped embedding) vs dumped `h_ln` | **0.000000** (formula and eps agree) |
+| LN(HF embedding) vs dumped `h_ln` | **0.000000** |
+| rebuild of k from HF weights + dumped cos/sin | **0.000000** |
+| rebuild of q from HF weights + dumped cos/sin | 0.007812 (sub-ulp, op-order noise) |
+
+So everything up to and including the rope of layer 0 matches HF. The 0.34 delta that shows up in the layer-0 attention residual therefore comes from what happens **after** q/k: the mask/softmax weighting, V, or o_proj.
+
+Three comparison harness mistakes were fixed on the way and are worth remembering, because each one produced a large fake delta:
+
+1. a dump that fires on every call silently keeps the *last* (decode) step while the reference side holds the prefill row (fake `max|delta| = 71`);
+2. a monkeypatched `apply_rotary_pos_emb` captures the *last* layer, not layer 0 (fake `q delta = 15.7`);
+3. a forward hook registered once still fires per call, so its captured tensor can belong to a different request than the engine dump (fake `post-LN delta = 0.05`).
+
+Next micro-step: dump the attention output `o` (pre `o_proj`) and V for the same latched call, and recompute the expected value offline from the dumped q/k plus HF's weights. That isolates mask/softmax from o_proj.
