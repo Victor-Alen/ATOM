@@ -1271,3 +1271,22 @@ Three comparison harness mistakes were fixed on the way and are worth rememberin
 3. a forward hook registered once still fires per call, so its captured tensor can belong to a different request than the engine dump (fake `post-LN delta = 0.05`).
 
 Next micro-step: dump the attention output `o` (pre `o_proj`) and V for the same latched call, and recompute the expected value offline from the dumped q/k plus HF's weights. That isolates mask/softmax from o_proj.
+
+### 2026-11-01 (round 36): the 'nondeterminism' was an extra token from the previous request
+
+Two identical A-0012 prefill calls in the same engine process produced layer-0 outputs differing by 0.2246, which looked like nondeterminism. Tracing the inputs of both calls showed why:
+
+| | call 1 | call 2 |
+|---|---|---|
+| token count | 1470 | **1471** |
+| head | `[1372, 1277, 1277, 2677]` | same |
+| tail | `[6857, 5025, 2776, 48]` | `[5025, 2776, 48, 233]` |
+| id sum | 2492091 | 2492324 |
+
+The second call carries one **extra trailing token** - `233`, which is the first token the first request generated. So the two runs did not have identical inputs and the earlier 'nondeterministic' interpretation is retracted: with the extra token appended, a different output is expected.
+
+The engine's request layout can be `[new | deferred]`, not only `[deferred | new]` (the comment in `prepare_input_ids` documents both cases), and the deferred slot is filled with `prev_token_ids`. A first attempt to strip that token by comparing against `md.context_lens` did not fire, because `context_lens` counts the extra token as well.
+
+So the reference path must decide the true prompt length from something that distinguishes scheduled prompt tokens from deferred continuation tokens. Until that is fixed, any measurement that sends more than one request to the same engine is contaminated - which also means the A/B/C agreement numbers from round 31 are **lower bounds**, not final values.
+
+This is the most concrete lead yet on the gap to the 90% gate: it is a request-plumbing defect, not a numerical one.

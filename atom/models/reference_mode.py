@@ -68,11 +68,27 @@ def _moe_grouped(w13, w2, gate_w, x, num_experts, top_k, norm_topk):
     hist = torch.histc(ids_g.int(), bins=num_experts, min=0, max=num_experts - 1)
     offsets = torch.cumsum(hist, dim=0, dtype=torch.int32)
 
-    gate_up = F.grouped_mm(sel_g, w13.transpose(-2, -1), offs=offsets)
-    gate, up = gate_up.chunk(2, dim=-1)
-    gated = F.silu(gate) * up
-    out_g = F.grouped_mm(gated, w2.transpose(-2, -1), offs=offsets)
-    out_g = out_g * w_g.unsqueeze(-1)
+    if os.environ.get("ATOM_REFERENCE_MOE_DET") == "1":
+        bounds = [0] + [int(v) for v in offsets.tolist()]
+        out_g = torch.empty(
+            sel_g.shape[0], w2.shape[-2], dtype=sel_g.dtype, device=sel_g.device
+        )
+        for e in range(num_experts):
+            a, b = bounds[e], bounds[e + 1]
+            if b <= a:
+                continue
+            seg = sel_g[a:b]
+            gate_up = F.linear(seg, w13[e])
+            gate, up = gate_up.chunk(2, dim=-1)
+            gated = F.silu(gate) * up
+            out_g[a:b] = F.linear(gated, w2[e])
+        out_g = out_g * w_g.unsqueeze(-1)
+    else:
+        gate_up = F.grouped_mm(sel_g, w13.transpose(-2, -1), offs=offsets)
+        gate, up = gate_up.chunk(2, dim=-1)
+        gated = F.silu(gate) * up
+        out_g = F.grouped_mm(gated, w2.transpose(-2, -1), offs=offsets)
+        out_g = out_g * w_g.unsqueeze(-1)
     out = out_g[inv_perm]
     return out.view(tokens, top_k, -1).sum(dim=1).to(hs.dtype).view_as(x)
 
@@ -225,8 +241,16 @@ def reference_forward(model, input_ids, positions):
     _recomp = False
     if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
         _recomp = True
+        _ctxs = None
+        try:
+            _ctxs = [int(v) for v in md.context_lens.tolist()]
+        except Exception:  # noqa: BLE001
+            _ctxs = None
         new_ids = input_ids.tolist()
         _fp = int(positions[0].item()) if positions.numel() else 0
+        if _fp == 0 and _ctxs and _ctxs[0] == len(new_ids) - 1:
+            new_ids = new_ids[:-1]
+            positions = positions[:-1]
         hist = history_after(new_ids, _fp)
         if os.environ.get("ATOM_REFERENCE_DEBUG") not in (None, "0"):
             print(
@@ -280,6 +304,20 @@ def reference_forward(model, input_ids, positions):
         _ROT["dumped"] = True
         print("[ref] dumped ATOM params -> /workspace/logs/atom_params.pt", flush=True)
 
+    _LDUMP = {
+        "ids_hash": int(torch.tensor(input_ids.tolist(), dtype=torch.int64).sum().item()),
+        "n_new": int(input_ids.numel()),
+        "first_pos": int(positions[0].item()) if positions.numel() else -1,
+        "moe_det": os.environ.get("ATOM_REFERENCE_MOE_DET", "0"),
+        "emb_last": x[-1].detach().float().cpu() if int(x.shape[0]) > 1 else None,
+        "ids_head": input_ids[:4].detach().cpu().tolist(),
+        "ids_tail": input_ids[-4:].detach().cpu().tolist(),
+        "pos_head": positions[:4].detach().cpu().tolist() if positions.numel() else [],
+    }
+    _dump_dir = os.environ.get("ATOM_REFERENCE_DUMPL")
+    _dump_ok = bool(_dump_dir) and int(x.shape[0]) > 1
+    _dump_n = len([k for k in _DUMPED if k.startswith("layers")])
+    _dump_call = _dump_ok and _dump_n < 2
     for li, layer in enumerate(model.model.layers):
         attn = layer.self_attn
         q_w, k_w, v_w = torch.split(attn.qkv_proj.weight, [nH * D, nKV * D, nKV * D], dim=0)
@@ -350,6 +388,13 @@ def reference_forward(model, input_ids, positions):
                         "k_last": k[-1].detach().float().cpu(),
                         "cos_last": cos[-1].detach().float().cpu(),
                         "sin_last": sin[-1].detach().float().cpu(),
+                        "k_all": k.detach().to(torch.bfloat16).cpu(),
+                        "v_all": v.detach().to(torch.bfloat16).cpu(),
+                        "n_heads": nH,
+                        "n_kv": nKV,
+                        "head_dim": D,
+                        "window": -1 if W is None else int(W),
+                        "scale": float(scale),
                     },
                     f"{_d1}/l0_qk.pt",
                 )
@@ -428,12 +473,16 @@ def reference_forward(model, input_ids, positions):
                 o_all[:, :, c0:c1, :] = torch.matmul(pr, vv).view(nKV, rep, c1 - c0, D)
                 del pr, qc
             o = o_all.permute(2, 0, 1, 3).reshape(n_new, nH * D)
+            if _do_dump:
+                torch.save(o[-1].detach().float().cpu(), f"{_d1}/l0_o_last.pt")
             outs[lo:hi] = F.linear(o, attn.o_proj.weight)
             del o, o_all, kk, vv
         x = x + outs
         _ldir = os.environ.get("ATOM_REFERENCE_DUMPL")
         if _ldir and n_new > 1 and li == 0:
             torch.save((x[-1] - outs[-1]).detach().float().cpu(), f"{_ldir}/in_L0.pt")
+        if _dump_call:
+            _LDUMP[f"attn_{li}"] = x[-1].detach().float().cpu()
         if _ldir and n_new > 1:
             torch.save(x[-1].detach().float().cpu(), f"{_ldir}/attn_L{li}.pt")
 
@@ -458,6 +507,8 @@ def reference_forward(model, input_ids, positions):
                 layer.mlp.down_proj.weight,
             )
         x = x + moe
+        if _dump_call:
+            _LDUMP[f"blk_{li}"] = x[-1].detach().float().cpu()
         if _ldir and n_new > 1:
             torch.save(x[-1].detach().float().cpu(), f"{_ldir}/blk_L{li}.pt")
         if os.environ.get("ATOM_REFERENCE_DEBUG") == "2" and li < 8:
@@ -466,6 +517,10 @@ def reference_forward(model, input_ids, positions):
     if os.environ.get("ATOM_REFERENCE_DEBUG") in ("0", "1", "2"):
         print(f"[ref] final_absmax={float(x.abs().max()):.4f}", flush=True)
     out = _hf_norm(x, model.model.norm.weight, eps)
+    if _dump_call:
+        _DUMPED.add(f"layers{_dump_n}")
+        _LDUMP["final"] = out[-1].detach().float().cpu()
+        torch.save(_LDUMP, f"{_dump_dir}/layers_{_dump_n}.pt")
     if os.environ.get("ATOM_REFERENCE_RECOMPUTE") == "1":
         return out[keep]
     return out
