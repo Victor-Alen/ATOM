@@ -1204,3 +1204,23 @@ prompt length triggering it.
 Workaround for the next session: dump the engine's per-step logits with
 ATOM_REFERENCE_DUMP and compute HF's per-step logits on the A100 node (CUDA, which
 never showed this fault), then diff the two files offline.
+
+### 2026-11-01 (round 33): first per-step logits diff (A-0012, 1470 tokens)
+
+Added ATOM_REFERENCE_LOGSTEP (dump argmax / top-5 / margin per call) and compared with HF in a second process, both on the same prompt:
+
+| step | engine argmax / top5 / margin | HF argmax / top5 / margin |
+|---|---|---|
+| 0 | 233 / [233,470,6091,5097,10119] / 2.50 | 233 / same order / 2.75 |
+| 1 | 233 / [233,37,573,98,1332] / 1.875 | 233 / [233,37,1332,889,573] / 1.75 |
+| 2 | **889** / [889,23,37,910,98] / 0.25 | **23** / [23,889,37,910,433] / 0.25 |
+
+Readings:
+
+* at step 0 the top-5 **order is identical** but the values differ by 0.375-0.5 absolute, i.e. the two forwards are not bit-identical at this length (bf16 ulp near 30 is ~0.0625, so this is several ulps, not rounding noise);
+* at step 2 the top-2 are 889 / 23 in both, with a margin of only 0.125-0.25, so the small numeric difference flips the argmax - exactly the mechanism behind the 2-25-token agreement seen across scenarios;
+* therefore the remaining work is to make the *logits* match, not to change any decision rule.
+
+A first attempt to localise it by dumping the engine's last hidden row was invalid: the dump fires on every call, so the file held the last decode step while the HF side held the prefill row (max|delta| = 71 is comparing different positions, not a real discrepancy). The dump needs a per-call suffix before that comparison means anything.
+
+Also fixed on the way: the step logger originally used `os.environ` in a module without an `os` import and killed the model runner (`NameError`), which is worth remembering because the HTTP layer kept answering health checks while the runner was dead.

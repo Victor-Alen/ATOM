@@ -1,3 +1,4 @@
+import os
 from typing import Optional, Union, Any
 
 import torch
@@ -550,7 +551,42 @@ class MellumForCausalLM(nn.Module):
                 _hs = hidden_states[-1:]
             if _hs.shape[0] != 1 and len(getattr(_hs, "shape", ())) > 0:
                 pass
+            _dmp = None
+            try:
+                import os as _os3
+
+                _dmp = _os3.environ.get("ATOM_REFERENCE_DUMPH")
+            except Exception:  # noqa: BLE001
+                _dmp = None
+            if _dmp:
+                try:
+                    torch.save(_hs[-1].detach().float().cpu(), _dmp)
+                except Exception:  # noqa: BLE001
+                    pass
             _logits = _F.linear(_hs, self.lm_head.weight)
+            _lsp = None
+            try:
+                import os as _os2
+
+                _lsp = _os2.environ.get("ATOM_REFERENCE_LOGSTEP")
+            except Exception:  # noqa: BLE001
+                _lsp = None
+            if _lsp:
+                try:
+                    _row = _logits[-1].float()
+                    _v, _i = torch.topk(_row, 5)
+                    _mi = int(_i[0].item())
+                    _margin = float(_v[0].item() - _v[1].item()) if _v.numel() > 1 else 0.0
+                    _path = _lsp
+                    with open(_path, "a", encoding="utf-8") as _fh:
+                        _fh.write(
+                            f"row={_logits.shape[0]} argmax={_mi} "
+                            f"top5={[int(x) for x in _i.tolist()]} "
+                            f"vals={[round(float(x), 4) for x in _v.tolist()]} "
+                            f"margin={_margin:.4f}\n"
+                        )
+                except Exception:  # noqa: BLE001
+                    pass
             if __import__("os").environ.get("ATOM_REFERENCE_DEBUG") in ("1", "2"):
                 _top = _logits.float().topk(2, dim=-1)
                 print(
