@@ -1342,3 +1342,22 @@ Before the pin the same prompt produced `[233, 233, 37, 26828, 23, 233, 2116, 89
 This also explains why the standalone probe (`ref_arith_probe3`, a separate process) measured 0.000000 while the engine did not: the two processes resolved different kernels for identical shapes.
 
 Gate run with the pin is in progress; the earlier numbers (A 0.3516, B 1.0000, C 0.5816) were all measured without it and are therefore invalid as a measure of the implementation.
+
+### 2026-11-02 (round 40): the paired BLAS experiment fails; cross-process exactness is the obstacle
+
+Ran the apples-to-apples test: engine and HF **both** pinned to `TORCH_BLAS_PREFER_HIPBLASLT=0`,
+with HF's references regenerated under that same pin.
+
+| configuration | A-0000 | A-0006 |
+|---|---|---|
+| engine default vs HF default | 14/64 | 8/8 for 8 steps, then diverges |
+| engine pinned vs HF default refs | 14/64 | **8/8 match** |
+| engine pinned vs HF pinned refs | **3/64** | - |
+
+Pinning both sides makes agreement *worse*, and the same prompt (A-0007, 3738 tokens) is 16/16 in one configuration and 1/64 in another. The only configuration that ever measured `0.000000` was the standalone probe, where my reference code and HF run **in the same process**.
+
+So the remaining obstacle is not arithmetic, not weights, not layout: it is that the two processes resolve different GEMM kernels for identical shapes, and which kernel each resolves depends on process state that the documented environment variables do not fully control.
+
+Concrete next step (unfinished): run HF's own `MellumModel` **inside the engine process** so that engine and reference are guaranteed to share kernels, then use that as the reference for the gate. If that reproduces standalone HF, the plumbing is the issue; if it does not, the gate's reference must be pinned to a specific environment and that requirement has to be stated explicitly.
+
+Status: **Step 0 not passed.** Best numbers to date (all measured before the pin was understood): A 0.3516-0.3766, B 1.0000, C 0.5816.
