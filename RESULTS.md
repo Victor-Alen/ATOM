@@ -1224,3 +1224,26 @@ Readings:
 A first attempt to localise it by dumping the engine's last hidden row was invalid: the dump fires on every call, so the file held the last decode step while the HF side held the prefill row (max|delta| = 71 is comparing different positions, not a real discrepancy). The dump needs a per-call suffix before that comparison means anything.
 
 Also fixed on the way: the step logger originally used `os.environ` in a module without an `os` import and killed the model runner (`NameError`), which is worth remembering because the HTTP layer kept answering health checks while the runner was dead.
+
+### 2026-11-01 (round 34): first divergence is layer-0 attention, and only in-engine
+
+Bisected A-0012 (1470 tokens) layer by layer, engine dumps vs HF `output_hidden_states`:
+
+| compared | result |
+|---|---|
+| embedding row (last position) | **equal = True**, max|delta| = 0.000000 |
+| last 8 input token ids | identical to the reference prompt |
+| L0 attention residual | max|delta| = 0.343750 (engine absmax 4.6875 vs HF 4.375) |
+| L0 block output | max|delta| = 0.187500 |
+
+So the input is bit-identical and the first divergence is **layer 0's attention**. The MLP is not the source.
+
+Decisive control: the same 1470-token prompt through `ref_arith_probe3` in a clean process reports
+`L0..L3: d_attn=0.000000 d_mlp=0.000000 d_block=0.000000`, i.e. the reference forward **is** bit-identical to HF when run standalone.
+The engine therefore executes my reference code with a small numeric difference that the standalone run does not have.
+
+Candidates left, in order: (a) the dtype handed to the rotary embedding in-engine, (b) q/k/v layout or contiguous view differences inside the packed qkv projection, (c) a global torch backend setting in the runner (the probe process and the model-runner process do not share the same torch state).
+
+Next step: dump q and k (post-rope) for the last position of layer 0 in-engine and diff against HF's, which separates (a)/(b) from (c).
+
+Note: `ref_arith_probe3` still aborts with an HSA exception after the first four layers on this node; the L0-L3 lines above are printed before the abort, so the comparison is valid for them but the run does not complete.

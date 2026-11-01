@@ -212,6 +212,12 @@ def reference_forward(model, input_ids, positions):
         )
 
     x = F.embedding(input_ids, model.model.embed_tokens.weight)
+    _ldir0 = os.environ.get("ATOM_REFERENCE_DUMPL")
+    if _ldir0 and int(x.shape[0]) > 1:
+        torch.save(x[-1].detach().float().cpu(), f"{_ldir0}/emb.pt")
+        torch.save(
+            torch.tensor(input_ids[-8:].tolist(), dtype=torch.long), f"{_ldir0}/last8.pt"
+        )
     if x.dim() == 1:
         x = x[None, :]
     if os.environ.get("ATOM_REFERENCE_DEBUG") in ("0", "1", "2"):
@@ -405,6 +411,11 @@ def reference_forward(model, input_ids, positions):
             outs[lo:hi] = F.linear(o, attn.o_proj.weight)
             del o, o_all, kk, vv
         x = x + outs
+        _ldir = os.environ.get("ATOM_REFERENCE_DUMPL")
+        if _ldir and n_new > 1 and li == 0:
+            torch.save((x[-1] - outs[-1]).detach().float().cpu(), f"{_ldir}/in_L0.pt")
+        if _ldir and n_new > 1:
+            torch.save(x[-1].detach().float().cpu(), f"{_ldir}/attn_L{li}.pt")
 
         h2 = _hf_norm(x, layer.post_attention_layernorm.weight, eps)
         exp = getattr(layer.mlp, "experts", None)
@@ -427,6 +438,8 @@ def reference_forward(model, input_ids, positions):
                 layer.mlp.down_proj.weight,
             )
         x = x + moe
+        if _ldir and n_new > 1:
+            torch.save(x[-1].detach().float().cpu(), f"{_ldir}/blk_L{li}.pt")
         if os.environ.get("ATOM_REFERENCE_DEBUG") == "2" and li < 8:
             print(f"[ref] L{li} last_absmax={float(x[-1].abs().max()):.4f}", flush=True)
 
