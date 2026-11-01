@@ -1327,3 +1327,18 @@ Two consequences:
 Also observed earlier in this round: on the pristine server the *same* prompt answered differently depending on what had been asked before (A-0006 first, A-0002 second - the second request reproduced the first request's tokens). That is request-to-request state leakage, again on unmodified code.
 
 Immediate plan: warm every measurement server with a throwaway request, then re-measure A/B/C; separately, take the steady-state HF disagreement and bisect it with the same latched-dump technique that already proved layer-0 inputs, LN, q and k match.
+
+### 2026-11-01 (round 39): pinning the BLAS backend makes the engine match HF
+
+Running the reference path with `TORCH_BLAS_PREFER_HIPBLASLT=0` in the *engine* environment makes prompt A-0006 reproduce HF exactly:
+
+```
+engine (hipblaslt off): [233, 233, 37, 24285, 233, 47, 307, 950]
+HF reference (default): [233, 233, 37, 24285, 233, 47, 307, 950]
+```
+
+Before the pin the same prompt produced `[233, 233, 37, 26828, 23, 233, 2116, 895]`, and the pristine engine alternated between two of these variants across identical requests. So the earlier "numeric mismatch with HF" and the "same prompt, different answers" symptom have the same origin: which BLAS kernel hipBLASLt picks, which in turn depends on process state.
+
+This also explains why the standalone probe (`ref_arith_probe3`, a separate process) measured 0.000000 while the engine did not: the two processes resolved different kernels for identical shapes.
+
+Gate run with the pin is in progress; the earlier numbers (A 0.3516, B 1.0000, C 0.5816) were all measured without it and are therefore invalid as a measure of the implementation.
