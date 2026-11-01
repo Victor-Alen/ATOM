@@ -1306,3 +1306,24 @@ Open items, in the order they should be attacked:
 1. pin one BLAS/backend environment for both the engine and the HF reference, then re-measure A and C - part of the current gap may be this alone;
 2. finish the request-plumbing fix (the capture file must be written before the runner consumes the request; a stale file makes the engine answer the previous prompt, which was observed once);
 3. after 1-2, re-run the full 200-prompt gate instead of the 40-prompt subset.
+
+### 2026-11-01 (round 38): the pristine engine already returns different answers for the same prompt
+
+Ran the same prompt three times against a **freshly started pristine worktree** (`/workspace/ATOM`, no reference-mode patches, `--level 0 --enforce-eager --kv_cache_dtype bf16`, temperature 0, greedy):
+
+```
+run0: [233, 233, 23, 233, 2116, 895]
+run1: [233, 233, 37, 26828, 23, 233]
+run2: [233, 233, 37, 26828, 23, 233]
+```
+
+Same prompt, same server, same sampling parameters - run0 differs from run1/run2. The first request after a fresh start is the odd one out; steady state (run1/run2) is self-consistent.
+
+Two consequences:
+
+1. **The task's determinism requirement is violated by the engine itself**, independent of the reference path. Any greedy measurement has to discard or warm past the first request.
+2. Even in steady state this prompt disagrees with HF (`[233, 233, 37, 24285, 233, 47, 307, 950]`), so there is a second, separate disagreement to close.
+
+Also observed earlier in this round: on the pristine server the *same* prompt answered differently depending on what had been asked before (A-0006 first, A-0002 second - the second request reproduced the first request's tokens). That is request-to-request state leakage, again on unmodified code.
+
+Immediate plan: warm every measurement server with a throwaway request, then re-measure A/B/C; separately, take the steady-state HF disagreement and bisect it with the same latched-dump technique that already proved layer-0 inputs, LN, q and k match.
