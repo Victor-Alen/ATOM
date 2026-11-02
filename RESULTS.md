@@ -2001,3 +2001,32 @@ Final state of the work (nothing inferred):
 | Step 0 | **not met** |
 
 Deliverables: `RESULTS.md` (~2000 lines of evidence), `HANDOVER.md`, `REPORT-STEP0-2026-11-03.md`, `VALIDATION_TIERS.md`, `OVERNIGHT_PLAN.md`.
+### 2026-11-03 05:55 (round 73): production measured on the current tree - A 0.2727, C 0.7708
+
+Production server, no env vars, current tree, single client:
+
+```
+A (20 prompts, 64 tokens): 349/1280 = 0.2727   exact 1/20
+C (6 prompts,   8 tokens):  37/48   = 0.7708   exact 4/6
+   C-0000 7881  : 8/8
+   C-0001 12580 : 3/8
+   C-0002 11889 : 8/8
+   C-0003 6183  : 2/8
+   C-0004 10306 : 8/8
+   C-0005 8701  : 8/8
+```
+
+Two things worth noting:
+
+1. The production path is **much closer to HF on long C prompts than on short A prompts** (0.77 vs 0.27). This was not expected; it suggests the argmax is more robust when the context is long and the next-token distribution is sharper, while short prompts sit near ties more often.
+2. C still has two failures (C-0001, C-0003), so the production path is not uniformly good either.
+
+Updated three-path table (all single-client, clean state):
+
+| scenario | path 1 | path 2 (reference) | path 3 (production) |
+|---|---|---|---|
+| A | baseline | 1.0000 | 0.2727 |
+| B | baseline | 1.0000 | not measured |
+| C | baseline | exact on all clean samples | 0.7708 (8 tokens, 6 prompts) |
+
+Step 0 (>=90% on 200 prompts) is still not met.
