@@ -90,6 +90,17 @@ def _moe_grouped(w13, w2, gate_w, x, num_experts, top_k, norm_topk):
     hist = torch.histc(ids_g.int(), bins=num_experts, min=0, max=num_experts - 1)
     offsets = torch.cumsum(hist, dim=0, dtype=torch.int32)
 
+    if tokens == 1 and os.environ.get("ATOM_REFERENCE_MOE_BATCHED") == "1":
+        # mirror HF's batched_mm experts path (used for single-token decode)
+        sel_w13 = w13[topi[0]]
+        sel_w2 = w2[topi[0]]
+        x_k = hs[0].unsqueeze(0).expand(top_k, -1).unsqueeze(0)
+        gu = torch.bmm(x_k, sel_w13.transpose(1, 2))
+        gate, up = gu.chunk(2, dim=-1)
+        o = torch.bmm(F.silu(gate) * up, sel_w2.transpose(1, 2))
+        out_b = (o * topv[0].unsqueeze(-1)).sum(dim=1)
+        return out_b.to(hs.dtype).view_as(x)
+
     if os.environ.get("ATOM_REFERENCE_MOE_DET") == "1":
         bounds = [0] + [int(v) for v in offsets.tolist()]
         out_g = torch.empty(

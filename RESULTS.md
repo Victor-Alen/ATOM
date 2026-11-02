@@ -1706,3 +1706,20 @@ refcheck A: rate=1.0000 exact=3 tokens=192/192
 ```
 
 So that change reset the KV buffer in the middle of a request. It was never validated before being committed (the only run after it was the invalid teacher-forcing test). Recorded here so the next iteration does not repeat it.
+
+### 2026-11-03 01:45 (round 58): frozen-config baselines, batched_mm decode branch, OOM fix
+
+Three-path numbers measured on the frozen configuration:
+
+| scenario | path 1 (HF) | path 2 (reference) | path 3 (production, no env vars) |
+|---|---|---|---|
+| A | baseline | **1.0000** (20/20) | **0.2242** (287/1280, 2/20 exact) |
+| B | baseline | 1.0000 (20/20) | running |
+| C | baseline | 7/8 earlier, C-0001 = 7/64 (new failure seen) | running (C-0036 11/64, C-0037 56/64) |
+
+Two changes prepared:
+
+1. `ATOM_REFERENCE_MOE_BATCHED=1`: mirrors HF's `batched_mm` experts path for single-token decode (a `torch.bmm` over the selected experts) instead of always using `grouped_mm`. The other agent's C-200 run needed the same dispatch distinction (grouped_mm for prefill, batched_mm for decode), which is consistent with C-0001 failing without it.
+2. `ATOM_REFERENCE_ATTN_CHUNK=1024`: the 4-D scores for an 11889-token prompt need `32 x 11889^2 x 4 B = 18.9 GiB` in the fp32 softmax and OOMed. Chunking the query dimension bounds it without changing any result, because each query row still attends to every key.
+
+Status: reference path A and B are 1.0000; C still has individual failures and is being measured.
