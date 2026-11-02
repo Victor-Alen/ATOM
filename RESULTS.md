@@ -1495,3 +1495,22 @@ Reading the token sets: the MoE tokens `{199, 222, 508, 550, 557, 569, 583, 627,
 The sparsity is extreme: at token 93 a **single** hidden dimension differs, by 4.77e-7 (one bf16 ulp at that magnitude). A one-element, one-ulp event in attention, at 26 of 866 tokens, is what seeds the entire divergence.
 
 Next: inspect attention at token 93 - compare q, k, v, the scores row, the softmax row and the per-head outputs for that single token, to identify which stage first rounds differently.
+
+### 2026-11-02 (round 47): the difference appears between q-norm and the per-head output
+
+Layer-0 attention internals for A-0006, full matrices, same semantic points:
+
+```
+q after q_norm (pre-rope) : max|delta| = 0            tokens differing = 0/866
+per-head attention output (pre o_proj): max|delta| = 0.000244141  tokens differing = 29/866
+```
+
+q after the q-norm is bit-identical everywhere. Rope is a deterministic elementwise transform of those exact q/k values with the same cos/sin, so the post-rope q and k are exact as well. That leaves exactly three stages where the two implementations can differ:
+
+1. the score matmul `q @ k^T * scale`,
+2. the softmax (`F.softmax(..., dtype=float32)` vs transformers' eager path),
+3. the value matmul `probs @ v`.
+
+Because the last row is exact while 29 scattered tokens are not, this is not a structural error in any of the three; it is an accumulation-order difference that only shows up where a particular bf16 rounding boundary is hit.
+
+Next: capture the score row and the softmax row for token 93 in both implementations (HF exposes them via `output_attentions=True`) and compare those two vectors elementwise. That will separate stage 1 (scores) from stages 2-3 (softmax and value matmul).
