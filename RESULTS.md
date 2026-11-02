@@ -1457,3 +1457,22 @@ So the top-8 gate and the routing weights are exactly equal everywhere. Combined
 This is the narrowest the defect has been narrowed: a 1-ulp difference on 21 of 866 tokens, inside layer 0's experts, with identical inputs, identical expert assignment and identical routing weights.
 
 Next step: compare the per-expert GEMM output for one affected token - feed the same token slice and expert weights through (a) HF's `grouped_mm`, (b) the engine's path, (c) a plain `F.linear` per expert, and see which pair matches. The sort order inside `grouped_mm` (token-major vs expert-major accumulation) is the prime suspect for a 1-ulp difference.
+
+### 2026-11-02 (round 45): expert GEMM solved - my deterministic variant was wrong, and _unshuffle is suspect
+
+Three-way expert comparison on layer 0 (same `h2`, same `selected_experts`, same routing weights, weights assembled from the checkpoint's per-expert tensors):
+
+```
+grouped_mm  vs HF's MoE output : 0          <- bit-identical
+per-expert  vs HF's MoE output : 0.0250282  <- my MOE_DET=1 path is wrong
+grouped_mm  vs per-expert       : 0.0250282
+```
+
+Two conclusions:
+
+1. HF's MoE is exactly my `grouped_mm` replica, so the MoE mathematics is fully understood and implemented correctly.
+2. The deterministic replacement added earlier (`ATOM_REFERENCE_MOE_DET=1`, per-expert dense GEMMs) is **not** bit-equivalent to HF and must stay off when comparing against HF. It only changes accumulation order, which at bf16 is worth 2.5e-2 on this layer.
+
+New prime suspect for the remaining 1-ulp difference on 21 of 866 positions: this aiter build has **no `aiter.shuffle_weight`**, yet `reference_mode._unshuffle` is applied to the engine's expert tensors before the MoE. If ATOM stores the experts in checkpoint layout already, `_unshuffle` would permute correct weights into wrong ones - which matches the observed error magnitude exactly. Verification is blocked for the moment because the reference server stopped starting on this node (GPU memory contention: GPU0 71 GiB free, GPU1 busy).
+
+Next: dump `exp.w13_weight[0]` raw and `_unshuffle(...)[0]` and compare both against `cat(gate_proj[0], up_proj[0])` from the checkpoint; if the raw tensor matches, remove the `_unshuffle` calls.
