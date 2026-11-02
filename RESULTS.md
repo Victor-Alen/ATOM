@@ -2355,3 +2355,17 @@ Summary of every isolated fix attempted, all measured:
 | reference math + engine paged KV | - | - | 0.0156 (broken) |
 
 None of them closes the gap. The conclusion recorded in round 85 stands and is now supported by four independent scenarios.
+### 2026-11-03 07:25 (round 88): reference path re-verified on the current tree - and a measurement trap caught again
+
+Final integrity check of the central claim:
+
+```
+first attempt : 39/192 = 0.2031   <- WRONG measurement
+after killing the stale server and restarting: 192/192 = 1.0000  (3/3 exact)
+```
+
+The first attempt silently talked to a **previous server that still held port 8003** (the production+reference-MoE server from round 87). `curl /health` returned 200 because that old server was healthy, and my new server never bound the port. The resulting 0.2031 is exactly the production+reference-MoE number, which is the giveaway.
+
+So: the reference path is still 1.0000 on the current tree, after every patch added today - verified on a server that was confirmed dead before starting.
+
+Measurement trap, now encountered four times: **check that the old process is gone and that the new one actually owns the port** before trusting any number. `pgrep -cf atom.entrypoints` must return 0 immediately before starting.
