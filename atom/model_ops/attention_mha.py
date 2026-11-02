@@ -645,9 +645,133 @@ class PagedAttentionImpl(nn.Module):
 
         return o
 
+    def eager_attention_hf(self, q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx):
+        """HF-ordered attention: one full-row fp32 softmax per query row.
+
+        Gated by ATOM_EAGER_ATTN=1; used to reproduce HF's numbers exactly instead
+        of the online-softmax tiling used by the fused kernels.
+        """
+        import torch as _t
+
+        am = fwd_ctx.attn_metadata
+        ctx_lens = am.context_lens
+        bt = am.block_tables
+        if bt is None or ctx_lens is None or k_cache is None or v_cache is None:
+            # Prefill metadata has no block table; keep the fused kernel there.
+            if fwd_ctx.context.is_prefill:
+                if self.use_flash_layout:
+                    return self.prefill_attention_triton(
+                        q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx
+                    )
+                return self.prefill_attention(
+                    q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx
+                )
+            return self.paged_attention_triton(
+                q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx
+            )
+        cu = am.cu_seqlens_q if getattr(am, "cu_seqlens_q", None) is not None else None
+        if cu is None:
+            cu = _t.tensor([0, q.shape[0]], dtype=_t.int32, device=q.device)
+
+        nH = self.num_heads
+        nKV = self.num_kv_heads
+        D = self.head_dim
+        rep = nH // nKV
+
+        k5 = k_cache.dim() == 5
+        if k5:
+            # measured layout: [nb, nkv, hd//x, bs, x]   (x = 16 // element_size)
+            _nb, _nkv, _hdx, _bs, _x = k_cache.shape
+            bs = _bs
+            # v_cache is [nb, nkv, hd, bs]
+            v_layout_tail = v_cache.dim() == 4 and v_cache.shape[-1] == bs
+            v_layout_plain = v_cache.dim() == 4 and v_cache.shape[-2] == bs
+        else:
+            bs = k_cache.shape[-2]
+            v_layout_tail = False
+
+        if not globals().get("_eager_dbg"):
+            globals()["_eager_dbg"] = True
+            print("[eager] k_cache", tuple(k_cache.shape), "v_cache", tuple(v_cache.shape),
+                  "bt", None if bt is None else tuple(bt.shape),
+                  "ctx", tuple(ctx_lens.shape), "cu", tuple(cu.shape),
+                  "q", tuple(q.shape), "scale", type(self.scale).__name__,
+                  getattr(self.scale, "shape", self.scale), flush=True)
+
+        o = _t.empty_like(q)
+        W = self.sliding_window if self.sliding_window and self.sliding_window > 0 else None
+        q3 = q.view(-1, nH, D)
+
+        for b in range(ctx_lens.shape[0]):
+            q0 = int(cu[b])
+            q1 = int(cu[b + 1])
+            if q1 <= q0:
+                continue
+            n_ctx = int(ctx_lens[b])
+            n_q = q1 - q0
+            n_blk = (n_ctx + bs - 1) // bs
+            blocks = bt[b, :n_blk].long()
+            if k5:
+                ksel = k_cache.index_select(0, blocks)
+                kk = ksel.permute(0, 3, 1, 2, 4).reshape(-1, nKV, D)[:n_ctx]
+                vsel = v_cache.index_select(0, blocks)
+                if v_layout_tail:
+                    vv = vsel.permute(0, 3, 1, 2).reshape(-1, nKV, D)[:n_ctx]
+                elif v_layout_plain:
+                    vv = vsel.permute(0, 2, 1, 3).reshape(-1, nKV, D)[:n_ctx]
+                else:
+                    vv = vsel.permute(0, 3, 1, 2).reshape(-1, nKV, D)[:n_ctx]
+            else:
+                ksel = k_cache.index_select(0, blocks)
+                vsel = v_cache.index_select(0, blocks)
+                kk = ksel.permute(0, 2, 1, 3).reshape(-1, nKV, D)[:n_ctx]
+                vv = vsel.permute(0, 2, 1, 3).reshape(-1, nKV, D)[:n_ctx]
+
+            qb = q3[q0:q1].float()                              # [n_q, nH, D]
+            kb = kk.float().repeat_interleave(rep, dim=1)       # [n_ctx, nH, D]
+            vb = vv.float().repeat_interleave(rep, dim=1)
+
+            qi = _t.arange(n_ctx - n_q, n_ctx, device=q.device).unsqueeze(1)   # [n_q,1]
+            ki = _t.arange(n_ctx, device=q.device).unsqueeze(0)                # [1,n_ctx]
+            mask = ki <= qi
+            if W is not None:
+                mask = mask & ((qi - ki) < W)
+
+            sc = _t.einsum("qhd,khd->hqk", qb * float(self.scale), kb)   # [nH, n_q, n_ctx]
+            sc = sc.masked_fill(~mask.unsqueeze(0), float("-inf"))
+            p = _t.softmax(sc, dim=-1)
+            out = _t.einsum("hqk,khd->qhd", p, vb)               # [n_q, nH, D]
+            o[q0:q1] = out.to(o.dtype)
+
+        if __import__("os").environ.get("ATOM_EAGER_ONLY") != "1":
+            ref = None
+            if fwd_ctx.context.is_prefill:
+                ref = (
+                    self.prefill_attention_triton
+                    if self.use_flash_layout
+                    else self.prefill_attention
+                )(q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx)
+            else:
+                ref = self.paged_attention_triton(
+                    q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx
+                )
+            if not globals().get("_eager_diff_once"):
+                globals()["_eager_diff_once"] = True
+                d = (o.float() - ref.float()).abs()
+                print(
+                    "[eager] max|eager-fused| = %.6g  mean = %.6g  shapes %s / %s"
+                    % (float(d.max()), float(d.mean()), tuple(o.shape), tuple(ref.shape)),
+                    flush=True,
+                )
+            return ref
+        return o
+
     def dispatch_backend(self, fwd_ctx: ForwardContext):
 
         ctx = fwd_ctx.context
+
+        if __import__("os").environ.get("ATOM_EAGER_ATTN") == "1":
+            return self.eager_attention_hf
 
         if ctx.is_prefill:
             if self.use_flash_layout:

@@ -207,3 +207,19 @@ This changes the practical picture:
 3. Therefore the correct order of work is: fix the MoE accumulation first (proven, self-contained), then attack the attention ordering, then re-measure.
 
 This is the most actionable result of the session - it converts 'the kernels differ' into 'fix the MoE accumulation, it recovers the marginal decisions you can measure'.
+### 2026-11-03 07:00 (round 80): the eager attention implementation is correct, and the attention kernel is NOT the 0.031 source
+
+Implemented `eager_attention_hf` in `atom/model_ops/attention_mha.py` (gated by `ATOM_EAGER_ATTN=1`): it reconstructs the full KV row from the paged cache and runs one full-row fp32 softmax, exactly as HF does. Measured against the fused kernel on the same inputs, same step:
+
+```
+max|eager - fused| = 0.000488    mean = 5.3e-06    (shapes identical)
+```
+
+Two consequences, both important:
+
+1. **The eager reconstruction is correct.** The measured KV layout is `k_cache [nb, nkv, hd//8, bs, 8]` and `v_cache [nb, nkv, hd, bs]`; permuting those to `[bs, nkv, hd]` per block reproduces the kernel's input exactly.
+2. **The fused attention kernel is not the source of the layer-0 difference.** Its online-softmax tiling agrees with a full-row fp32 softmax to 5e-4, while production layer-0 attention differs from HF by 3e-2 - fifty times larger. So the 3e-2 must come from **upstream of attention**, most plausibly the fused `triton_fused_norm_rope_cache` kernel (RMSNorm + RoPE + cache write in one pass) rather than from the attention math.
+
+Also observed, and unexplained: with the eager branch computing but still returning the fused result, scenario A dropped to 0.03 instead of the 0.20 baseline. Calling the kernel twice per layer should be idempotent; it evidently is not. Until that is understood the eager branch stays off by default.
+
+Next concrete step: compare the fused norm+rope kernel output against HF's separate rmsnorm and rope on the same input, per layer-0 head. That is now the highest-value place to look.
