@@ -1586,3 +1586,25 @@ engine   : [754, 1365, 1337, 754, 2677, 754, 1365, 587]   match = True
 ```
 
 Two independent defects had to be fixed for the long-context path: the attention score batch structure (round 49) and this cache reallocation.
+
+### 2026-11-02 (round 51): scenario C long context now bit-exact; correcting two earlier claims
+
+With the round-49 (4-D attention scores) and round-50 (no KV reallocation) fixes both active, the long-context scenarios reproduce HF exactly:
+
+```
+C-0000 (7881 tokens) : [801, 1622, 1622] == HF   agreement 1.000
+C-0002 (11889 tokens): agreement 1.000  EXACT for all 64 tokens
+```
+
+Diagnostics recorded on the way:
+
+- the 7881-token prefill runs as **one** forward call (positions 0..7880); the engine does not chunk it
+- per-layer comparison of that prefill: L0..L26 all `0`; the only nonzero row is the known artifact of comparing `blk_27` (pre final-norm) against `hidden_states[28]` (post final-norm)
+- the KV write-validity assertion reports `unwritten_visible = 0` on both the prefill and the decode step, so the "reading unwritten KV" hypothesis is refuted
+- decode in recompute mode re-runs the whole history (7882 positions per step), which is why C is slow
+
+**Correction 1**: I earlier estimated the 4-D score tensor at 7881 tokens as ~4 TB. It is `32 x 7881 x 7881 x 2 B = 3.97 GB`, which fits easily. The "cannot possibly run" concern was my arithmetic error, not a real constraint.
+
+**Correction 2**: the earlier C failures (0.000-0.64) were measured against a server that did not have both fixes active; they were not a third defect. There is no separate 11.8k bug.
+
+Current agreement: A 20/20 exact, B 20/20 exact, C exact on the two longest prompts measured so far (7881 and 11889 tokens).
