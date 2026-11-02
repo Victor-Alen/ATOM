@@ -1968,3 +1968,15 @@ Clean state at 05:10:
 - production A: 0.2242
 
 Step 0 is not met. The reference path is a validated oracle for A/B and for every C prompt measured in a clean state; the production path is still 0.22 on A and has no measured B/C numbers on the current code.
+### 2026-11-03 05:20 (round 71): reference math cannot run on the engine's paged KV cache
+
+Tested the obvious shortcut - reference forward with `RECOMPUTE=0` so it uses the engine block tables instead of its own buffer:
+
+```
+reference math + engine paged KV : 3/192 = 0.0156   (3 prompts, 64 tokens)
+```
+
+Almost every token is wrong. This matches the historical note in `reference_mode.py`: on decode steps `block_tables` is `None`, the path falls back, and when it does read slots it mis-indexes. So the reference forward only works in its own recompute mode, which costs about 15 minutes per long C prompt.
+
+Consequence for the objective: 'production = reference math + real KV manager' is not available. The production path can only be fixed by giving its attention kernels an HF-ordered computation, which is a kernel-level change.
+EOF
