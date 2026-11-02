@@ -1831,3 +1831,19 @@ For these prompts the query-chunk loop runs exactly once (866 tokens, chunk 1024
 Consequence for the record: any measurement made with `ATOM_REFERENCE_ATTN_CHUNK=1024` is invalid, which includes the C-20 run labelled chunkC (`7/8 exact`) and every run from round 58 onwards that used it. The earlier clean C run (`c_clean.py`, no CHUNK) and the reference A/B numbers at 0.45 remain valid.
 
 This is exactly the kind of silent regression the project has been bitten by before; it is recorded here rather than quietly dropped.
+
+### 2026-11-03 03:50 (round 64): the regression is ATOM_REFERENCE_ATTN_CHUNK itself, not the memory setting
+
+Isolating the two variables from round 63:
+
+```
+util 0.45, no CHUNK : 384/384 = 1.0000
+util 0.35, no CHUNK : 384/384 = 1.0000   <- memory fraction is irrelevant
+util 0.35, CHUNK=1024: 135/384 = 0.3516
+```
+
+So `--gpu-memory-utilization` has no effect on correctness, and setting `ATOM_REFERENCE_ATTN_CHUNK` alone breaks scenario A even though the chunk loop executes exactly one iteration for these prompts. That is a defect in the chunked branch that also manifests in the single-chunk case; it is **not** understood yet.
+
+Rule for any further run: reference path = `MODE + RECOMPUTE + ATTN4D + OWN_CACHE` only. No `ATTN_CHUNK`, no `MOE_BATCHED`.
+
+Consequence: an 11889-token prompt needs `32 x 11889^2 x 4 B = 18.9 GiB` of fp32 softmax workspace, which OOMed earlier when the server also held its KV buffers. Until the chunked path is fixed, long-C prompts can only be served with a larger memory budget, not with chunking.
