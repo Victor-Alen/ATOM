@@ -1423,3 +1423,22 @@ Weights were re-checked for layers 0-3 (q/k/v rows, q_norm, k_norm): all `0.0000
 Remaining candidates inside L1's attention, all of which are exact at L0 with the same code: rope application, q/k norm application order, softmax/accumulation order, o_proj. The per-op harness (`scripts/ops_l1.py`) captures HF's `q_proj`, `q_norm`, pre/post-rope q and k and recomputes them from the engine's own `h1_full` with checkpoint weights; it needs one fix (the `apply_rotary_pos_emb` wrapper's return unpacking) before it can report the first differing op.
 
 Status unchanged: **Step 0 not passed**; best numbers A 0.3836 single-run / 0.257 median-of-3, B 1.0000, C 0.5816.
+
+### 2026-11-02 (round 43): the prefill is exact at 845/866 positions - 21 positions differ by one ulp
+
+Comparing the **full matrices** (not just the last row) of layer 1's input against HF:
+
+```
+L1 input: positions differing = 21 / 866
+max|delta| overall = 0.000732422
+first differing positions: [199, 222, 508, 550, 557, 569, 583, 627]
+last-row delta = 0.0
+```
+
+So the engine's forward matches HF bit-for-bit at 845 of 866 positions; 21 positions are off by roughly one bf16 ulp. The **last row is exact**, which is why all earlier last-row comparisons looked clean at layer 0.
+
+This explains the paradox that layer 1's last row diverged although its last-row input matched: the last row's attention attends over all 866 positions, 21 of which carry a one-ulp difference, so the contaminated value propagates forward.
+
+Since layer 0's input (embedding) is bit-exact everywhere, the one-ulp differences at those 21 positions are produced inside layer 0 - the most likely mechanism being a **top-8 expert tie**: a one-ulp difference in the gate logits flips the 8th expert at a near-tie, changing only that token's output slightly.
+
+Next step: for those 21 positions, compare the selected top-8 expert index sets between the engine and HF, and the gate logits. If the sets differ, the fix is to make the gate computation identical (or to break ties by a fixed rule on both sides).
