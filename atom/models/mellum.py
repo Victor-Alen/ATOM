@@ -131,9 +131,44 @@ class MellumSparseMoeBlock(nn.Module):
 
         # router_logits: (num_tokens, n_experts)
         router_logits = self.gate(hidden_states)
-        final_hidden_states = self.experts(
-            hidden_states=hidden_states, router_logits=router_logits
-        )
+        _prod_moe = __import__("os").environ.get("ATOM_PROD_MOE")
+        if _prod_moe == "ref":
+            try:
+                from atom.models.reference_mode import _moe_grouped, _unshuffle
+
+                _exp = self.experts
+                _w13 = _unshuffle(_exp.w13_weight)
+                _w2 = _unshuffle(_exp.w2_weight)
+                _tk = int(getattr(_exp, "top_k", getattr(_exp, "topk", 8)))
+                _ne = int(_exp.w13_weight.shape[0])
+                _norm = bool(getattr(_exp, "renormalize", True))
+                if "prod-moe-attrs" not in globals():
+                    globals()["prod-moe-attrs"] = True
+                    print(
+                        "[prod-moe-ref] E=%d top_k=%d norm=%s attrs=%s"
+                        % (
+                            _ne,
+                            _tk,
+                            _norm,
+                            [a for a in dir(_exp) if any(k in a.lower() for k in ("top", "norm", "expert", "w13", "w2"))],
+                        ),
+                        flush=True,
+                    )
+                final_hidden_states = _moe_grouped(
+                    _w13, _w2, self.gate.weight, hidden_states, _ne, _tk, _norm
+                )
+            except Exception as _e:  # noqa: BLE001
+                import traceback as _tb
+
+                print("[prod-moe-ref] failed, falling back:", repr(_e), flush=True)
+                _tb.print_exc()
+                final_hidden_states = self.experts(
+                    hidden_states=hidden_states, router_logits=router_logits
+                )
+        else:
+            final_hidden_states = self.experts(
+                hidden_states=hidden_states, router_logits=router_logits
+            )
         if self.tp_size > 1 and not ENABLE_ALLREDUCE_RMSNORM_FUSION:
             final_hidden_states = tensor_model_parallel_all_reduce(final_hidden_states)
         # return to 1d if input is 1d

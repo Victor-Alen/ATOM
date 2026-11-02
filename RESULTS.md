@@ -1773,3 +1773,22 @@ The magnitudes fit the known mechanism rather than a layout bug:
 The `blk` numbers (4.4 at L0, 11.5 at L1) are not a like-for-like comparison: the production layer hook and the HF decoder-layer hook do not return the same quantity. That needs fixing before `blk` is used as evidence.
 
 Status: tier B has a working instrument (`ATOM_PROD_DUMP`) and a first trustworthy measurement. Round 59's conclusion is retracted.
+
+### 2026-11-03 03:00 (round 61): swapping the production MoE for the reference one breaks the model - weight layout differs
+
+Added an env-gated branch in `MellumSparseMoeBlock.forward` (`ATOM_PROD_MOE=ref`) that calls the reference `_moe_grouped` with `_unshuffle(experts.w13_weight)`. The branch runs without exceptions (E=64, top_k=8, renormalize=True, zero fallbacks in the server log), but the resulting model is broken:
+
+```
+baseline production   L0_attn max 0.03125   (round 60)
+ATOM_PROD_MOE=ref     L0_attn max 4.4375
+                      L0_moe  max 2.82812
+                      L1_moe  max 8.15625
+```
+
+and the request returns no tokens at all.
+
+Conclusion: `FusedMoE.w13_weight` is **not** stored in the layout that `_unshuffle` inverts. The reference path works on `layer.mlp.experts` of the HF-style model, where the tensor is the shuffled checkpoint layout; the production `FusedMoE` module stores something else (it also exposes `global_num_experts`, `local_num_experts`, `expert_map`, suggesting a different packing).
+
+Next step before any MoE swap: dump `experts.w13_weight[0]` and compare its first rows against the checkpoint's `experts.0.gate_proj/up_proj` to determine the production layout. Only then can a deterministic replacement be written.
+
+The branch stays in the tree, default off.
