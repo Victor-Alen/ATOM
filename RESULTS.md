@@ -2557,3 +2557,26 @@ Why this is not surprising, given everything measured tonight:
 So the honest statement to put in front of the acceptance discussion is: **the fix the task prescribes has been implemented and it does not work.** Not because it was implemented badly - its attention output matches the fused kernel to 4.9e-4 and its MoE is HF's own algorithm - but because the residual error is distributed across the other fused stages, and no single substitution addresses it.
 
 The only configuration measured tonight that reaches HF exactly remains the full reference path (ordered PyTorch operations end to end), which is 3x slower.
+### 2026-11-03 07:55 (round 97): final verification - reference path 14/14 prompts exact on the final tree
+
+Re-ran scenario A through the reference path on the final code tree (after every patch added today), 64 greedy tokens per prompt, single client, freshly started server:
+
+```
+prompts=14  tokens=896/896  rate=1.0000  exact=14
+```
+
+The batch was cut at 14 prompts by my own timeout (the reference path needs about 30-60 s per prompt in recompute mode), not by a failure: every prompt completed scored 64/64, A-0000 through A-0013.
+
+This is the strongest statement the session can make about the reference path: on the exact tree being handed over, with the documented configuration, it reproduces HF token for token on 896 of 896 generated tokens across 14 prompts.
+
+Final deliverable state:
+
+| | value |
+|---|---|
+| reference path, A | 1.0000 (14/14 verified today; 20/20 earlier) |
+| reference path, B | 1.0000 (20/20 earlier) |
+| reference path, C | exact on every clean sample |
+| production, A | 0.14-0.33 across runs (nondeterministic) |
+| production, B | 1.0000 |
+| production, C | 0.7812 (20 prompts) |
+| Step 0 | **not met** |
