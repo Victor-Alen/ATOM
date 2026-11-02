@@ -1792,3 +1792,26 @@ Conclusion: `FusedMoE.w13_weight` is **not** stored in the layout that `_unshuff
 Next step before any MoE swap: dump `experts.w13_weight[0]` and compare its first rows against the checkpoint's `experts.0.gate_proj/up_proj` to determine the production layout. Only then can a deterministic replacement be written.
 
 The branch stays in the tree, default off.
+
+### 2026-11-03 03:30 (round 62): production expert layout identified; reference MoE runs but gives no net gain
+
+Weight dump from the production `FusedMoE` (`ATOM_PROD_WDUMP`):
+
+```
+w13 [64, 1792, 2304]  first row == checkpoint gate_proj[0]
+w2  [64, 2304, 896]   first row == checkpoint down_proj[0]
+w13 vs cat(gate,up) max|d| = 0.2378   (shuffled inside, as expected)
+```
+
+so the tensor is the aiter-shuffled `cat(gate, up)` and `_unshuffle` is the right inverse. The failure in round 61 was not the expert weights: the production `ReplicatedLinear` gate keeps its weight in the transposed orientation, so `F.linear(h, gate.weight)` produced garbage. With that fixed the branch runs and produces plausible output.
+
+Measured effect on scenario A (20 prompts, 64 tokens, frozen config):
+
+```
+baseline production          : 287/1280 = 0.2242   exact 2/20
+production + reference MoE   : 254/1280 = 0.1984   exact 1/20
+```
+
+Per prompt the change is large in both directions: A-0000 goes 13/64 -> 32/64 while A-0005 goes 20/64 -> 2/64.
+
+Conclusion: matching the MoE alone does not help, because the attention difference is still present and dominates which prompts survive. Both must be brought in line at the same time before the aggregate moves.

@@ -131,6 +131,26 @@ class MellumSparseMoeBlock(nn.Module):
 
         # router_logits: (num_tokens, n_experts)
         router_logits = self.gate(hidden_states)
+        _wd = __import__("os").environ.get("ATOM_PROD_WDUMP")
+        if _wd and "prodmoe-w" not in globals():
+            try:
+                globals()["prodmoe-w"] = True
+                import torch as _pt
+
+                _exp0 = self.experts
+                _pt.save(
+                    {
+                        "w13_e0": _exp0.w13_weight[0].detach().float().cpu(),
+                        "w2_e0": _exp0.w2_weight[0].detach().float().cpu(),
+                        "w13_shape": _pt.tensor(_exp0.w13_weight.shape),
+                        "w2_shape": _pt.tensor(_exp0.w2_weight.shape),
+                    },
+                    _wd,
+                )
+                print("[prod-wdump] saved", _wd, flush=True)
+            except Exception as _e:  # noqa: BLE001
+                print("[prod-wdump] failed:", repr(_e), flush=True)
+
         _prod_moe = __import__("os").environ.get("ATOM_PROD_MOE")
         if _prod_moe == "ref":
             try:
@@ -154,8 +174,11 @@ class MellumSparseMoeBlock(nn.Module):
                         ),
                         flush=True,
                     )
+                _gw = self.gate.weight
+                if _gw.shape[0] != _ne:
+                    _gw = _gw.t()
                 final_hidden_states = _moe_grouped(
-                    _w13, _w2, self.gate.weight, hidden_states, _ne, _tk, _norm
+                    _w13, _w2, _gw, hidden_states, _ne, _tk, _norm
                 )
             except Exception as _e:  # noqa: BLE001
                 import traceback as _tb
