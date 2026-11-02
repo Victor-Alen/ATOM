@@ -1663,3 +1663,20 @@ Teacher forcing on C-0011 (send `prompt + ref[:k]`, ask for the next token) retu
 This is correct for serial single-request execution (which is what the engine does here). Concurrent requests would still need per-request state keyed by request id.
 
 Regression status at the time of writing: the teacher-forcing replay is in progress (step 0 `OK`); the full 9-step run takes about 18 minutes because every step re-prefills 4368 tokens.
+
+### 2026-11-02 (round 55): teacher forcing still returns 233 - the experiment is invalid, not the model
+
+After the request-isolation fix (round 54), teacher forcing on C-0011 still returns 233 at every step:
+
+```
+step 2: engine=233 hf=37     step 3: engine=233 hf=26828
+step 4: engine=233 hf=23     step 6: engine=233 hf=2116
+```
+
+While the free-running generation of the same prompt starts `[233, 233, 37, 26828, ...]` and matches HF for the first 12 tokens.
+
+The teacher-forcing prompt is built as `text + tok.decode(ref[:k])`, and those appended pieces are `'\n'`, `'\n\n'`, `'\n\n#'`, i.e. **trailing whitespace**. The round trip through the tokenizer was verified, but the HTTP prompt path re-tokenizes the text it receives, so trailing whitespace is not reliably preserved. That makes every request look like the original prompt and the model answers 233 each time.
+
+Conclusion: the 233 result is an artefact of the text prompt path, not evidence of request-state leakage, and it cannot be used to judge the model. The request-isolation fix (round 54) remains correct on its own terms and is kept.
+
+Valid measurement remains the free-running comparison: scenario C is 7/8 exact on the first eight prompts with 24 tokens.

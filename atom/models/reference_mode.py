@@ -171,12 +171,11 @@ _DUMPED: set = set()
 
 def _reset_reference_state():
     """Drop every piece of per-request state in the reference path."""
-    global _PENDING_FIRST, _LAST_PRED
     _HIST.clear()
     _KV.clear()
     _WRITTEN.clear()
-    _PENDING_FIRST = None
-    _LAST_PRED = None
+    _PENDING_FIRST[0] = False
+    _LAST_PRED[0] = None
 
 
 def history_after(new_ids, first_pos=0):
