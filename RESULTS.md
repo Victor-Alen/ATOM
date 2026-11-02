@@ -1815,3 +1815,19 @@ production + reference MoE   : 254/1280 = 0.1984   exact 1/20
 Per prompt the change is large in both directions: A-0000 goes 13/64 -> 32/64 while A-0005 goes 20/64 -> 2/64.
 
 Conclusion: matching the MoE alone does not help, because the attention difference is still present and dominates which prompts survive. Both must be brought in line at the same time before the aggregate moves.
+
+### 2026-11-03 03:45 (round 63): ATOM_REFERENCE_ATTN_CHUNK (or the 0.35 memory setting) breaks scenario A - do not use it
+
+Three configurations, scenario A, same prompts and reference file:
+
+```
+MODE+RECOMPUTE+ATTN4D+OWN_CACHE, util 0.45       : 384/384 = 1.0000  (6/6 exact)
+MODE+RECOMPUTE+ATTN4D+OWN_CACHE+MOE_BATCHED, CHUNK=1024, util 0.35 : 576/1280 = 0.4500
+MODE+RECOMPUTE+ATTN4D+OWN_CACHE, CHUNK=1024, util 0.35             : 135/384  = 0.3516
+```
+
+For these prompts the query-chunk loop runs exactly once (866 tokens, chunk 1024), so chunking should be a no-op - yet the result changes. Either the chunked path has a defect that also affects the single-chunk case, or the lower memory fraction changes KV allocation in a way that alters the computation. Both need investigation; until then `ATOM_REFERENCE_ATTN_CHUNK` must not be set and `--gpu-memory-utilization` must stay at 0.45.
+
+Consequence for the record: any measurement made with `ATOM_REFERENCE_ATTN_CHUNK=1024` is invalid, which includes the C-20 run labelled chunkC (`7/8 exact`) and every run from round 58 onwards that used it. The earlier clean C run (`c_clean.py`, no CHUNK) and the reference A/B numbers at 0.45 remain valid.
+
+This is exactly the kind of silent regression the project has been bitten by before; it is recorded here rather than quietly dropped.
