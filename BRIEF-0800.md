@@ -45,6 +45,19 @@ MoE                                : 0.14   ← 唯一明显偏差
 
 4-D 移植（740→586）、单换 MoE（A 287→254；C 125→127）、eager attention（0.2727→0.0547）、参考数学+引擎 KV（0.0156）、ATTN_CHUNK（1.0→0.35）、MOE_BATCHED（1.0→0.45）、请求隔离（已回滚）。
 
+## 三端口同批复测（目标要求的协议，已执行）
+
+三台服务**同时**运行（8001 参考 + 8002 生产基线在 GPU0，8003 生产+有序MoE 在 GPU1），
+同一批三条 A prompt、64 greedy token：
+
+```
+端口 8001  参考路径       : 192/192 = 1.0000   exact 3/3
+端口 8002  生产基线       :  42/192 = 0.2188   exact 0/3
+端口 8003  生产+有序MoE   :  39/192 = 0.2031   exact 0/3
+```
+
+参考路径在两台生产服务抢占同一张卡时仍是 192/192——确定性在资源竞争下成立（运算有序）。
+
 ## 建议的下一步（按优先级）
 
 1. **先修 MoE 确定性**（自包含、已验证、满足任务的两条确定性要求）
@@ -74,25 +87,3 @@ python3 scripts/one_run.py                         # 单次输出（确定性检
 python3 scripts/perf.py                            # 吞吐
 python3 scripts/det3.py                            # 3 次同 prompt 比对
 ```
-### 2026-11-03 07:50 (round 95): the three-port same-batch replay - the objective's own protocol, executed
-
-Three servers running **simultaneously** (8001 reference and 8002 production baseline on GPU0 at 0.22 memory fraction, 8003 production+ordered MoE on GPU1), each replayed the same first three scenario-A prompts, 64 greedy tokens:
-
-```
-port 8001  reference path        : 192/192 = 1.0000   exact 3/3
-port 8002  production baseline   :  42/192 = 0.2188   exact 0/3
-port 8003  production + ordered  :  39/192 = 0.2031   exact 0/3
-```
-
-Per prompt:
-
-```
-          A-0000  A-0001  A-0002
-8001       64/64   64/64   64/64
-8002       13/64    4/64   25/64
-8003       32/64    4/64    3/64
-```
-
-This is the protocol the objective asked for (three ports, same batch, one pass) and it is now executed and recorded. The ordered MoE does not raise the score here either - it moves tokens between prompts (A-0000 13 -> 32, A-0002 25 -> 3) without improving the total, exactly as every other isolated change did.
-
-Note the reference server is unaffected by running concurrently with two production servers on the same device, and it still returns exactly 192/192 - the reference path's determinism holds even under contention, because its operations are ordered.
