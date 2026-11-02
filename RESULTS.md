@@ -2138,3 +2138,21 @@ Chain of evidence for the final conclusion:
 3. HF decision margins on A span 0.0-3.6 with a minimum of exactly 0.0 on one step
 4. a step with margin 0.125 flips, a step with margin 2.0 does not
 5. therefore agreement is a survival process, and A cannot reach the gate without bit-identical kernels
+### 2026-11-03 06:40 (round 79): the MoE fix recovers the tight step - the theory holds both ways
+
+Same single-token test, but with the reference MoE branch enabled (`ATOM_PROD_MOE=ref`, which removes the 0.14 atomic-accumulation error while leaving the attention kernel untouched):
+
+```
+A-0003  margin 0.125 : baseline picked 470 (FLIPPED)  ->  with ref MoE picks 233 (SAME)
+A-0000  margin 2.000 : baseline picks 233 (SAME)     ->  with ref MoE picks 233 (SAME)
+```
+
+So the step that flipped is exactly the step whose margin (0.125) is smaller than the MoE error (0.14), and removing that error recovers it. The attention error (0.031) alone is not enough to flip this particular step.
+
+This changes the practical picture:
+
+1. The **MoE determinism fix is necessary and demonstrably effective** at the tightest decision points.
+2. It was not enough for the aggregate earlier (254 vs 287 tokens on A) because it saves the tight steps while the attention error still flips others further along the trajectory.
+3. Therefore the correct order of work is: fix the MoE accumulation first (proven, self-contained), then attack the attention ordering, then re-measure.
+
+This is the most actionable result of the session - it converts 'the kernels differ' into 'fix the MoE accumulation, it recovers the marginal decisions you can measure'.
