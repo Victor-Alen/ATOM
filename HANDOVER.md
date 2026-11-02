@@ -228,3 +228,23 @@ log: self.drafter = EagleProposer(self.config, self.device, self)
 So the status of that requirement is **not measured**, for a concrete reason (missing draft model), not because it was skipped.
 
 To measure it later: obtain the Mellum draft checkpoint, then run `scripts/one_run.py` against a server with and without `--method mtp --draft-model <path>` and compare the token ids - the same procedure used for the run-to-run and dual-GPU checks.
+## 关键提交（完整，按时间顺序）
+
+```
+f6d295d2  4-D attention scores（路径2 达到 1.0000 的转折点）
+78da84c3  KV 不重分配清零
+a373049d  回滚有害的请求隔离改动
+18d8fba8  ATOM_PROD_DUMP（路径3 profiling 工具）
+23816f10  ATTN_CHUNK 回归（测量作废声明）
+1ac4ee10  参考路径在 C 上其实是对的（此前的 C 失败全是测量污染）
+1dfee0b3  参考 MoE 能救回 0.125 间隔的步
+2d37d8f0  HF 同序 eager attention（含 KV 布局文档）；证明融合 attention 精准
+4f223ef3  attention 在 prefill/decode 两个阶段都被排除
+fb868420  RoPE 精确验证（half-split，theta 5e5）
+679c116e  RMSNorm 精准；无单一 bug，是累积舍入
+53a348b8  确定性代价 2.75×（26.3 → 9.6 tok/s）
+534d2567  生产路径双卡不一致（第 12 token）
+ac888007  有序 MoE 同时修复跨 run 与双卡可复现（已验证）
+82bf3b6b  MTP 无法测量（缺 draft 模型，附失败日志）
+6a825c9d  报告去重与最终整理
+```
