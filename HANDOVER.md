@@ -248,3 +248,24 @@ ac888007  有序 MoE 同时修复跨 run 与双卡可复现（已验证）
 82bf3b6b  MTP 无法测量（缺 draft 模型，附失败日志）
 6a825c9d  报告去重与最终整理
 ```
+## 工作产物在哪里（交付位置说明）
+
+所有提交都在**服务器本地**，没有推送到远端。
+
+| 仓库 | 路径 | 分支 | 最新提交 |
+|---|---|---|---|
+| 工作树 | `/workspace/ATOM-tritonmoe` | `dsh/moe-determinism` | `bbe48a6a` |
+| 共享 | `/workspace/ATOM` | `mellum-step0` | `313e9f5b` |
+
+`git remote -v` 指向 `https://github.com/ROCm/ATOM.git`（上游开源仓库），两个分支都**没有 upstream**。
+
+**我没有推送**，因为没有推送授权，而且推送到上游开源仓库不是本次任务的授权范围。
+
+取走产物：
+
+```
+# 在服务器上打包（推荐）
+cd /workspace/ATOM-tritonmoe && git bundle create /tmp/mellum-step0.bundle --all
+# 或直接拷走文档
+scp -P 2211 root@43.180.254.230:/workspace/ATOM-tritonmoe/{BRIEF-0800.md,DEBUG_GUIDE.md,REPORT-STEP0-2026-11-03.md,HANDOVER.md,RESULTS.md} .
+```
