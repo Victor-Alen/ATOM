@@ -58,6 +58,24 @@ MoE                                : 0.14   ← 唯一明显偏差
 
 参考路径在两台生产服务抢占同一张卡时仍是 192/192——确定性在资源竞争下成立（运算有序）。
 
+## 目标指定的方案：已实现，已测试，无效
+
+目标要求「生产路径接入 eager 同序 attention + HF MoE dispatch」。两个都实现了，同时启用测了：
+
+```
+生产基线                          :  42/192 = 0.2188
+只换 eager attention              :  13/192 = 0.0677
+只换 HF MoE                       :  39/192 = 0.2031
+两者同时（目标指定配置）          :  12/192 = 0.0625   ← 最低
+```
+
+**指定组合比基线低、比任何单项也低。**
+
+原因：attention 本来就准（4.9e-4），换掉它几乎不减少误差，只改变舍入路径；MoE 替换
+同样改变它参与的所有位置的舍入。两次替换把轨迹推向不同方向，换个方向不等于靠近 HF。
+
+**唯一能达到 HF 精确一致的配置仍是完整参考路径**（端到端有序 PyTorch 运算），慢 3 倍。
+
 ## 建议的下一步（按优先级）
 
 1. **先修 MoE 确定性**（自包含、已验证、满足任务的两条确定性要求）
@@ -87,26 +105,3 @@ python3 scripts/one_run.py                         # 单次输出（确定性检
 python3 scripts/perf.py                            # 吞吐
 python3 scripts/det3.py                            # 3 次同 prompt 比对
 ```
-
-### 2026-11-03 07:50 (round 96): the objective's prescribed fix, implemented and measured - it makes A worse
-
-The objective asks for the production path to adopt 'eager same-order attention + HF MoE dispatch'. Both were implemented this session (`ATOM_EAGER_ATTN=1` and `ATOM_PROD_MOE=ref`); this is the first measurement with **both enabled at once**, which is exactly the configuration the objective describes:
-
-```
-production baseline                     :  42/192 = 0.2188   exact 0/3
-eager attention only                    :  13/192 = 0.0677
-ordered (HF) MoE only                   :  39/192 = 0.2031
-eager attention + ordered MoE (target)  :  12/192 = 0.0625   exact 0/3
-```
-
-**The prescribed combination scores lower than the baseline and lower than either change alone.**
-
-Why this is not surprising, given everything measured tonight:
-
-1. attention was already accurate to 4.9e-4 (round 81) - replacing it removes almost no error, it only changes the rounding path
-2. the MoE substitution removes the 0.14 error but also changes the rounding path everywhere it is used
-3. each substitution therefore moves the trajectory in a different direction, and moving in a different direction does not converge on HF - the remaining stages still contribute their own few ulps per layer
-
-So the honest statement to put in front of the acceptance discussion is: **the fix the task prescribes has been implemented and it does not work.** Not because it was implemented badly - its attention output matches the fused kernel to 4.9e-4 and its MoE is HF's own algorithm - but because the residual error is distributed across the other fused stages, and no single substitution addresses it.
-
-The only configuration measured tonight that reaches HF exactly remains the full reference path (ordered PyTorch operations end to end), which is 3x slower.
