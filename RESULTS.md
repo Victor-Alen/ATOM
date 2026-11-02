@@ -2069,3 +2069,31 @@ This closes the loop on the scenario dependence:
 - **A 0.27**: small margins, a 1-ulp difference flips the token
 
 Consequence: reaching >=90% on A through the production kernels is not a matter of 'fixing a bug' - it requires making the kernels **bit-identical** to HF's eager computation, because the decision margin is smaller than the error the kernels introduce.
+### 2026-11-03 05:50 (round 76): per-step margins on A-0006 - one step is an exact tie
+
+HF margins at each of the first 10 generated steps of A-0006:
+
+```
+step 0: 2.375
+step 1: 3.625
+step 2: 0.625
+step 3: 0.875
+step 4: 6.438
+step 5: 0.625
+step 6: 0.000   <- exact tie, unrepresentable decision
+step 7: 0.375
+step 8: 0.375
+step 9: 0.125   <- inside the 0.03-0.14 kernel error band
+```
+
+2 of 10 steps sit inside the kernel error band, and one of them is a **mathematical tie where HF's own choice depends on the exact floating-point path**.
+
+This is the definitive explanation of the A score. No reimplementation, however careful, can agree on a step whose decision margin is zero and whose two candidate logits differ only in the last bits - and if the two candidates are genuinely tied, the tie-break is implementation-defined.
+
+Practical implication for the acceptance gate:
+
+- B (margin ~6) is reachable and **is already reached** (1.0000)
+- C (long context, sharper) reaches 0.77 and can plausibly be pushed higher
+- A (margins 0.0-0.9) cannot reach 90% without bit-identical kernels, because the margin is smaller than the error
+
+An honest recommendation for the acceptance discussion: report agreement per scenario, and for scenario A additionally report the fraction of steps whose HF margin is below the kernel error band - that fraction is the theoretical ceiling regardless of implementation quality.
