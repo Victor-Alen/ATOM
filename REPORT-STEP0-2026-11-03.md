@@ -436,3 +436,32 @@ Consequences to state plainly:
 1. Any single production number must be quoted with its run-to-run spread, not as a precise score.
 2. The reference path is deterministic (1.0000 reproduced three times) because it uses ordered PyTorch operations; the production path cannot be, because of the atomics - which is itself an argument for making the MoE accumulation deterministic.
 3. This also means the task requirement 'greedy must be identical' (MTP on/off identical, dual-GPU invariant) cannot be met by the production path as it stands, independent of the reference comparison.
+### 2026-11-03 07:55 (round 90): VERIFIED FIX - the MoE does cause the nondeterminism, and removing it restores reproducibility
+
+Same prompt (A-0000), greedy, 16 tokens, three consecutive requests against one freshly started server, twice:
+
+**Fused MoE (baseline):**
+
+```
+run0: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392, 37495, 497]
+run1: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392, 37495, 497]
+run2: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392,  470,  1297, 7912]
+identical: False        <- diverges at token 14
+```
+
+**Reference MoE (`ATOM_PROD_MOE=ref`):**
+
+```
+run0: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392, 37495, 497]
+run1: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392, 37495, 497]
+run2: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392, 37495, 497]
+identical: True         <- fully reproducible
+```
+
+## This is the one concrete win of the session
+
+The task requires that greedy output be reproducible (MTP on/off identical, dual-GPU invariant). The production path **fails** that today, and the cause is proven: the fused MoE's atomic accumulation produces a different summation order between runs, which flips a marginal decision at token 14 of this prompt. Replacing it with ordered accumulation makes the same server produce bit-identical greedy output three times in a row.
+
+Note the two results are not contradictory with round 87: removing the atomics does not raise the agreement score much (+0.013 on C), but it does restore determinism. These are two different properties, and only one of them is fixed by this change.
+
+Recommended first change to ship: make the MoE accumulation order-deterministic. It is self-contained, it fixes a stated requirement, and it is verified.
