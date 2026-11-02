@@ -398,6 +398,25 @@ class MellumModel(nn.Module):
         else:
             self.norm = PPMissingLayer()
 
+        _pd = __import__("os").environ.get("ATOM_PROD_DUMP")
+        if _pd:
+            import torch as _pt
+            _os2 = __import__("os")
+            _os2.makedirs(_pd, exist_ok=True)
+
+            def _mkprod(name):
+                def _h(mod, inp, out):
+                    t = out[0] if isinstance(out, tuple) else out
+                    if hasattr(t, "shape") and t.shape[0] > 1:
+                        _pt.save(t.detach().float().cpu(), _os2.path.join(_pd, name + ".pt"))
+                return _h
+
+            for _li in range(min(2, len(self.layers))):
+                _lay = self.layers[_li]
+                _lay.register_forward_hook(_mkprod(f"L{_li}_blk"))
+                _lay.self_attn.register_forward_hook(_mkprod(f"L{_li}_attn"))
+                _lay.mlp.register_forward_hook(_mkprod(f"L{_li}_moe"))
+
         self.make_empty_intermediate_tensors = make_empty_intermediate_tensors_factory(
             ["hidden_states", "residual"], self.config.hidden_size
         )

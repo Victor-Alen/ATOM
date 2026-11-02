@@ -1723,3 +1723,30 @@ Two changes prepared:
 2. `ATOM_REFERENCE_ATTN_CHUNK=1024`: the 4-D scores for an 11889-token prompt need `32 x 11889^2 x 4 B = 18.9 GiB` in the fp32 softmax and OOMed. Chunking the query dimension bounds it without changing any result, because each query row still attends to every key.
 
 Status: reference path A and B are 1.0000; C still has individual failures and is being measured.
+
+### 2026-11-03 02:15 (round 59): tier-B profiling instrumented; production L0 attention is permuted, not drifted
+
+Added `ATOM_PROD_DUMP=<dir>` to `atom/models/mellum.py`: forward hooks on layers 0-1 (`self_attn`, `mlp`, layer) dump the prefill tensors. This is the tier-B instrument (reference vs production).
+
+First measurement on A-0006, production server with no reference env vars:
+
+```
+L0_attn: max|delta| 1.59375   tokens differing 866/866
+L0_moe : max|delta| 3.5       tokens differing 866/866
+L0_blk : max|delta| 4.75      tokens differing 866/866
+```
+
+Critically, the *statistics* of the production and HF attention outputs agree almost exactly:
+
+```
+production: abs mean 0.02528, std 0.08606, shape (990, 2304)
+HF        : abs mean 0.02543, std 0.08621, shape (866, 2304)
+```
+
+and no row shift from -3 to +3 aligns them. A 1-ulp numerical difference cannot produce a 1.59 max delta while leaving mean and std unchanged; this looks like a **permutation or layout difference** in the attention output rather than accumulated rounding.
+
+Two immediate leads for the next round:
+1. the production dump has 990 rows where the prompt has 866 - locate where the extra 124 rows come from (padding aligned to a tile?) and whether the real rows are the first 866
+2. test whether production's output is a permutation of HF's by comparing sorted values per row (a match would prove a head-order or o_proj layout difference)
+
+The previous element-wise scan did not print because of a string-edit error in the probe; that measurement still needs to be redone.
