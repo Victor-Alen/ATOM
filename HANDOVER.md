@@ -213,3 +213,18 @@ So two of the three determinism requirements in the task can be met today, by ch
 3. the reason A cannot pass: accumulated rounding (6 fused stages x 28 layers) exceeds A's decision margin, whose minimum is 0.125 with one step at exactly 0.0
 4. seven candidate fixes measured, all ineffective at scenario level
 5. the production nondeterminism traced to the MoE atomics and **fixed** by ordered accumulation, satisfying run-to-run and dual-GPU reproducibility
+### 2026-11-03 07:35 (round 94): MTP cannot be measured here - attempted, not assumed
+
+Tried to enable the third determinism requirement (MTP on/off identical) by starting the server with `--method mtp`:
+
+```
+server came up DOWN
+log: self.drafter = EagleProposer(self.config, self.device, self)
+     model_class = resolve_obj_by_qualname(support_eagle_model_arch_dict[draft_model_hf_config.architectures[0]])
+```
+
+`--method mtp` resolves to the Eagle process, which requires a `--draft-model`; the Mellum checkpoint at /data/models/Mellum2.1-12B-A2.5B-Thinking does not ship one and none was found in the environment.
+
+So the status of that requirement is **not measured**, for a concrete reason (missing draft model), not because it was skipped.
+
+To measure it later: obtain the Mellum draft checkpoint, then run `scripts/one_run.py` against a server with and without `--method mtp --draft-model <path>` and compare the token ids - the same procedure used for the run-to-run and dual-GPU checks.
