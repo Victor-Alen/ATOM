@@ -1899,3 +1899,18 @@ HF fresh       : [233, 233, 37, 6539, 233, 910, 1132, 37]
 Only the first token agrees. C-0001 is the longest prompt measured so far (12580 tokens) and the failure is not reproduced at 11889 (C-0002 is exact), so there is a length-dependent defect somewhere between 11.9k and 12.6k in the reference path - most likely memory/allocation related, since the fp32 softmax workspace at 12580 tokens is `32 x 12580^2 x 4 B = 20.2 GiB` and the server also holds a 131k-slot KV buffer.
 
 Nothing was changed in the code this round.
+
+### 2026-11-03 04:25 (round 67): two concurrent clients corrupt the reference server
+
+While a background C-20 run was in progress, a second client sent `C-0000` to the same reference server. The response was:
+
+```
+engine: [801, 0, 0, 0, 0]
+HF    : [801, 1622, 1622, 1020, 669]
+```
+
+The first token is right and the rest are zero, i.e. the reference path's module-level state (`_HIST`, `_KV`, `_PENDING_FIRST`, ...) was being mutated by two requests at once. The same request alone on the same server had produced 64/64 earlier.
+
+Operational rule: **never send two concurrent clients to a reference-path server**. All reference-path measurements must be single-client. (This is the same root weakness that the reverted request-isolation change tried to address; it is real, but the reference path is documented as a single-sequence instrument.)
+
+This also means the concurrent runs I started earlier in the session (e.g. overnight ref A/B/C alongside other clients) may contain silently corrupted samples. Where a number looked anomalous, this is the first thing to suspect.
