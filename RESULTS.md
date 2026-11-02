@@ -2369,3 +2369,27 @@ The first attempt silently talked to a **previous server that still held port 80
 So: the reference path is still 1.0000 on the current tree, after every patch added today - verified on a server that was confirmed dead before starting.
 
 Measurement trap, now encountered four times: **check that the old process is gone and that the new one actually owns the port** before trusting any number. `pgrep -cf atom.entrypoints` must return 0 immediately before starting.
+### 2026-11-03 07:40 (round 89): the production path is not deterministic run to run - the A number has a spread
+
+Re-verified the production baseline on a freshly started server (old process confirmed dead first):
+
+```
+fresh run, A first 3 prompts : 13/192 = 0.0677
+stored run, same 3 prompts   : A-0000 13 + A-0001 3 + A-0002 3 = 19/192 = 0.099
+```
+
+and across earlier runs the same prompts scored differently again (A-0001 was 5/64 in one run and 3/64 in another; A-0005 was 20/64 in one and 2/64 in another).
+
+**So the production path is nondeterministic from run to run**, and the scenario-A aggregate is only meaningful as a range, not a single number:
+
+```
+production A across runs measured today: 0.2242 (20 prompts), 0.2727 (20 prompts), 0.3307 (6 prompts), 0.0677 (3 prompts)
+```
+
+The variation is consistent with the mechanism already established: the MoE kernel's atomic accumulation produces a different summation order on different runs, which moves the tight decisions in different directions each time.
+
+Consequences to state plainly:
+
+1. Any single production number must be quoted with its run-to-run spread, not as a precise score.
+2. The reference path is deterministic (1.0000 reproduced three times) because it uses ordered PyTorch operations; the production path cannot be, because of the atomics - which is itself an argument for making the MoE accumulation deterministic.
+3. This also means the task requirement 'greedy must be identical' (MTP on/off identical, dual-GPU invariant) cannot be met by the production path as it stands, independent of the reference comparison.
