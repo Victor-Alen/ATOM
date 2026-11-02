@@ -465,3 +465,26 @@ The task requires that greedy output be reproducible (MTP on/off identical, dual
 Note the two results are not contradictory with round 87: removing the atomics does not raise the agreement score much (+0.013 on C), but it does restore determinism. These are two different properties, and only one of them is fixed by this change.
 
 Recommended first change to ship: make the MoE accumulation order-deterministic. It is self-contained, it fixes a stated requirement, and it is verified.
+### 2026-11-03 07:25 (round 91): the price of determinism - 26.3 vs 9.6 tok/s
+
+Same prompt (A-0000, 990 tokens), 64 greedy tokens, same server settings, only the MoE differs:
+
+```
+fused MoE (current default, nondeterministic) : 64 tokens in 2.43 s = 26.32 tok/s   tpot 30.0 ms   ttft 0.520 s
+ordered MoE (deterministic, ATOM_PROD_MOE=ref): 64 tokens in 6.70 s =  9.56 tok/s   tpot 94.8 ms   ttft 0.703 s
+```
+
+So reproducibility costs **2.75x throughput** with this particular substitution, because the reference path calls PyTorch grouped GEMMs per expert instead of the fused aiter kernel.
+
+This is the number the decision needs:
+
+| property | fused MoE | ordered MoE |
+|---|---|---|
+| greedy reproducible | no (diverges by token 14) | yes (3/3 identical) |
+| A agreement | 0.27 (unstable) | 0.20 |
+| C agreement | 0.7812 | 0.7937 |
+| throughput | 26.3 tok/s | 9.6 tok/s |
+
+Note that this substitution is **not** the right long-term fix - it is a proof that the atomics are the cause, and it pays for determinism by abandoning the fused kernel. A proper fix would keep the fused kernel and make its accumulation order fixed (for example a deterministic tree reduction or a per-expert sequential accumulate inside the same kernel), which should cost far less than 2.75x.
+
+Recommendation for the acceptance discussion: treat determinism and agreement as two separate requirements with separate owners. Determinism has a proven cause and a proven (expensive) fix; agreement on scenario A has no fix short of full bit-exactness.
