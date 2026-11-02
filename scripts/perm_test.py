@@ -9,7 +9,7 @@ import torch
 
 MODEL = "/data/models/Mellum2.1-12B-A2.5B-Thinking"
 REF = Path("/workspace/ATOM/scripts/hf_reference_generate.py")
-D = Path("/workspace/logs/prodn")
+D = Path("/workspace/logs/prodn33")
 
 
 def load():

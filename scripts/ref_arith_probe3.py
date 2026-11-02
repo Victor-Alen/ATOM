@@ -41,6 +41,7 @@ def rotate_half(x):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--ref-file", default="/workspace/correctness/hf_scenario_c_200_eager.jsonl")
     ap.add_argument("--prompt-id", default="C-0000")
     ap.add_argument("--steps", type=int, default=16)
     ap.add_argument("--prompt-tokens", type=int, default=512)
@@ -62,7 +63,7 @@ def main():
     print("HF ready", flush=True)
 
     rec = None
-    for line in open("/workspace/correctness/hf_scenario_c_200_eager.jsonl", encoding="utf-8"):
+    for line in open(args.ref_file, encoding="utf-8"):
         r = json.loads(line)
         if r["id"] == args.prompt_id:
             rec = r
