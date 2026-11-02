@@ -1627,3 +1627,25 @@ ref: [233, 233, 37, 26828, 23, 233, 2116, 895]   (first 8 identical)
 Conclusion: the chunk pattern for a failing prompt is identical to that of a passing one, and every visible KV slot is written. The failure is therefore not structural - it is a residual arithmetic difference that only some prompts reach within 64 tokens.
 
 Scenario C measured so far: 6/12 exact, mean 0.6588, and the failures do **not** correlate with prompt length (C-0004 at 10306 tokens is exact, C-0011 at 4368 is not).
+
+### 2026-11-02 (round 53): clean scenario-C measurement - 7/8 exact; earlier C numbers were stale
+
+Re-measured scenario C on the server that has all fixes active (4-D scores + no KV reallocation + own cache), 24 greedy tokens per prompt:
+
+```
+C-0000 1.000  C-0002 1.000  C-0003 1.000  C-0004 1.000
+C-0005 1.000  C-0007 1.000  C-0011 0.708  C-0012 1.000
+```
+
+7 of the first 8 prompts are bit-exact; only C-0011 diverges (after token 12). The earlier C figures (0.047, 0.125, 0.297, mean 0.6588) were measured on servers that did not have the complete fix set active and are not valid evidence.
+
+Forward diagnostics for C-0011 confirm there is no chunking:
+
+```
+[chunk] fwd=1 q_len=4368 ctx=4368 pos=(0,4367) ctx_head=[0,1,2] ctx_tail=[4366,4367]
+[chunk] fwd=2 q_len=4369 ctx=4369 pos=(0,4368) ...
+```
+
+Repeatability: three consecutive requests for the same prompt return byte-identical streams (`all three identical: True`), so the path is deterministic; the earlier 0.297-vs-0.016 discrepancy was a configuration difference, not state leakage.
+
+Logits-level comparison for step 0 and step 1 could not be completed: the injection into `compute_logits` did not apply (the anchor text differs), so the logits dump directory stayed empty. That measurement is still open.
