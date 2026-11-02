@@ -1404,3 +1404,22 @@ Experiment 2: HF per-layer last-row hidden states computed in that same engine-e
 Layer 0 is bit-exact, layer 1 is off by exactly one bf16 ulp, and the error doubles layer by layer. Running with the deterministic MoE (`MOE_DET=1`) and with the HF-identical `F.grouped_mm` (`MOE_DET=0`) produced **identical** layer deltas, so the MoE is not the source.
 
 Next step (now clearly scoped): compare layer 1's sub-operations (post-attention-LN, attention output, MoE output) between the engine and HF in one process. A one-ulp difference at a single op is findable, unlike the earlier environment-level mystery.
+
+### 2026-11-02 (round 42): sub-op bisection - the divergence is inside layer 1's attention
+
+Per-layer sub-operation comparison (engine latched dump vs HF hooks, same prompt A-0006, same process environment):
+
+| layer | post-LN `h` | attention out | post-attn LN `h2` | MoE out |
+|---|---|---|---|---|
+| L0 | 0 | 0 | 0 | 0 |
+| L1 | **0** | **0.000488** | 0.00195 | 0.000488 |
+| L2 | 0.000244 | 0.0078 | 0.00586 | 0.00098 |
+| L3 | 0.00098 | 0.0078 | 0.0156 | 0.0078 |
+
+Layer 0 is exact in every sub-operation. Layer 1 has a bit-identical input (post-LN) and diverges first in the **attention output**, before the MoE. So Norm, residual and MoE are excluded as the origin of the first difference.
+
+Weights were re-checked for layers 0-3 (q/k/v rows, q_norm, k_norm): all `0.000000` against the checkpoint, so the divergence is not a weight/layout problem either.
+
+Remaining candidates inside L1's attention, all of which are exact at L0 with the same code: rope application, q/k norm application order, softmax/accumulation order, o_proj. The per-op harness (`scripts/ops_l1.py`) captures HF's `q_proj`, `q_norm`, pre/post-rope q and k and recomputes them from the engine's own `h1_full` with checkpoint weights; it needs one fix (the `apply_rotary_pos_emb` wrapper's return unpacking) before it can report the first differing op.
+
+Status unchanged: **Step 0 not passed**; best numbers A 0.3836 single-run / 0.257 median-of-3, B 1.0000, C 0.5816.
