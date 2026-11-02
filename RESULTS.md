@@ -2030,3 +2030,22 @@ Updated three-path table (all single-client, clean state):
 | C | baseline | exact on all clean samples | 0.7708 (8 tokens, 6 prompts) |
 
 Step 0 (>=90% on 200 prompts) is still not met.
+### 2026-11-03 06:00 (round 74): the production path already passes scenario B at 1.0000
+
+Production server, no env vars, current tree, single client:
+
+```
+B (20 prompts, 64 tokens): 1280/1280 = 1.0000   exact 20/20
+```
+
+Full three-path table, all clean single-client measurements:
+
+| scenario | path 1 HF | path 2 reference | path 3 production |
+|---|---|---|---|
+| A | baseline | 1.0000 | 0.2727 |
+| B | baseline | 1.0000 | **1.0000** |
+| C | baseline | exact on clean samples | 0.7708 (8 tokens, 6 prompts) |
+
+So the production path already meets the >=90% gate on B, is close on C (0.77), and is far on A (0.27). The gap is scenario-dependent, which strongly suggests it is driven by how close the next-token distribution sits to a tie rather than by a uniform numerical error.
+
+Step 0 as a whole (200 public prompts, >=90%) is still not met, because A is far below the gate.
