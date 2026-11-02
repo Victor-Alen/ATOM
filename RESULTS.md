@@ -1750,3 +1750,26 @@ Two immediate leads for the next round:
 2. test whether production's output is a permutation of HF's by comparing sorted values per row (a match would prove a head-order or o_proj layout difference)
 
 The previous element-wise scan did not print because of a string-edit error in the probe; that measurement still needs to be redone.
+
+### 2026-11-03 02:30 (round 60): CORRECTION - production L0 attention is not permuted, it differs by small numerical amounts
+
+Round 59 reported production `L0_attn` differing from HF by `max 1.59` and concluded a permutation/layout problem. A cleaner re-measurement (aligning on the true prompt length, 866 rows, and using the head-wise view) gives:
+
+```
+L0_attn: max 0.03125    mean 1.57e-4
+L0_moe : max 0.140625   mean 8.22e-4
+L0_blk : max 4.4375     mean 2.99e-2
+L1_attn: max 0.0625     mean 5.14e-4
+L1_moe : max 0.135742   mean 1.45e-3
+L1_blk : max 11.459     mean 8.35e-2
+```
+
+and the head mapping is the identity for the first eight heads (`0->0`, `1->1`, ..., each within `4.9e-4`). So the earlier 1.59 figure was a comparison artefact, and the permutation hypothesis is **refuted**: production attention is numerically close to HF eager but not bit-identical.
+
+The magnitudes fit the known mechanism rather than a layout bug:
+- attention `~3e-2` max at layer 0 is a few bf16 ulps, consistent with online-softmax tiling versus a single full-row fp32 softmax
+- MoE `~1.4e-1` max is larger, consistent with the atomic accumulation order in the fused kernel
+
+The `blk` numbers (4.4 at L0, 11.5 at L1) are not a like-for-like comparison: the production layer hook and the HF decoder-layer hook do not return the same quantity. That needs fixing before `blk` is used as evidence.
+
+Status: tier B has a working instrument (`ATOM_PROD_DUMP`) and a first trustworthy measurement. Round 59's conclusion is retracted.
