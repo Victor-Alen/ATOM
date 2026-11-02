@@ -552,3 +552,25 @@ Per prompt:
 This is the protocol the objective asked for (three ports, same batch, one pass) and it is now executed and recorded. The ordered MoE does not raise the score here either - it moves tokens between prompts (A-0000 13 -> 32, A-0002 25 -> 3) without improving the total, exactly as every other isolated change did.
 
 Note the reference server is unaffected by running concurrently with two production servers on the same device, and it still returns exactly 192/192 - the reference path's determinism holds even under contention, because its operations are ordered.
+### 2026-11-03 07:50 (round 96): the objective's prescribed fix, implemented and measured - it makes A worse
+
+The objective asks for the production path to adopt 'eager same-order attention + HF MoE dispatch'. Both were implemented this session (`ATOM_EAGER_ATTN=1` and `ATOM_PROD_MOE=ref`); this is the first measurement with **both enabled at once**, which is exactly the configuration the objective describes:
+
+```
+production baseline                     :  42/192 = 0.2188   exact 0/3
+eager attention only                    :  13/192 = 0.0677
+ordered (HF) MoE only                   :  39/192 = 0.2031
+eager attention + ordered MoE (target)  :  12/192 = 0.0625   exact 0/3
+```
+
+**The prescribed combination scores lower than the baseline and lower than either change alone.**
+
+Why this is not surprising, given everything measured tonight:
+
+1. attention was already accurate to 4.9e-4 (round 81) - replacing it removes almost no error, it only changes the rounding path
+2. the MoE substitution removes the 0.14 error but also changes the rounding path everywhere it is used
+3. each substitution therefore moves the trajectory in a different direction, and moving in a different direction does not converge on HF - the remaining stages still contribute their own few ulps per layer
+
+So the honest statement to put in front of the acceptance discussion is: **the fix the task prescribes has been implemented and it does not work.** Not because it was implemented badly - its attention output matches the fused kernel to 4.9e-4 and its MoE is HF's own algorithm - but because the residual error is distributed across the other fused stages, and no single substitution addresses it.
+
+The only configuration measured tonight that reaches HF exactly remains the full reference path (ordered PyTorch operations end to end), which is 3x slower.
