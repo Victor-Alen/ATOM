@@ -1680,3 +1680,19 @@ The teacher-forcing prompt is built as `text + tok.decode(ref[:k])`, and those a
 Conclusion: the 233 result is an artefact of the text prompt path, not evidence of request-state leakage, and it cannot be used to judge the model. The request-isolation fix (round 54) remains correct on its own terms and is kept.
 
 Valid measurement remains the free-running comparison: scenario C is 7/8 exact on the first eight prompts with 24 tokens.
+
+### 2026-11-02 (round 56): default fast path measures A = 0.2292 - the reference path is not the deliverable
+
+Re-measured scenario A (first 6 prompts, 64 greedy tokens) on a server started **without** any `ATOM_REFERENCE_*` variables, i.e. the configuration the judge will use:
+
+```
+A-0000 0.500  A-0001 0.078  A-0002 0.078
+A-0003 0.312  A-0004 0.094  A-0005 0.312
+FAST PATH A(6): agreement = 0.2292
+```
+
+Versus the reference configuration (all four switches on): `agreement = 1.0000, 20/20 exact`.
+
+**The reference path is a measuring instrument, not a deliverable.** The default path is still at roughly 23-38% agreement, so Step 0 is not met by the shipped code in any sense. The two fixes found this session (4-D score layout, KV allocation) exist only inside `reference_mode.py` and have not been ported into the production kernels.
+
+Reported discrepancy with the other agent is therefore explained: they measured the default path, which is the meaningful number.
