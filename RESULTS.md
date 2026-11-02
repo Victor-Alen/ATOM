@@ -1476,3 +1476,22 @@ Two conclusions:
 New prime suspect for the remaining 1-ulp difference on 21 of 866 positions: this aiter build has **no `aiter.shuffle_weight`**, yet `reference_mode._unshuffle` is applied to the engine's expert tensors before the MoE. If ATOM stores the experts in checkpoint layout already, `_unshuffle` would permute correct weights into wrong ones - which matches the observed error magnitude exactly. Verification is blocked for the moment because the reference server stopped starting on this node (GPU memory contention: GPU0 71 GiB free, GPU1 busy).
 
 Next: dump `exp.w13_weight[0]` raw and `_unshuffle(...)[0]` and compare both against `cat(gate_proj[0], up_proj[0])` from the checkpoint; if the raw tensor matches, remove the `_unshuffle` calls.
+
+### 2026-11-02 (round 46): four-tensor semantic comparison, layer 0, full matrices
+
+Engine and HF tensors captured at the same semantic points, both bf16:
+`attn_out` = attention projection output before the residual; `moe_out` = the MoE output as executed; `blk_0` = the layer output.
+
+| tensor | max abs delta | tokens differing | elements differing |
+|---|---|---|---|
+| `attn_out` | 4.88e-4 | 26 / 866 | 2068 / 1 995 264 |
+| `moe_out` | 1.95e-3 | 21 / 866 | 13635 / 1 995 264 |
+| `blk_0` | 1.95e-3 | 22 / 866 | 9547 / 1 995 264 |
+
+The `post_attn_residual` row is omitted: the engine-side dump for it was written as `x + outs` at a point where `x` had already been updated to `x + outs`, so that entry double-counts the attention output and is a measurement bug, not a real difference. The correct residual is the engine's own `x` after the update, which differs from HF by the `attn_out` deltas above.
+
+Reading the token sets: the MoE tokens `{199, 222, 508, 550, 557, 569, 583, 627, ...}` are a subset of the attention tokens `{93, 164, 199, 222, 471, 477, 508, 550, ...}`, so attention is upstream and the MoE difference is inherited through the post-attention norm.
+
+The sparsity is extreme: at token 93 a **single** hidden dimension differs, by 4.77e-7 (one bf16 ulp at that magnitude). A one-element, one-ulp event in attention, at 26 of 866 tokens, is what seeds the entire divergence.
+
+Next: inspect attention at token 93 - compare q, k, v, the scores row, the softmax row and the per-head outputs for that single token, to identify which stage first rounds differently.
