@@ -1442,3 +1442,18 @@ This explains the paradox that layer 1's last row diverged although its last-row
 Since layer 0's input (embedding) is bit-exact everywhere, the one-ulp differences at those 21 positions are produced inside layer 0 - the most likely mechanism being a **top-8 expert tie**: a one-ulp difference in the gate logits flips the 8th expert at a near-tie, changing only that token's output slightly.
 
 Next step: for those 21 positions, compare the selected top-8 expert index sets between the engine and HF, and the gate logits. If the sets differ, the fix is to make the gate computation identical (or to break ties by a fixed rule on both sides).
+
+### 2026-11-02 (round 44): expert routing is bit-identical - the one-ulp difference is in the expert GEMM
+
+Compared layer-0 expert selection between engine and HF for A-0006 (HF's `MellumTopKRouter` returns `(logits, routing_weights, selected_experts)`, so the selection can be captured directly):
+
+```
+positions with identical expert set = 866 / 866
+routing weights max|delta|         = 0
+```
+
+So the top-8 gate and the routing weights are exactly equal everywhere. Combined with the previous rounds (embedding bit-exact, weights bit-exact, L1 input differing at only 21/866 positions), the remaining one-ulp difference must be produced **inside the expert computation itself** (the grouped GEMM over the sorted token-expert pairs), not by routing.
+
+This is the narrowest the defect has been narrowed: a 1-ulp difference on 21 of 866 tokens, inside layer 0's experts, with identical inputs, identical expert assignment and identical routing weights.
+
+Next step: compare the per-expert GEMM output for one affected token - feed the same token slice and expert weights through (a) HF's `grouped_mm`, (b) the engine's path, (c) a plain `F.linear` per expert, and see which pair matches. The sort order inside `grouped_mm` (token-major vs expert-major accumulation) is the prime suspect for a 1-ulp difference.
