@@ -158,6 +158,10 @@ def _rotary(cfg, dev):
 
 
 _HIST: list = []
+_CHUNK: dict = {}
+_WRITTEN: dict = {}
+_LCHUNK: dict = {}
+
 _LAST_PRED = [None]
 _PROMPT = {"ids": None}
 _FIRST_OUT = [None]
@@ -165,17 +169,37 @@ _PENDING_FIRST = [False]
 _DUMPED: set = set()
 
 
+def _reset_reference_state():
+    """Drop every piece of per-request state in the reference path."""
+    global _PENDING_FIRST, _LAST_PRED
+    _HIST.clear()
+    _KV.clear()
+    _WRITTEN.clear()
+    _PENDING_FIRST = None
+    _LAST_PRED = None
+
+
 def history_after(new_ids, first_pos=0):
     """Update the single-sequence token history and return it.
 
-    A request starts at position 0 (prefill, possibly split into several chunks);
-    everything else continues the current sequence. Using 'multi-token means a new
-    request' was wrong because chunked prefill sends several multi-token chunks.
+    A decode step in recompute mode replays the whole history from position 0, so the
+    absolute position cannot distinguish a new request from a replayed one. The
+    incoming stream is classified instead: it either equals the stored history, or it
+    extends it, or it is something else - which means a new request arrived and all
+    per-request state must be reset.
     """
-    if int(first_pos) == 0:
-        _HIST[:] = list(new_ids)
-    else:
-        _HIST.extend(list(new_ids))
+    ids = list(new_ids)
+    prev = _HIST
+    n = len(ids)
+    same = n <= len(prev) and prev[:n] == ids
+    extends = n > len(prev) and ids[: len(prev)] == prev
+    if same:
+        return _HIST
+    if extends:
+        _HIST[:] = ids
+        return _HIST
+    _reset_reference_state()
+    _HIST[:] = ids
     return _HIST
 
 
@@ -402,7 +426,9 @@ def reference_forward(model, input_ids, positions):
         "n_positions": int(positions.numel()),
     }
     _dump_dir = os.environ.get("ATOM_REFERENCE_DUMPL")
-    _dump_ok = bool(_dump_dir) and int(x.shape[0]) > 1
+    _dump_ok = bool(_dump_dir) and (
+        int(x.shape[0]) > 1 or os.environ.get("ATOM_REFERENCE_DUMP_DECODE") == "1"
+    )
     _dump_n = len([k for k in _DUMPED if k.startswith("layers")])
     _dump_call = _dump_ok and _dump_n < 2
     for li, layer in enumerate(model.model.layers):
@@ -535,6 +561,29 @@ def reference_forward(model, input_ids, positions):
                 print(f"[ref] slots_mine={write_slots.tolist()[:8]} slots_atom={smv} bt={bt_dbg} bs={block_size}", flush=True)
             k_flat[write_slots] = k
             v_flat[write_slots] = v
+            _wr = _WRITTEN.get(li)
+            if _wr is None or _wr.numel() < k_flat.shape[0]:
+                _wr = torch.zeros(int(k_flat.shape[0]), dtype=torch.bool, device=dev)
+                _WRITTEN[li] = _wr
+            _wr[write_slots] = True
+            if li == 0 and s == 0:
+                _n = int(_LCHUNK.get("n", 0)) + 1
+                _LCHUNK["n"] = _n
+                _CHUNK["n"] = _n
+                _CHUNK["pos"] = (int(new_pos.min().item()), int(new_pos.max().item()))
+                _CHUNK["ctx"] = ctx
+                _CHUNK["bs"] = bs
+                if os.environ.get("ATOM_REFERENCE_CHUNKLOG") == "1":
+                    _ws = write_slots[:3].tolist() if hasattr(write_slots, "tolist") else write_slots
+                    _cs = ctx_slots[s]
+                    _cs_head = _cs[:3].tolist() if hasattr(_cs, "tolist") else _cs
+                    _cs_tail = _cs[-2:].tolist() if hasattr(_cs, "tolist") else _cs
+                    print(
+                        f"[chunk] fwd={_n} q_len={int(len(new_pos))} ctx={ctx} "
+                        f"pos={_CHUNK['pos']} ctx_slots_len={int(len(_cs))} "
+                        f"ctx_head={_cs_head} ctx_tail={_cs_tail} write={_ws}",
+                        flush=True,
+                    )
 
             sl = ctx_slots[s]
             kk = k_flat[sl].transpose(0, 1)  # [nKV, ctx, D]
@@ -553,6 +602,17 @@ def reference_forward(model, input_ids, positions):
                 mask = ki <= qi
                 if lt == "sliding_attention" and W is not None:
                     mask = mask & ((qi - ki) < W)
+                if os.environ.get("ATOM_REFERENCE_KVCHK") == "1":
+                    _wr2 = _WRITTEN.get(li)
+                    if _wr2 is not None:
+                        _vis = mask[-1]
+                        _w = _wr2[: _vis.numel()]
+                        _unw = int((_vis & ~_w).sum().item())
+                        print(
+                            f"[kvchk] L{li} chunk={_CHUNK.get('n')} q={int(qi[-1].item())} "
+                            f"visible={int(_vis.sum().item())} unwritten_visible={_unw}",
+                            flush=True,
+                        )
                 _hl = os.environ.get("ATOM_REFERENCE_HEAD_LOOP") == "1"
                 if _hl:
                     neg2 = ~mask.repeat(rep, 1)
@@ -572,6 +632,13 @@ def reference_forward(model, input_ids, positions):
                     continue
                 if os.environ.get("ATOM_REFERENCE_ATTN4D") == "1":
                     q4 = qh.reshape(1, nH, qh.shape[2], D)[:, :, c0:c1, :]
+                    if os.environ.get("ATOM_REFERENCE_ATTN4D_LOG") == "1":
+                        print(
+                            f"[a4d] L{li} chunk={_CHUNK.get('n')} n_new={n_new} "
+                            f"nH={nH} rep={rep} ctx={ctx} rows={c1 - c0} "
+                            f"k4e={tuple(kk.shape)}",
+                            flush=True,
+                        )
                     k4e = kk.repeat_interleave(rep, dim=0).unsqueeze(0)
                     v4e = vv.repeat_interleave(rep, dim=0).unsqueeze(0)
                     sc = torch.matmul(q4, k4e.transpose(2, 3)) * scale
@@ -678,6 +745,7 @@ def reference_forward(model, input_ids, positions):
                 _LDUMP["moe0_full"] = moe.detach().to(torch.bfloat16).cpu()
         if _dump_call:
             _LDUMP[f"blk_{li}"] = x[-1].detach().float().cpu()
+            _LDUMP[f"c{_CHUNK.get('n')}_blk_{li}"] = x[-1].detach().float().cpu()
             if li == 0:
                 _LDUMP["blk0_full"] = x.detach().to(torch.bfloat16).cpu()
         if _ldir and n_new > 1:

@@ -1649,3 +1649,17 @@ Forward diagnostics for C-0011 confirm there is no chunking:
 Repeatability: three consecutive requests for the same prompt return byte-identical streams (`all three identical: True`), so the path is deterministic; the earlier 0.297-vs-0.016 discrepancy was a configuration difference, not state leakage.
 
 Logits-level comparison for step 0 and step 1 could not be completed: the injection into `compute_logits` did not apply (the anchor text differs), so the logits dump directory stayed empty. That measurement is still open.
+
+### 2026-11-02 (round 54): request isolation for the reference path
+
+Teacher forcing on C-0011 (send `prompt + ref[:k]`, ask for the next token) returned 233 at **every** step regardless of the prefix, while free-running generation matched HF for the first 12 tokens. Inputs were verified correct (round-trip lengths and prefixes all matched), so the defect is request-to-request state, not arithmetic.
+
+`first_pos == 0` cannot identify a new request because in recompute mode every decode step also replays from position 0. The fix classifies the incoming token stream against the stored history instead:
+
+- equal to the stored history -> replay of the same request, keep state
+- extends the stored history -> next decode step, keep KV and adopt the new stream
+- anything else -> a new request, drop `_HIST`, `_KV`, `_WRITTEN`, `_PENDING_FIRST`, `_LAST_PRED`
+
+This is correct for serial single-request execution (which is what the engine does here). Concurrent requests would still need per-request state keyed by request id.
+
+Regression status at the time of writing: the teacher-forcing replay is in progress (step 0 `OK`); the full 9-step run takes about 18 minutes because every step re-prefills 4368 tokens.
