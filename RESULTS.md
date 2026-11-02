@@ -1537,3 +1537,18 @@ Different batch rank and batch count make the library pick a different GEMM kern
 The fix is to compute the scores in exactly HF's layout: expand the 4 KV heads to 32 query heads, reshape q and k to `[1, nH, S, D]`, and call `torch.matmul` on that 4-D pair before the softmax. That makes the score matmul bit-comparable instead of merely numerically close.
 
 This closes the investigation chain that started with the KV-block question: weights, embeddings, routing, MoE GEMM, q/k norm and rope are all bit-exact; the single remaining discrepancy is the batch structure of one matmul.
+
+### 2026-11-02 (round 49): FIXED - 4-D attention scores make scenario A 20/20 exact
+
+Implemented the fix identified in round 48: compute the attention scores as a 4-D batched matmul over the 32 query heads (`ATOM_REFERENCE_ATTN4D=1`), exactly as HF does, instead of the 3-D `[nKV, rep*S, D]` form.
+
+Result on scenario A (20 prompts, 64 greedy tokens, fresh HF references):
+
+```
+A: agreement = 1.0000   exact = 20/20
+```
+
+Target prompt A-0006 now reproduces HF byte for byte:
+`[233, 233, 37, 24285, 233, 47, 307, 950]` for both engine and HF (previously `26828` vs `24285` at position 4).
+
+Before this change the same measurement was 0.3836 (5/20). The entire divergence chain - weights, embedding, norms, rope, routing, MoE, and every layer - was downstream of one matmul whose batch rank differed from HF's.
