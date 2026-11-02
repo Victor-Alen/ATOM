@@ -1914,3 +1914,20 @@ The first token is right and the rest are zero, i.e. the reference path's module
 Operational rule: **never send two concurrent clients to a reference-path server**. All reference-path measurements must be single-client. (This is the same root weakness that the reverted request-isolation change tried to address; it is real, but the reference path is documented as a single-sequence instrument.)
 
 This also means the concurrent runs I started earlier in the session (e.g. overnight ref A/B/C alongside other clients) may contain silently corrupted samples. Where a number looked anomalous, this is the first thing to suspect.
+
+### 2026-11-03 04:50 (round 68): experiments stopped, state consolidated
+
+The live-C measurement (`HF recomputed live` vs engine, single client) could not be completed: a stale background job restarted the 8003 server with a different environment while the request was in flight, so the client hung on a dead server. This is the third time a restart has corrupted a measurement in this session - the running processes must be checked before starting anything new.
+
+Current evidence-backed state, nothing inferred:
+
+| item | value | how measured |
+|---|---|---|
+| reference path A | 1.0000 (384/384, 6/6 exact) | clean config, single client |
+| reference path B | 1.0000 (20/20) | earlier clean run |
+| reference path C | C-0000 64/64, C-0002 64/64, C-0003 64/64; C-0001 1/8 | mixed, C-0001 has an unreproducible reference |
+| production A | 0.2242 (287/1280, 2/20) | clean config, single client |
+| production MoE vs HF at L0 | max 0.14 | `ATOM_PROD_DUMP` |
+| production attention vs HF at L0 | max 0.031 | `ATOM_PROD_DUMP` |
+
+Step 0 is **not** met and the three-path unification is **not** achieved.
