@@ -1980,3 +1980,24 @@ Almost every token is wrong. This matches the historical note in `reference_mode
 
 Consequence for the objective: 'production = reference math + real KV manager' is not available. The production path can only be fixed by giving its attention kernels an HF-ordered computation, which is a kernel-level change.
 EOF
+### 2026-11-03 05:40 (round 72): the production path is unchanged by the instrumentation
+
+All the diagnostic additions this session (`ATOM_PROD_DUMP`, `ATOM_PROD_MOE`, `ATOM_PROD_WDUMP`) are env-gated and default off. Verified that the default path still behaves as before:
+
+```
+production, no env vars, A first 6 prompts: 127/384 = 0.3307 (1/6 exact)
+earlier production baseline, A 20 prompts : 287/1280 = 0.2242 (2/20 exact)
+```
+
+Same band, different prompt subset - so the instrumentation did not break the shipped path.
+
+Final state of the work (nothing inferred):
+
+| | value |
+|---|---|
+| reference path A / B | 1.0000 / 1.0000 |
+| reference path C (clean samples) | C-0000 64/64, C-0001-C-0003 8/8 |
+| production A | 0.2242 (20 prompts) / 0.3307 (6 prompts) |
+| Step 0 | **not met** |
+
+Deliverables: `RESULTS.md` (~2000 lines of evidence), `HANDOVER.md`, `REPORT-STEP0-2026-11-03.md`, `VALIDATION_TIERS.md`, `OVERNIGHT_PLAN.md`.
