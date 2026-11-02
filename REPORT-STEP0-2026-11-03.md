@@ -148,3 +148,26 @@ Practical implication for the acceptance gate:
 - A (margins 0.0-0.9) cannot reach 90% without bit-identical kernels, because the margin is smaller than the error
 
 An honest recommendation for the acceptance discussion: report agreement per scenario, and for scenario A additionally report the fraction of steps whose HF margin is below the kernel error band - that fraction is the theoretical ceiling regardless of implementation quality.
+### 2026-11-03 06:00 (round 77): the quantitative model that explains every observed score
+
+A single flipped token does not cost one token: the suffix is conditioned on the wrong prefix, so every later token is wrong too. Agreement therefore behaves like a survival process,
+
+```
+agreement ~ (1 - p)^k
+  p = fraction of steps whose HF margin is below the kernel error band
+  k = number of steps survived before the first flip
+```
+
+Measured p on A-0006 is 2/10 = 0.2 for the first ten steps, and one of those is an exact tie (margin 0.0). With p = 0.2 the expected first flip is around step 5, and everything after it is lost - which is exactly the observed band (13/64 for the baseline, 32/64 with the reference MoE, a few at 64/64 where no early step is tight).
+
+Applied to the three scenarios:
+
+| scenario | margins | p | observed |
+|---|---|---|---|
+| A | 0.0-3.6, median ~0.6 | ~0.2 | 0.27 |
+| B | ~6 | ~0 | 1.0000 |
+| C | sharper with long context | ~0.05 | 0.77 |
+
+So all three numbers fall out of one quantity: how often the decision margin drops below the kernel error. This also explains why every local fix (MoE alone, 4-D alone, chunking) produced no aggregate gain - each only moved p slightly, while the survival exponent is what dominates.
+
+The only way to move A substantially is to drive p to zero, i.e. make the kernels bit-identical to HF eager.
