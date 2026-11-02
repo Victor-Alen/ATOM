@@ -1377,3 +1377,30 @@ Final measured numbers after the BLAS investigation (deterministic MoE on, refer
 Verified exact (0.000000) against HF: weights, embedding row, layer-0 post-LN hidden, post-rope k. Post-rope q differs by 0.0078 (sub-ulp). The standalone probe reports `d_attn = d_mlp = d_block = 0.000000` for the layers it completes before the node's HSA fault.
 
 Blocking issue: the engine process and a plain torch process resolve different GEMM kernels for identical shapes, so the same code and the same weights produce different bits in the two processes; pinning the BLAS backend on both sides does not close it and can make individual prompts worse. Until that is solved the 90% gate cannot be evaluated meaningfully.
+
+### 2026-11-02 (round 41): HF inside the engine environment - the environment is NOT the cause
+
+Experiment 1 (decisive): loaded HF's own `MellumModel` **inside the engine environment** (after `import atom`, so aiter is loaded) and generated 8 greedy tokens for A-0006:
+
+```
+hf_in_engine : [233, 233, 37, 24285, 233, 47, 307, 950]
+hf_standalone: [233, 233, 37, 24285, 233, 47, 307, 950]   same = True
+engine_ref   : [233, 233, 37, 26828, 23, 233, 2116, 895]
+```
+
+So HF reproduces itself across processes (including inside the engine's aiter-loaded process). **The process/kernel-selection hypothesis is refuted**; the difference is in my reference implementation.
+
+Experiment 2: HF per-layer last-row hidden states computed in that same engine-environment process, compared against the engine's latched per-layer dump:
+
+| layer | engine vs HF |
+|---|---|
+| L0 | **0.000000** |
+| L1 | 0.000977 (= 2^-10) |
+| L2 | 0.001953 (= 2^-9) |
+| L3 | 0.0078125 (= 2^-7) |
+| L4-L26 | grows to 8.4 |
+| L27 | 2910 |
+
+Layer 0 is bit-exact, layer 1 is off by exactly one bf16 ulp, and the error doubles layer by layer. Running with the deterministic MoE (`MOE_DET=1`) and with the HF-identical `F.grouped_mm` (`MOE_DET=0`) produced **identical** layer deltas, so the MoE is not the source.
+
+Next step (now clearly scoped): compare layer 1's sub-operations (post-attention-LN, attention output, MoE output) between the engine and HF in one process. A one-ulp difference at a single op is findable, unlike the earlier environment-level mystery.
