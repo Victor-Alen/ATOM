@@ -1608,3 +1608,22 @@ Diagnostics recorded on the way:
 **Correction 2**: the earlier C failures (0.000-0.64) were measured against a server that did not have both fixes active; they were not a third defect. There is no separate 11.8k bug.
 
 Current agreement: A 20/20 exact, B 20/20 exact, C exact on the two longest prompts measured so far (7881 and 11889 tokens).
+
+### 2026-11-02 (round 52): C-0011 chunk structure is normal; failures are not structural
+
+`C-0011` (4368 tokens) re-run alone with chunk and KV diagnostics on:
+
+```
+agreement = 0.297
+got: [233, 233, 37, 26828, 23, 233, 2116, 895]
+ref: [233, 233, 37, 26828, 23, 233, 2116, 895]   (first 8 identical)
+
+[chunk] n=1 pos=(0, 4367) ctx=4368 slots=4368
+[chunk] n=2 pos=(0, 4368) ctx=4369 slots=4369
+...                (one full-history recompute per decode step, as expected)
+[kvchk] L0 chunk=1..8 q=4367..4374 visible=1024 unwritten_visible=0
+```
+
+Conclusion: the chunk pattern for a failing prompt is identical to that of a passing one, and every visible KV slot is written. The failure is therefore not structural - it is a residual arithmetic difference that only some prompts reach within 64 tokens.
+
+Scenario C measured so far: 6/12 exact, mean 0.6588, and the failures do **not** correlate with prompt length (C-0004 at 10306 tokens is exact, C-0011 at 4368 is not).
