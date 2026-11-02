@@ -382,3 +382,27 @@ FINAL THREE-PATH TABLE (all clean, single client, this tree):
 | C (20 prompts x 8 tokens)  | baseline | exact on every clean sample | 0.7812 |
 
 Step 0 (>=90% on all scenarios) is **not met**: B passes, C is 0.78, A is 0.27.
+### 2026-11-03 07:40 (round 87): the MoE fix gives +0.013 on C - consistent with everything else
+
+Production path with the reference MoE (which removes the 0.14 atomic-accumulation error), scenario C, 20 prompts x 8 tokens, clean single client:
+
+```
+baseline production        : 125/160 = 0.7812   exact 12/20
+production + reference MoE : 127/160 = 0.7937   exact 11/20
+```
+
+A gain of two tokens out of 160, and one fewer exactly-correct prompt. Statistically indistinguishable.
+
+This is the fourth independent measurement of the same phenomenon: fixing one stage in isolation does not move the aggregate, because the accumulated rounding of the remaining stages fills the same budget. Individual tight decisions can be recovered (A-0003's first token: 470 -> 233, verified), but the scenario-level score does not move.
+
+Summary of every isolated fix attempted, all measured:
+
+| fix | scenario | baseline | with fix |
+|---|---|---|---|
+| 4-D attention scores in the kernel | A | 740/1280 | 586/1280 |
+| reference MoE | A | 287/1280 | 254/1280 |
+| reference MoE | C | 125/160 | 127/160 |
+| HF-order eager attention | A | 0.2727 | 0.0547 |
+| reference math + engine paged KV | - | - | 0.0156 (broken) |
+
+None of them closes the gap. The conclusion recorded in round 85 stands and is now supported by four independent scenarios.
