@@ -530,3 +530,25 @@ So two of the three determinism requirements in the task can be met today, by ch
 3. the reason A cannot pass: accumulated rounding (6 fused stages x 28 layers) exceeds A's decision margin, whose minimum is 0.125 with one step at exactly 0.0
 4. seven candidate fixes measured, all ineffective at scenario level
 5. the production nondeterminism traced to the MoE atomics and **fixed** by ordered accumulation, satisfying run-to-run and dual-GPU reproducibility
+### 2026-11-03 07:50 (round 95): the three-port same-batch replay - the objective's own protocol, executed
+
+Three servers running **simultaneously** (8001 reference and 8002 production baseline on GPU0 at 0.22 memory fraction, 8003 production+ordered MoE on GPU1), each replayed the same first three scenario-A prompts, 64 greedy tokens:
+
+```
+port 8001  reference path        : 192/192 = 1.0000   exact 3/3
+port 8002  production baseline   :  42/192 = 0.2188   exact 0/3
+port 8003  production + ordered  :  39/192 = 0.2031   exact 0/3
+```
+
+Per prompt:
+
+```
+          A-0000  A-0001  A-0002
+8001       64/64   64/64   64/64
+8002       13/64    4/64   25/64
+8003       32/64    4/64    3/64
+```
+
+This is the protocol the objective asked for (three ports, same batch, one pass) and it is now executed and recorded. The ordered MoE does not raise the score here either - it moves tokens between prompts (A-0000 13 -> 32, A-0002 25 -> 3) without improving the total, exactly as every other isolated change did.
+
+Note the reference server is unaffected by running concurrently with two production servers on the same device, and it still returns exactly 192/192 - the reference path's determinism holds even under contention, because its operations are ordered.
