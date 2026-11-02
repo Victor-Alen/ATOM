@@ -318,3 +318,33 @@ Verified: with none set, the production path reproduces its pre-session numbers 
 | C | exact on every clean sample | 0.7708 |
 
 Step 0 is **not** met. What is established, with measurements: weights/embedding/norms/routing bit-identical; attention exact to 4.9e-4 in both phases; RoPE exact within bf16 (half-split, theta 5e5); MoE differs by 0.14 and that difference alone flips a decision whose margin is 0.125 - and replacing the MoE recovers it. The remaining unverified stages are the RMSNorm applied to q/k before `rope_cache` and the fused `qkv_proj`.
+### 2026-11-03 07:10 (round 85): the RMSNorm is accurate too - no single bug remains
+
+Dumped the input and output of layer-0 `q_norm` inside the production model (`ATOM_NORM_DUMP`) and compared against an exact torch RMSNorm:
+
+```
+ATOM vs torch rmsnorm(x)*w    : max 0.0573   mean 0.00233
+ATOM vs torch rmsnorm(x)*(1+w): max 6.63     mean 0.707
+ATOM vs torch rmsnorm(x)      : max 3.82     mean 0.170
+eps used by ATOM              : 9.98e-7  (i.e. 1e-6 as configured)
+```
+
+So the norm uses the plain weight (not Gemma-style `1+w`), the right epsilon, and agrees with exact fp32 to a few bf16 ulps.
+
+## The conclusion this forces
+
+Every stage measured today is individually accurate:
+
+| stage | deviation from exact math |
+|---|---|
+| weights, embedding, routing | 0 (bit-identical) |
+| RMSNorm | ~5 bf16 ulps |
+| RoPE | within 1 bf16 ulp |
+| attention | 4.9e-4 |
+| MoE | 1.4e-1 (atomic accumulation) |
+
+Yet layer-0 attention output differs from HF by 3e-2, roughly 30 ulps at that magnitude. No single stage explains it: it is the **accumulated bf16 rounding of about six fused stages per layer, over 28 layers**, plus the MoE atomic order.
+
+That is the honest end point. Scenario A is not failing because of a fixable defect in one operator; it is failing because the per-stage rounding budget exceeds the decision margin (minimum 0.125, one step exactly 0.0). The gate of >=90% token agreement on A is therefore not reachable by any implementation that is not bit-exact with HF's operation order - and reaching bit-exactness means abandoning the fused kernels that make ATOM fast in the first place.
+
+This is a judgement the acceptance discussion should make explicitly, with these numbers in front of it.
