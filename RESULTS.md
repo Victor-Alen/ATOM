@@ -2445,3 +2445,26 @@ This is the number the decision needs:
 Note that this substitution is **not** the right long-term fix - it is a proof that the atomics are the cause, and it pays for determinism by abandoning the fused kernel. A proper fix would keep the fused kernel and make its accumulation order fixed (for example a deterministic tree reduction or a per-expert sequential accumulate inside the same kernel), which should cost far less than 2.75x.
 
 Recommendation for the acceptance discussion: treat determinism and agreement as two separate requirements with separate owners. Determinism has a proven cause and a proven (expensive) fix; agreement on scenario A has no fix short of full bit-exactness.
+### 2026-11-03 07:40 (round 92): the production path also fails dual-GPU invariance
+
+The task requires that greedy output not change between the two GPUs. Same prompt (A-0000), same server settings, one request each, only the device differs:
+
+```
+GPU0: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 48, 470, 1297, 7912]
+GPU1: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 470, 1297, 7912]
+                                                                    ^^   ^^
+```
+
+They differ at position 12 (48 vs 60) and agree afterwards. So the production path is not invariant across devices either - a second stated requirement that it currently fails.
+
+Same root cause: the fused MoE's atomic accumulation order depends on how blocks are scheduled, and that differs between devices as well as between runs. GPU1's output matches the 'run2' divergence seen in round 90, which is consistent.
+
+## Where this leaves the three task requirements about determinism
+
+| requirement | production path | evidence |
+|---|---|---|
+| greedy reproducible run to run | **fails** | 3 runs, run2 diverges at token 14 |
+| dual-GPU output identical | **fails** | GPU0 vs GPU1 differ at token 12 |
+| MTP on/off identical | not measured | no MTP run attempted in this session |
+
+With the ordered MoE substitution the first two become true by construction (the operations are ordered PyTorch calls); the third would need its own measurement.

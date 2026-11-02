@@ -160,3 +160,26 @@ A 场景的失败**不是可修的单一算子缺陷**，而是**逐阶段舍入
 
 - 实验脚本：`scripts/det3.py`（3 次同 prompt 比对）、`scripts/perf.py`（吞吐）
 - 服务：`ATOM_PROD_MOE=ref` 开关
+### 2026-11-03 07:40 (round 92): the production path also fails dual-GPU invariance
+
+The task requires that greedy output not change between the two GPUs. Same prompt (A-0000), same server settings, one request each, only the device differs:
+
+```
+GPU0: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 48, 470, 1297, 7912]
+GPU1: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 470, 1297, 7912]
+                                                                    ^^   ^^
+```
+
+They differ at position 12 (48 vs 60) and agree afterwards. So the production path is not invariant across devices either - a second stated requirement that it currently fails.
+
+Same root cause: the fused MoE's atomic accumulation order depends on how blocks are scheduled, and that differs between devices as well as between runs. GPU1's output matches the 'run2' divergence seen in round 90, which is consistent.
+
+## Where this leaves the three task requirements about determinism
+
+| requirement | production path | evidence |
+|---|---|---|
+| greedy reproducible run to run | **fails** | 3 runs, run2 diverges at token 14 |
+| dual-GPU output identical | **fails** | GPU0 vs GPU1 differ at token 12 |
+| MTP on/off identical | not measured | no MTP run attempted in this session |
+
+With the ordered MoE substitution the first two become true by construction (the operations are ordered PyTorch calls); the third would need its own measurement.
