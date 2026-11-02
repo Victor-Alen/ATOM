@@ -1514,3 +1514,26 @@ q after the q-norm is bit-identical everywhere. Rope is a deterministic elementw
 Because the last row is exact while 29 scattered tokens are not, this is not a structural error in any of the three; it is an accumulation-order difference that only shows up where a particular bf16 rounding boundary is hit.
 
 Next: capture the score row and the softmax row for token 93 in both implementations (HF exposes them via `output_attentions=True`) and compare those two vectors elementwise. That will separate stage 1 (scores) from stages 2-3 (softmax and value matmul).
+
+### 2026-11-02 (round 48): root cause found - the attention score matmul uses a different batch structure
+
+Token 93, layer 0, softmax row comparison (engine `[4, 866]` per KV head vs HF `[32, 866, 866]` per query head):
+
+```
+kv0: probs max|delta| = 1.93e-4      (matches its own group head 0, no closer head exists)
+kv1: probs max|delta| = 1.11e-4
+kv2: probs max|delta| = 5.98e-5
+kv3: probs max|delta| = 8.52e-5
+engine probs vs softmax(engine scores) in fp64 = 1.49e-8   <- my softmax is correct
+```
+
+The softmax is exact (1.5e-8 against an fp64 reference of its own scores), and the q after `q_norm` is bit-identical, and rope is a deterministic elementwise transform of exact values. Therefore the **attention scores** themselves differ.
+
+The mechanism: HF computes the scores as a 4-D batched matmul
+`torch.matmul(q[B, nH, S, D], k[B, nH, S, D].transpose(2, 3))` with `nH = 32` query heads, while my reference path computes a 3-D matmul
+`torch.matmul(qc[nKV, rep*S, D], kk[nKV, ctx, D].transpose(1, 2))` with `nKV = 4`.
+Different batch rank and batch count make the library pick a different GEMM kernel and a different bf16 accumulation order, which changes the scores in the last bits and shows up as 1e-4 in the softmax row.
+
+The fix is to compute the scores in exactly HF's layout: expand the 4 KV heads to 32 query heads, reshape q and k to `[1, nH, S, D]`, and call `torch.matmul` on that 4-D pair before the softmax. That makes the score matmul bit-comparable instead of merely numerically close.
+
+This closes the investigation chain that started with the KV-block question: weights, embeddings, routing, MoE GEMM, q/k norm and rope are all bit-exact; the single remaining discrepancy is the batch structure of one matmul.
