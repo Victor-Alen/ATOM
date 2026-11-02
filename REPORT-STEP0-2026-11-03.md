@@ -262,3 +262,27 @@ Remaining candidates for the layer-0 gap of 3e-2, in order of likelihood:
 3. the residual / post-attention RMSNorm fusion in `MellumDecoderLayer`
 
 Each can be checked the same way this one was: dump the production tensor, recompute the HF path in torch, compare element-wise. The dump hook is `ATOM_ROPE_DUMP` in `atom/model_ops/attention_mha.py` (`rope_cache` caller).
+### 2026-11-03 07:25 (round 83): production RoPE verified exact - half-split, base 500000
+
+Dumped layer-0 q/k before and after `rope_cache` in the same call (`ATOM_ROPE_DUMP`) and reconstructed the rotation in torch:
+
+```
+convention      base        q max|diff|   q mean
+interleaved     1e6             32.3        0.907
+interleaved     1e7             31.5        0.849
+half-split      1e4             32.0        0.875
+half-split      1e6             15.2        0.438
+half-split      5e5              0.093      0.0018     <- match
+```
+
+With the GPT-NeoX / `rotate_half` convention and theta = **500000**, the reconstruction agrees with the kernel to `max 0.093`, `mean 0.0018`. Since the q values reach magnitude ~18, where the bf16 ulp is 0.125, this is exact within bf16.
+
+Two corrections to earlier notes:
+
+1. The fused kernel does **not** apply RMSNorm; at position 0 (where the rotation is the identity) q before and after `rope_cache` are bitwise equal, so the norm happens earlier in the layer.
+2. The Mellum rope is **half-split with theta 500000**, not interleaved with 1e6. Any torch reimplementation that gets this wrong will look catastrophically broken (as my first attempt did) and must be checked against this convention.
+
+Remaining unverified production stages, in order:
+1. the RMSNorm applied to q/k before `rope_cache` (find where it happens; it is not in this kernel)
+2. the fused `qkv_proj` vs HF's separate projections
+3. the residual / post-attention norm fusion in `MellumDecoderLayer`

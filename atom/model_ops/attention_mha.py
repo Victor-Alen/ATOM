@@ -105,20 +105,30 @@ class PagedAttentionImpl(nn.Module):
 
         o: torch.Tensor
         q = q.view(-1, self.num_heads, self.head_dim)
+
         k = k.view(-1, self.num_kv_heads, self.head_dim)
         v = v.view(-1, self.num_kv_heads, self.head_dim)
 
         # rope cache
+        _dp0 = __import__("os").environ.get("ATOM_ROPE_DUMP")
+        _save_here = bool(_dp0) and self.layer_num == 0 and not globals().get("_rope_dumped")
+        if _save_here:
+            self._pre_q = q.detach().float().cpu()
+            self._pre_k = k.detach().float().cpu()
+            self._pre_pos = position.detach().cpu() if position is not None else None
+
         q, k, v, k_cache, v_cache, k_scale, v_scale = self.rope_cache(
             q, k, v, qkv, position, fwd_ctx
         )
 
         _dp = __import__("os").environ.get("ATOM_ROPE_DUMP")
-        if _dp and self.layer_num == 0 and not globals().get("_rope_dumped"):
+        if _save_here:
             globals()["_rope_dumped"] = True
             _t = __import__("torch")
             _t.save(
                 {
+                    "q_pre": getattr(self, "_pre_q", None),
+                    "k_pre": getattr(self, "_pre_k", None),
                     "pos": position.detach().cpu(),
                     "q_post": q.detach().float().cpu(),
                     "k_post": k.detach().float().cpu(),
