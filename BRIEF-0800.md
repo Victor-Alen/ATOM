@@ -1,0 +1,76 @@
+# 8 点简报 — Mellum Step 0（2026-11-03 07:40）
+
+## 一句话
+
+**Step 0 未通过。** 参考路径完全正确；生产路径 B 达标、C 0.78、A 0.27，且 A 的差距不是可修的单一 bug。
+
+## 三路径实测（单客户端、干净状态、当前代码树）
+
+| 场景 | 路径1 HF | 路径2 参考 | 路径3 生产 |
+|---|---|---|---|
+| A（20×64 token）| 基准 | **1.0000** | 0.07–0.33（不稳定）|
+| B（20×64 token）| 基准 | **1.0000** | **1.0000** |
+| C（20×8 token）| 基准 | 逐位精确 | 0.7812 |
+
+## 今晚证明的三件事
+
+**1. 每个生产环节单独都不差**
+
+```
+权重 / embedding / norm 权重 / 路由 : 逐位相同
+RMSNorm                            : ~5 个 bf16 ulp
+RoPE（half-split, theta 5e5）      : 1 ulp 内
+attention（prefill 与 decode）      : 4.9e-4
+MoE                                : 0.14   ← 唯一明显偏差
+```
+
+**2. A 过不了是因为累积舍入超过决策间隔**
+
+- 每层 6 个融合阶段 × 28 层的 bf16 舍入 → L0 与 HF 差 3e-2
+- A 的 HF 决策间隔最小 **0.125**，其中一步恰好 **0.0**
+- **预算 > 间隔 ⇒ 必然翻 token ⇒ 后续前缀错误 ⇒ 整段崩**
+- 因此 A ≥90% 需要 bit-exact kernel，不是修 bug
+
+**3. 生产路径本身不确定（独立于 HF 对齐）**
+
+```
+跨 run : 3 次运行，第 3 次在 token 14 分叉
+双卡    : GPU0 与 GPU1 在 token 12 不同
+根因    : 融合 MoE 的原子累加顺序
+```
+
+**修法已验证**：改用有序累加后，跨 run 与双卡都逐位一致；代价是 26.3 → 9.6 tok/s（2.75×）。正确修法是保留 kernel、把累加改成确定性归约（需改 aiter）。
+
+## 已实测无效的七种修复
+
+4-D 移植（740→586）、单换 MoE（A 287→254；C 125→127）、eager attention（0.2727→0.0547）、参考数学+引擎 KV（0.0156）、ATTN_CHUNK（1.0→0.35）、MOE_BATCHED（1.0→0.45）、请求隔离（已回滚）。
+
+## 建议的下一步（按优先级）
+
+1. **先修 MoE 确定性**（自包含、已验证、满足任务的两条确定性要求）
+2. 再决定 A 的口径：要么接受 ≥90% 在 A 上不可达（附间隔统计），要么投入 kernel 级 bit-exact 改造
+3. MTP 一致性需要 draft checkpoint（当前环境没有，已尝试并记录失败日志）
+
+## 文档索引
+
+| 文件 | 内容 |
+|---|---|
+| 本文件 | 2 分钟读完的状态 |
+| `REPORT-STEP0-2026-11-03.md` | 完整结论与因果链（532 行）|
+| `HANDOVER.md` | 交接：要做什么、代价、坑（256 行）|
+| `RESULTS.md` | 全部实验原始数据与提交号（2540 行）|
+
+## 复现命令
+
+```
+# 参考路径（A/B 应为 1.0000）
+ATOM_REFERENCE_MODE=1 ATOM_REFERENCE_RECOMPUTE=1 ATOM_REFERENCE_ATTN4D=1 ATOM_REFERENCE_OWN_CACHE=1 \
+  python3 -m atom.entrypoints.openai_server --model /data/models/Mellum2.1-12B-A2.5B-Thinking \
+  --level 0 --enforce-eager --kv_cache_dtype bf16 --max-model-len 32768 --server-port 8003 \
+  --no-enable_prefix_caching
+
+python3 scripts/overnight_run.py A 8003 <label>     # A/B/C 批量
+python3 scripts/one_run.py                         # 单次输出（确定性检查）
+python3 scripts/perf.py                            # 吞吐
+python3 scripts/det3.py                            # 3 次同 prompt 比对
+```
