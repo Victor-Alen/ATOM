@@ -1875,3 +1875,27 @@ Open items, in priority order:
 1. C-0001 in the reference path (7/64) - a real defect in path 2, must be understood before C can be claimed
 2. production attention: needs an eager-order implementation to replace the online-softmax kernel
 3. the CHUNK regression (single-chunk case changes results) - unexplained, flag disabled
+
+### 2026-11-03 04:20 (round 66): two separate C problems - one bad reference entry, one real 12.5k-token failure
+
+Re-running HF on four scenario-C prompts in this environment:
+
+```
+C-0000 (7881)  : fresh == recorded  OK
+C-0001 (12580) : fresh != recorded  (first 5 tokens agree, then HF diverges from its own file)
+C-0002 (11889) : fresh == recorded  OK
+C-0003 (6183)  : fresh == recorded  OK
+```
+
+So the recorded C reference file is **not fully reproducible by HF itself**: the C-0001 entry cannot be regenerated. Any agreement number computed against it is meaningless.
+
+Separately, the reference path is genuinely wrong on C-0001 independent of the reference:
+
+```
+engine (C-0001): [233, 96855, 18437, 89628, 1576, 1576, 48, 51]
+HF fresh       : [233, 233, 37, 6539, 233, 910, 1132, 37]
+```
+
+Only the first token agrees. C-0001 is the longest prompt measured so far (12580 tokens) and the failure is not reproduced at 11889 (C-0002 is exact), so there is a length-dependent defect somewhere between 11.9k and 12.6k in the reference path - most likely memory/allocation related, since the fp32 softmax workspace at 12580 tokens is `32 x 12580^2 x 4 B = 20.2 GiB` and the server also holds a 131k-slot KV buffer.
+
+Nothing was changed in the code this round.
