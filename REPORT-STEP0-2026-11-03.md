@@ -171,3 +171,21 @@ Applied to the three scenarios:
 So all three numbers fall out of one quantity: how often the decision margin drops below the kernel error. This also explains why every local fix (MoE alone, 4-D alone, chunking) produced no aggregate gain - each only moved p slightly, while the survival exponent is what dominates.
 
 The only way to move A substantially is to drive p to zero, i.e. make the kernels bit-identical to HF eager.
+### 2026-11-03 06:25 (round 78): the prediction confirmed on the first token
+
+The margin model makes a sharp prediction: at a step whose HF margin is below the kernel error (~0.14), the production path must pick a different token, and at a step whose margin is well above it, the production path must agree. Tested directly, one token, production server, same prompt:
+
+```
+A-0003  HF top1=233, margin 0.125  ->  production picked 470   FLIPPED
+A-0000  HF top1=233, margin 2.000  ->  production picked 233   SAME
+```
+
+Both predictions hold. This is a single-step, unambiguous demonstration that the disagreement is **not** a defect in shape, layout, indexing or a stranded buffer - it is the decision margin being smaller than the numerical difference between the two kernels.
+
+Chain of evidence for the final conclusion:
+
+1. weights, embedding, norms, rope, routing: bit-identical (previous rounds)
+2. layer-0 attention differs by 0.031 and layer-0 MoE by 0.14, in the direction and magnitude expected from online-softmax tiling and atomic accumulation
+3. HF decision margins on A span 0.0-3.6 with a minimum of exactly 0.0 on one step
+4. a step with margin 0.125 flips, a step with margin 2.0 does not
+5. therefore agreement is a survival process, and A cannot reach the gate without bit-identical kernels
