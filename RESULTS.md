@@ -1552,3 +1552,37 @@ Target prompt A-0006 now reproduces HF byte for byte:
 `[233, 233, 37, 24285, 233, 47, 307, 950]` for both engine and HF (previously `26828` vs `24285` at position 4).
 
 Before this change the same measurement was 0.3836 (5/20). The entire divergence chain - weights, embedding, norms, rope, routing, MoE, and every layer - was downstream of one matmul whose batch rank differed from HF's.
+
+### 2026-11-02 (round 50): second bug found and fixed - KV buffer reallocation wiped the history
+
+Scenario C failed at 1200 tokens. Bisection with the scenario-A protocol:
+
+```
+L0 q_norm / attn_out / per-head out  : 0        (mask and sliding window are correct)
+L0..L26 block outputs (last row)     : 0        (whole stack exact)
+blk_27 (pre final norm) vs HF        : 0        (last layer exact)
+HF top-1 after the 1200-token prefill: 754       (identical to the engine's first token)
+```
+
+So the **prefill is bit-exact at 1200 tokens**; the divergence appears at the first *decode* step (HF 1365 vs engine 66566).
+
+Root cause in `reference_mode.py`:
+
+```python
+elif _recomp:
+    _need = int(ctx_lens[0]) + 1
+...
+if li not in _KV or _KV[li][0].shape[0] < _need:
+    _KV[li] = (torch.zeros(...), torch.zeros(...))   # history replaced by zeros
+```
+
+In recompute mode the required length grows by one on every decode step, so the buffer is reallocated to **zeros** whenever the context grows, and any step that does not rewrite the full history reads zeroed KV.
+
+Fixed by allocating with slack (`ATOM_REFERENCE_OWN_CACHE=1` uses `max_position_embeddings + 1`, so the buffer is never reallocated). Result:
+
+```
+hf_tokens: [754, 1365, 1337, 754, 2677, 754, 1365, 587]
+engine   : [754, 1365, 1337, 754, 2677, 754, 1365, 587]   match = True
+```
+
+Two independent defects had to be fixed for the long-context path: the attention score batch structure (round 49) and this cache reallocation.
