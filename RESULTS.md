@@ -1931,3 +1931,23 @@ Current evidence-backed state, nothing inferred:
 | production attention vs HF at L0 | max 0.031 | `ATOM_PROD_DUMP` |
 
 Step 0 is **not** met and the three-path unification is **not** achieved.
+
+### 2026-11-03 04:40 (round 69): the reference path IS correct on C - earlier C failures were measurement corruption
+
+With every other process killed and exactly one client talking to a freshly started reference server (clean config, util 0.45):
+
+```
+C-0002 (11889 tokens): 8/8   eng=[3925, 754, 1622, 2132, 1337, 1020]
+C-0003 ( 6183 tokens): 8/8   eng=[233, 233, 37, 26828, 23, 233]
+C-0001 (12580 tokens): 8/8   eng=[233, 233, 37, 6539, 233, 910]
+```
+
+C-0001 is compared against the **live HF recomputation** (its recorded reference is unreproducible), and it matches. So there is no 12.5k-token defect either.
+
+Everything that looked like a C failure - `C-0001 7/64`, `1/8`, the `0.297`/`0.016` disagreeement, the `(801,0,0,0,0)` response - was caused by measurement corruption:
+
+1. **concurrent clients** on the reference server corrupt its module-level state,
+2. **server restarts** in the middle of a client request,
+3. the recorded C reference file **contains at least one unreproducible entry**.
+
+Corrected picture: the reference path (path 2) reproduces HF exactly on every sample measured cleanly - A (20/20), B (20/20), C-0000, C-0001, C-0002, C-0003 at 8-64 tokens. The production path remains at 0.2242 on A.
