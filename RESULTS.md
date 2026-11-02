@@ -1361,3 +1361,19 @@ So the remaining obstacle is not arithmetic, not weights, not layout: it is that
 Concrete next step (unfinished): run HF's own `MellumModel` **inside the engine process** so that engine and reference are guaranteed to share kernels, then use that as the reference for the gate. If that reproduces standalone HF, the plumbing is the issue; if it does not, the gate's reference must be pinned to a specific environment and that requirement has to be stated explicitly.
 
 Status: **Step 0 not passed.** Best numbers to date (all measured before the pin was understood): A 0.3516-0.3766, B 1.0000, C 0.5816.
+
+### 2026-11-02 08:25 close-out
+
+Final measured numbers after the BLAS investigation (deterministic MoE on, references regenerated in the same configuration):
+
+| scenario | prompts | token agreement | fully exact |
+|---|---|---|---|
+| A | 20 | **0.3836** | 5/20 |
+| B | 20 | **1.0000** | 20/20 |
+| C | 40 (of 200; rest exceed 12k) | 0.5816 | 16/40 |
+
+**Step 0 is not passed.** The gate requires 90% token agreement over 200 public prompts.
+
+Verified exact (0.000000) against HF: weights, embedding row, layer-0 post-LN hidden, post-rope k. Post-rope q differs by 0.0078 (sub-ulp). The standalone probe reports `d_attn = d_mlp = d_block = 0.000000` for the layers it completes before the node's HSA fault.
+
+Blocking issue: the engine process and a plain torch process resolve different GEMM kernels for identical shapes, so the same code and the same weights produce different bits in the two processes; pinning the BLAS backend on both sides does not close it and can make individual prompts worse. Until that is solved the 90% gate cannot be evaluated meaningfully.
