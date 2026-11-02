@@ -2049,3 +2049,23 @@ Full three-path table, all clean single-client measurements:
 So the production path already meets the >=90% gate on B, is close on C (0.77), and is far on A (0.27). The gap is scenario-dependent, which strongly suggests it is driven by how close the next-token distribution sits to a tie rather than by a uniform numerical error.
 
 Step 0 as a whole (200 public prompts, >=90%) is still not met, because A is far below the gate.
+### 2026-11-03 06:20 (round 75): why B is perfect and A is not - HF top1-top2 margins
+
+HF logits margin between the first and second candidate at the first generated token (6 prompts each):
+
+```
+A: sorted margins = [0.125, 1.5, 2.0, 2.0, 2.875, 3.625]   median 2.0, min 0.125
+B: sorted margins = [5.77, 5.83, 5.96, 6.16, 6.18, 6.27]   median 6.16, min 5.77
+```
+
+The B prompt is the same 1049-token prompt repeated, and its decision margin is about **6 logits** - many hundreds of bf16 ulps. A 1-ulp kernel difference cannot flip that, which is exactly why the production path scores 1.0000 on B.
+
+A's margins are 5-50x smaller, with one prompt at 0.125 (about two ulps at that magnitude), and the margins along a 64-token trajectory will dip below that many times.
+
+This closes the loop on the scenario dependence:
+
+- **B 1.0000**: margin ~6, robust to any last-bit difference
+- **C 0.77**: long context, sharper distributions, mostly robust
+- **A 0.27**: small margins, a 1-ulp difference flips the token
+
+Consequence: reaching >=90% on A through the production kernels is not a matter of 'fixing a bug' - it requires making the kernels **bit-identical** to HF's eager computation, because the decision margin is smaller than the error the kernels introduce.
