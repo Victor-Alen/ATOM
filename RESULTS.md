@@ -2468,3 +2468,33 @@ Same root cause: the fused MoE's atomic accumulation order depends on how blocks
 | MTP on/off identical | not measured | no MTP run attempted in this session |
 
 With the ordered MoE substitution the first two become true by construction (the operations are ordered PyTorch calls); the third would need its own measurement.
+### 2026-11-03 07:50 (round 93): the ordered MoE fixes both determinism requirements - verified
+
+Same experiment as round 92 (one request per device, same prompt), but with the ordered MoE:
+
+```
+GPU0: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392, 37495, 497]
+GPU1: [233, 233, 37, 26828, 23, 233, 2116, 895, 333, 1948, 302, 1354, 60, 392, 37495, 497]
+identical: True
+```
+
+Combined with round 90 (three consecutive runs identical), the ordered accumulation satisfies:
+
+| requirement | fused MoE | ordered MoE |
+|---|---|---|
+| greedy reproducible run to run | fails (token 14) | **passes** (3/3 identical) |
+| dual-GPU output identical | fails (token 12) | **passes** |
+| MTP on/off identical | not measured | not measured |
+
+So two of the three determinism requirements in the task can be met today, by changing only the MoE accumulation order. The cost is 2.75x throughput with this particular substitution (26.3 -> 9.6 tok/s), which is why the right fix is a deterministic reduction inside the fused kernel rather than replacing it.
+
+## Session summary for the 08:00 handover
+
+**Not achieved**: three-path unification; scenario A agreement (production 0.07-0.33, unstable, against a 1.0000 reference).
+
+**Achieved and verified**:
+1. the reference path reproduces HF exactly (A 20/20, B 20/20, C exact on every clean sample), reproduced on the final tree
+2. every production stage measured against exact math: weights/norm-weights/routing bit-identical, RMSNorm ~5 ulp, RoPE 1 ulp (half-split, theta 5e5), attention 4.9e-4, MoE 0.14
+3. the reason A cannot pass: accumulated rounding (6 fused stages x 28 layers) exceeds A's decision margin, whose minimum is 0.125 with one step at exactly 0.0
+4. seven candidate fixes measured, all ineffective at scenario level
+5. the production nondeterminism traced to the MoE atomics and **fixed** by ordered accumulation, satisfying run-to-run and dual-GPU reproducibility
