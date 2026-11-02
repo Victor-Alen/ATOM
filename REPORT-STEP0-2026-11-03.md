@@ -286,3 +286,35 @@ Remaining unverified production stages, in order:
 1. the RMSNorm applied to q/k before `rope_cache` (find where it happens; it is not in this kernel)
 2. the fused `qkv_proj` vs HF's separate projections
 3. the residual / post-attention norm fusion in `MellumDecoderLayer`
+### 2026-11-03 07:45 (round 84): the default path is unchanged by everything added today
+
+Final regression check, production server started with none of the diagnostic env vars set:
+
+```
+A first 2 prompts: 18/128 = 0.1406
+  A-0000 13/64 + A-0001 5/64 = 18  - identical to the pre-session baseline, prompt for prompt
+```
+
+All additions today are env-gated and default off:
+
+```
+ATOM_PROD_DUMP   layer-0/1 attn/moe/blk tensors
+ATOM_PROD_MOE    reference MoE inside production
+ATOM_PROD_WDUMP  expert weight dump
+ATOM_EAGER_ATTN  HF-order eager attention
+ATOM_ROPE_DUMP   pre/post rope q,k
+```
+
+Verified: with none set, the production path reproduces its pre-session numbers exactly. The tree is safe to hand over.
+
+---
+
+## End-of-session state (2026-11-03 07:45)
+
+| | path 2 (reference) | path 3 (production) |
+|---|---|---|
+| A | 1.0000 | 0.2727 |
+| B | 1.0000 | 1.0000 |
+| C | exact on every clean sample | 0.7708 |
+
+Step 0 is **not** met. What is established, with measurements: weights/embedding/norms/routing bit-identical; attention exact to 4.9e-4 in both phases; RoPE exact within bf16 (half-split, theta 5e5); MoE differs by 0.14 and that difference alone flips a decision whose margin is 0.125 - and replacing the MoE recovers it. The remaining unverified stages are the RMSNorm applied to q/k before `rope_cache` and the fused `qkv_proj`.
