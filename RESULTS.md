@@ -1847,3 +1847,31 @@ So `--gpu-memory-utilization` has no effect on correctness, and setting `ATOM_RE
 Rule for any further run: reference path = `MODE + RECOMPUTE + ATTN4D + OWN_CACHE` only. No `ATTN_CHUNK`, no `MOE_BATCHED`.
 
 Consequence: an 11889-token prompt needs `32 x 11889^2 x 4 B = 18.9 GiB` of fp32 softmax workspace, which OOMed earlier when the server also held its KV buffers. Until the chunked path is fixed, long-C prompts can only be served with a larger memory budget, not with chunking.
+
+### 2026-11-03 04:10 (round 65): definitive three-path state
+
+Clean configuration (reference path = `MODE + RECOMPUTE + ATTN4D + OWN_CACHE`, no CHUNK, no MOE_BATCHED, util 0.35-0.45):
+
+| scenario | path 1 HF | path 2 ATOM reference | path 3 ATOM production |
+|---|---|---|---|
+| A | baseline | **1.0000** (6/6 verified; 20/20 measured earlier) | **0.2242** (287/1280, 2/20 exact) |
+| B | baseline | **1.0000** (20/20) | not measured on this config |
+| C | baseline | C-0000 64/64, **C-0001 7/64** | not measured on this config |
+
+So path 2 is exact on A and B but **not** on all of C: C-0001 diverges early even in the clean configuration. This is not caused by `ATTN_CHUNK` or `MOE_BATCHED` - both are absent here.
+
+Tier-B (reference vs production) first measurement on A-0006:
+
+```
+L0_attn max 0.03125  mean 1.6e-4   (online-softmax tiling vs one full-row fp32 softmax)
+L0_moe  max 0.140625 mean 8.2e-4   (atomic accumulation order)
+```
+
+Swapping only the MoE for the reference implementation: A 287/1280 -> 254/1280 (no net gain; A-0000 13->32 but A-0005 20->2).
+
+**Step 0 is not met.** The reference path reproduces HF exactly on A and B; the production path is at 0.22; C has at least one unexplained failure in the reference path, so the reference itself is not yet a 100% oracle.
+
+Open items, in priority order:
+1. C-0001 in the reference path (7/64) - a real defect in path 2, must be understood before C can be claimed
+2. production attention: needs an eager-order implementation to replace the online-softmax kernel
+3. the CHUNK regression (single-chunk case changes results) - unexplained, flag disabled
