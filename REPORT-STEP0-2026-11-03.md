@@ -348,3 +348,37 @@ Yet layer-0 attention output differs from HF by 3e-2, roughly 30 ulps at that ma
 That is the honest end point. Scenario A is not failing because of a fixable defect in one operator; it is failing because the per-stage rounding budget exceeds the decision margin (minimum 0.125, one step exactly 0.0). The gate of >=90% token agreement on A is therefore not reachable by any implementation that is not bit-exact with HF's operation order - and reaching bit-exactness means abandoning the fused kernels that make ATOM fast in the first place.
 
 This is a judgement the acceptance discussion should make explicitly, with these numbers in front of it.
+### 2026-11-03 07:20 (round 86): production scenario C measured on 20 prompts - 0.7812
+
+Clean production server, no diagnostic env vars, single client, 8 greedy tokens per prompt:
+
+```
+C aggregate: 125/160 = 0.7812   exact 12/20
+```
+
+Per prompt:
+
+```
+C-0000 7881  8/8    C-0010 13808 8/8
+C-0001 12580 5/8    C-0011 4368  8/8
+C-0002 11889 0/8    C-0012 5089  4/8
+C-0003 6183  8/8    C-0013 10672 8/8
+C-0004 10306 8/8    C-0014 7352  3/8
+C-0005 8701  8/8    C-0015 15231 3/8
+C-0006 13282 4/8    C-0016 6502  7/8
+C-0007 10632 3/8    C-0017 5576  8/8
+C-0008 13148 8/8    C-0018 6748  8/8
+C-0009 15194 8/8    C-0019 11214 8/8
+```
+
+So the production path is at **0.78 on C** with a proper sample, well above its 0.27 on A and below the gate.
+
+FINAL THREE-PATH TABLE (all clean, single client, this tree):
+
+| scenario | path 1 HF | path 2 reference | path 3 production |
+|---|---|---|---|
+| A (20 prompts x 64 tokens) | baseline | 1.0000 | 0.2727 |
+| B (20 prompts x 64 tokens) | baseline | 1.0000 | 1.0000 |
+| C (20 prompts x 8 tokens)  | baseline | exact on every clean sample | 0.7812 |
+
+Step 0 (>=90% on all scenarios) is **not met**: B passes, C is 0.78, A is 0.27.
