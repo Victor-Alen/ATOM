@@ -755,12 +755,13 @@ class PagedAttentionImpl(nn.Module):
                 ref = self.paged_attention_triton(
                     q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx
                 )
-            if not globals().get("_eager_diff_once"):
-                globals()["_eager_diff_once"] = True
+            _tag = "decode" if not fwd_ctx.context.is_prefill else "prefill"
+            if not globals().get("_eager_diff_" + _tag):
+                globals()["_eager_diff_" + _tag] = True
                 d = (o.float() - ref.float()).abs()
                 print(
-                    "[eager] max|eager-fused| = %.6g  mean = %.6g  shapes %s / %s"
-                    % (float(d.max()), float(d.mean()), tuple(o.shape), tuple(ref.shape)),
+                    "[eager] %s max|eager-fused| = %.6g  mean = %.6g"
+                    % (_tag, float(d.max()), float(d.mean())),
                     flush=True,
                 )
             return ref

@@ -223,3 +223,22 @@ Two consequences, both important:
 Also observed, and unexplained: with the eager branch computing but still returning the fused result, scenario A dropped to 0.03 instead of the 0.20 baseline. Calling the kernel twice per layer should be idempotent; it evidently is not. Until that is understood the eager branch stays off by default.
 
 Next concrete step: compare the fused norm+rope kernel output against HF's separate rmsnorm and rope on the same input, per layer-0 head. That is now the highest-value place to look.
+### 2026-11-03 07:15 (round 81): attention is exonerated in both phases; swapping it does not help
+
+Per-phase comparison of the HF-order eager attention against the fused kernel:
+
+```
+prefill: max|eager-fused| = 0.000488   mean 5.3e-6
+decode : max|eager-fused| = 0.000488   mean 5.3e-6
+```
+
+Both phases agree to bf16 rounding, so the eager implementation is correct and the fused attention kernel is numerically accurate.
+
+When the eager output was used instead of the fused one, scenario A gave 0.0547 against the 0.2727 baseline. That is not a defect - two implementations that each differ from HF by a few 1e-3 will each land at a similar, essentially random agreement level. Replacing one accurate-but-differently-rounded attention with another does not move the result toward HF.
+
+**Conclusion: attention is not where the production path loses accuracy.** The layer-0 gap of 3e-2 against HF must originate upstream - the fused `triton_fused_norm_rope_cache` (RMSNorm + RoPE + cache write in one kernel) and the fused QKV projection - not in the softmax.
+
+These are the concrete places to compare next, in order:
+1. `triton_fused_norm_rope_cache` output vs HF `q_norm`/`k_norm` followed by `apply_rotary_pos_emb`, per head, at layer 0
+2. the fused `qkv_proj` output vs HF's separate `q_proj`/`k_proj`/`v_proj`
+3. residual/RMSNorm fusion in `MellumDecoderLayer`
