@@ -1951,3 +1951,20 @@ Everything that looked like a C failure - `C-0001 7/64`, `1/8`, the `0.297`/`0.0
 3. the recorded C reference file **contains at least one unreproducible entry**.
 
 Corrected picture: the reference path (path 2) reproduces HF exactly on every sample measured cleanly - A (20/20), B (20/20), C-0000, C-0001, C-0002, C-0003 at 8-64 tokens. The production path remains at 0.2242 on A.
+
+### 2026-11-03 05:10 (round 70): reference-path operating constraints (all learned the hard way)
+
+1. **Single client only.** Two concurrent clients corrupt the module-level reference state; a request can come back as (801, 0, 0, 0, 0).
+2. **Never kill a client mid-request.** The in-flight request leaves _HIST/_KV corrupted and the next few requests are wrong until the state is overwritten. This is what produced the C-0001/2/3 = 1/8 sample that followed a killed run, while the same prompts measured 8/8 on a fresh server.
+3. **Never restart the server while a client is waiting.**
+4. **Do not trust a recorded reference without checking it** - the C-0001 entry cannot be reproduced by HF itself.
+5. **Recompute mode costs about 15 minutes per long C prompt at 8 tokens**, because every decode step re-prefills the whole history (7881 tokens x 8 steps). A 12-prompt C aggregate therefore needs about 3 hours.
+
+Clean state at 05:10:
+
+- A (reference, clean, single client): 1.0000 (384/384, 6/6 exact; 20/20 earlier)
+- B (reference): 1.0000 (20/20)
+- C (reference, clean, per-prompt): C-0000 8/8 and 64/64, C-0001 8/8, C-0002 8/8, C-0003 8/8
+- production A: 0.2242
+
+Step 0 is not met. The reference path is a validated oracle for A/B and for every C prompt measured in a clean state; the production path is still 0.22 on A and has no measured B/C numbers on the current code.
