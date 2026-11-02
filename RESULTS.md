@@ -1696,3 +1696,13 @@ Versus the reference configuration (all four switches on): `agreement = 1.0000, 
 **The reference path is a measuring instrument, not a deliverable.** The default path is still at roughly 23-38% agreement, so Step 0 is not met by the shipped code in any sense. The two fixes found this session (4-D score layout, KV allocation) exist only inside `reference_mode.py` and have not been ported into the production kernels.
 
 Reported discrepancy with the other agent is therefore explained: they measured the default path, which is the meaningful number.
+
+### 2026-11-03 01:05 (round 57): the request-isolation change was harmful and is reverted
+
+After the round-54 change to `history_after` (classify the incoming token stream and reset `_KV` on a mismatch), scenario A dropped to `1/64` per prompt. Reverting `history_after` to the original `first_pos`-based behaviour restored it immediately:
+
+```
+refcheck A: rate=1.0000 exact=3 tokens=192/192
+```
+
+So that change reset the KV buffer in the middle of a request. It was never validated before being committed (the only run after it was the invalid teacher-forcing test). Recorded here so the next iteration does not repeat it.

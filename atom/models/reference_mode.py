@@ -179,26 +179,11 @@ def _reset_reference_state():
 
 
 def history_after(new_ids, first_pos=0):
-    """Update the single-sequence token history and return it.
-
-    A decode step in recompute mode replays the whole history from position 0, so the
-    absolute position cannot distinguish a new request from a replayed one. The
-    incoming stream is classified instead: it either equals the stored history, or it
-    extends it, or it is something else - which means a new request arrived and all
-    per-request state must be reset.
-    """
-    ids = list(new_ids)
-    prev = _HIST
-    n = len(ids)
-    same = n <= len(prev) and prev[:n] == ids
-    extends = n > len(prev) and ids[: len(prev)] == prev
-    if same:
-        return _HIST
-    if extends:
-        _HIST[:] = ids
-        return _HIST
-    _reset_reference_state()
-    _HIST[:] = ids
+    """Update the single-sequence token history and return it."""
+    if int(first_pos) == 0:
+        _HIST[:] = list(new_ids)
+    else:
+        _HIST.extend(list(new_ids))
     return _HIST
 
 
