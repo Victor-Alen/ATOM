@@ -242,3 +242,23 @@ These are the concrete places to compare next, in order:
 1. `triton_fused_norm_rope_cache` output vs HF `q_norm`/`k_norm` followed by `apply_rotary_pos_emb`, per head, at layer 0
 2. the fused `qkv_proj` output vs HF's separate `q_proj`/`k_proj`/`v_proj`
 3. residual/RMSNorm fusion in `MellumDecoderLayer`
+### 2026-11-03 07:30 (round 82): the fused RoPE is standard - norm and QKV remain
+
+Dumped the layer-0 post-rope q and k from the production server (`ATOM_ROPE_DUMP`), 990 tokens x 32 heads x 128 dims.
+
+Checks:
+
+```
+inverse-rotation identity (standard inv_freq 1e6, theta pairs) : max error 1.9e-6
+unrotated q magnitudes                                        : mean 0.88, std 1.21  (plausible q values)
+q per-(token, head) norms                                     : 14-18, stable
+```
+
+So ATOM's fused norm+rope kernel applies the **standard** rotation with the same inverse frequencies as HF; there is no evidence of a RoPE defect.
+
+Remaining candidates for the layer-0 gap of 3e-2, in order of likelihood:
+1. the RMSNorm applied inside the fused kernel (`q_norm` / `k_norm`) versus HF's `MellumRMSNorm`
+2. the fused `qkv_proj` versus HF's separate `q_proj`/`k_proj`/`v_proj`
+3. the residual / post-attention RMSNorm fusion in `MellumDecoderLayer`
+
+Each can be checked the same way this one was: dump the production tensor, recompute the HF path in torch, compare element-wise. The dump hook is `ATOM_ROPE_DUMP` in `atom/model_ops/attention_mha.py` (`rope_cache` caller).
