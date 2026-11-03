@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Locate residual L0 MoE error after same-CK-stage2 ordered slot reduction."""
 import json
+import math
 import os
 import sys
 from pathlib import Path
@@ -109,7 +110,34 @@ def main():
     ck_gated = ck_aligned
     hf_gate = gate[inv_perm].view(m, topk, inter_dim).contiguous()
     hf_up = up[inv_perm].view(m, topk, inter_dim).contiguous()
+    def fp64_mismatches(ck_out, hf_out, weight_offset):
+        ix = torch.nonzero(ck_out != hf_out)
+        if len(ix) == 0:
+            return {"differing": 0}
+        token, slot, feature = ix.unbind(1)
+        expert = ids[token, slot]
+        dot = (x[token].double() * w13_hf[expert, feature + weight_offset].double()).sum(-1)
+        rounded = []
+        midpoint = 0
+        for v in dot.cpu().tolist():
+            if v == 0:
+                rounded.append(v)
+                continue
+            exponent = math.frexp(abs(v))[1] - 1
+            scaled = math.ldexp(abs(v), 7 - exponent)
+            midpoint += int(scaled - math.floor(scaled) == 0.5)
+            rounded.append(math.copysign(math.ldexp(round(scaled), exponent - 7), v))
+        r = torch.tensor(rounded, dtype=torch.float64, device=x.device)
+        ck_match = ck_out[token, slot, feature].double() == r
+        hf_match = hf_out[token, slot, feature].double() == r
+        return {"differing": len(ix), "ck_matches_fp64_bf16": int(ck_match.sum()),
+                "hf_matches_fp64_bf16": int(hf_match.sum()),
+                "neither_matches_fp64_bf16": int((~ck_match & ~hf_match).sum()),
+                "fp64_at_bf16_midpoint": midpoint}
+
     diagnostics = {
+        "fp64_gate_mismatches": fp64_mismatches(ck_gate, hf_gate, 0),
+        "fp64_up_mismatches": fp64_mismatches(ck_up, hf_up, inter_dim),
         "gemm_gate_ck_vs_hf": metric(ck_gate, hf_gate),
         "gemm_up_ck_vs_hf": metric(ck_up, hf_up),
         "silu_same_ck_gate_input": metric(ck_silu, F.silu(ck_gate)),

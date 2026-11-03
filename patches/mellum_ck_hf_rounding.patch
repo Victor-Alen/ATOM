@@ -1,0 +1,158 @@
+diff --git a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+index c9a4c8bc5..5ac6ff88e 100644
+--- a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
++++ b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+@@ -2,6 +2,7 @@
+ // SPDX-License-Identifier: MIT
+ 
+ #pragma once
++#include <cstdlib>
+ 
+ #include "ck/utility/common_header.hpp"
+ #include "ck/tensor_description/multi_index_transform_helper.hpp"
+@@ -690,6 +691,25 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+             Number<NumDTensor>{});
+     }
+ 
++    // Mellum BF16 diagnostic/alignment epilogue. Mode 0 preserves CK.
++    // 1: HF rounding boundaries; 2/3: GEMM gate/up; 4: rounded SiLU.
++    __device__ static float MellumSiluMul(float gate, float up, index_t mode)
++    {
++        if(mode == 0)
++        {
++            tensor_operation::element_wise::Silu{}(gate, gate);
++            return gate * up;
++        }
++        gate = type_convert<float>(type_convert<bhalf_t>(gate));
++        up = type_convert<float>(type_convert<bhalf_t>(up));
++        if(mode == 2) return gate;
++        if(mode == 3) return up;
++        tensor_operation::element_wise::Silu{}(gate, gate);
++        gate = type_convert<float>(type_convert<bhalf_t>(gate));
++        if(mode == 4) return gate;
++        return gate * up;
++    }
++
+     struct Problem
+     {
+         __host__ __device__ Problem(index_t NumTokens_,
+@@ -734,6 +754,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                       << "NBlock: " << NBlock << "}" << std::endl;
+         }
+ 
++        index_t MellumStage1Mode = 0;
++        index_t MellumStage2Round = 0;
+         index_t NumTokens;
+         index_t TopK;
+         index_t M;
+@@ -799,6 +821,26 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+               c_element_op{c_element_op_}
+         {
+ 
++            if constexpr(IsInputGemm && is_same_v<ADataType, bhalf_t> &&
++                         is_same_v<BDataType, bhalf_t> && is_same_v<CDataType, bhalf_t>)
++            {
++                if(N_ == 896 && K_ == 2304 && TopK_ == 8)
++                {
++                    const char* mode = std::getenv("CK_MELLUM_STAGE1_MODE");
++                    this->MellumStage1Mode = mode ? std::atoi(mode) : 0;
++                }
++            }
++
++            if constexpr(!IsInputGemm && is_same_v<ADataType, bhalf_t> &&
++                         is_same_v<BDataType, bhalf_t> && is_same_v<CDataType, bhalf_t>)
++            {
++                if(N_ == 2304 && K_ == 896)
++                {
++                    const char* round = std::getenv("CK_MELLUM_STAGE2_ROUND_WEIGHT");
++                    this->MellumStage2Round = round ? std::atoi(round) : 0;
++                }
++            }
++
+             // populate pointer, desc for Ds
+             static_for<0, NumDTensor, 1>{}([&](auto i) {
+                 using DDataType_ = remove_cvref_t<tuple_element_t<i.value, DsDataType>>;
+@@ -1443,8 +1485,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate *= 16;
+                                         up *= 16;
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+@@ -1490,6 +1532,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = scale_a * scale_b * c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =
+@@ -1532,8 +1577,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate = gate * topk_weights.template AsType<float>()[m4];
+                                         up   = up * topk_weights.template AsType<float>()[m4];
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+@@ -1563,6 +1608,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =
+@@ -1948,8 +1996,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate *= 16;
+                                         up *= 16;
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+@@ -1995,6 +2043,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = scale_a * scale_b * c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =
+@@ -2037,8 +2088,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate = gate * topk_weights.template AsType<float>()[m4];
+                                         up   = up * topk_weights.template AsType<float>()[m4];
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+@@ -2068,6 +2119,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =

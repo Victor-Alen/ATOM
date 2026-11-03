@@ -2674,3 +2674,12 @@ Link Type : PCIE     Hops : 2     Weight : 40
 ## 说明
 
 xGMI 单链路（count=1）约 50 GB/s，属于很窄的配置；MI300X OAM 那种 7 链路平台要高得多。所以在**这台机器**上做 PD 分离，KV 传输成本按 50 GB/s 算是对的——只是不该把它叫 PCIe。
+## 2026-11-03 continuation: CK stage1/2 HF rounding alignment, end-to-end measured
+
+See `CK_HF_ROUNDING_VALIDATION.md` and `patches/mellum_ck_hf_rounding.patch`. Real CK stage1 now has an opt-in epilogue that rounds GEMM gate/up to BF16, rounds SiLU output to BF16, then multiplies; both Run and Run_2Lds paths are covered. An additional opt-in CK stage2 epilogue rounds down output to BF16 before multiplying the route weight. These changes stay inside CK; no HF/PyTorch GEMM substitution. Default production remains original CK arithmetic plus ordered slots, because accuracy acceptance failed.
+
+Fixed-router M=866: same-input CK/PyTorch SiLU and multiply each differ in zero elements; GEMM gate/up have 1178/1149 differences out of 6,207,488 each. Stage1 gated mean vs HF falls 1.118e-4→1.495e-8; final L0 MoE mean is 9.137e-5 with stage1-only, 3.395e-7 with both rounding changes. The latter differs in 4585/1,995,264 scalar hidden-state elements, not requests or generated tokens. M=1 stage1 gated falls to 2/7168 different values. FP64 checks on differing GEMM entries do not universally favor HF or CK; no evidence requires rewriting SiLU or GEMM main loops for these captures.
+
+Production A20/B20/C20 token agreement: stage1-only 456/1280,1280/1280,122/160; both changes 284/1280,1280/1280,121/160. Control C with the same freshly regenerated HF eager/cache reference is 130/160; historical ordered-control A/B are 246/1280 and1280/1280. Fresh C20 agrees with saved eager prefixes on 20/20 prompts. **Step 0 remains unpassed**; local mean improvements do not certify generation accuracy. No new throughput, C200 full, MTP or scheduling/concurrency validation.
+
+ATOM branch `dsh/mellum-ck-hf-rounding`, based on `f0ab45dc`. CK base `af7118e342580ecd3f71edce7b1d0ba465012ecf`; stage1 branch commit `78a912528`, combined branch commit `d6e03ebd9`; original AITER source/installed JIT untouched. Independent CK worktrees/JIT directories and opt-in launcher `scripts/start_mellum_ck_hf_round.sh` preserve reproducibility. 40-repeat original-mode hashes match baseline; combined candidate has one hash per case on each GPU and matching hashes across GPUs; final production det3 is True. Services stopped and both GPUs returned to 0% VRAM. No upstream push.
