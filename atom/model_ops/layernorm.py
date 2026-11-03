@@ -256,7 +256,7 @@ class RMSNorm(nn.Module):
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         if (envs.ATOM_MELLUM_HF_NORM_PREFILL and x.shape==(990,2304)
                 and x.dtype==self.weight.dtype==torch.bfloat16 and self.tp_size==1
-                and not self.use_fused_quant and not self.fused_allreduce
+                and not self.use_fused_quant
                 and self.x_pad_to_multiple==0 and x_scale is None
                 and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
             from atom.model_ops.mellum_hf_norm import rmsnorm_hf_prefill

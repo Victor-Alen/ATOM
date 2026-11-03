@@ -55,6 +55,8 @@ def mellum_ordered_moe(
     if envs.ATOM_STEP_TRACE_DIR:
         from atom.models.step_tensor_trace import record_moe
         record_moe(layer_name, hidden_states, topk_ids, topk_weights, metadata.block_m)
+        from atom.models.step_tensor_trace import record_moe_weights
+        record_moe_weights(layer_name,w13,w2)
 
     sorted_ids, sorted_weights, sorted_experts, num_valid, _ = moe_sorting(
         topk_ids, topk_weights, experts, model_dim, hidden_states.dtype,

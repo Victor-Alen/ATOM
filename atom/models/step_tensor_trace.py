@@ -160,3 +160,16 @@ def record_moe_intermediate(layer_name,name,value):
     import re
     idx=int(re.search(r'layers\.(\d+)\.',layer_name).group(1))
     if idx==0:rec.detail[f'L0.full.moe.{name}']=value.detach().cpu().clone()
+
+
+def record_moe_weights(layer_name,w13,w2):
+    rec=RECORDER
+    if rec is None or not rec.active or os.environ.get('ATOM_STEP_TRACE_L0_DETAIL')!='1':return
+    import re
+    idx=int(re.search(r'layers\.(\d+)\.',layer_name).group(1))
+    if idx!=0:return
+    path=rec.root/'L0_weights.pt'
+    if path.exists():return
+    torch.save({'w13':w13.detach().cpu(),'w2':w2.detach().cpu(),
+                'w13_shuffled':getattr(w13,'is_shuffled',False),
+                'w2_shuffled':getattr(w2,'is_shuffled',False)},path)
