@@ -67,7 +67,7 @@ def mellum_ordered_moe(
         device=hidden_states.device,
     )
     stage1_num_valid = num_valid
-    if envs.ATOM_MELLUM_MOE_HF_KORDER:
+    if envs.ATOM_MELLUM_MOE_HF_KORDER and tokens > 1:
         from atom.model_ops.mellum_ck_korder import ck_hf_korder_plan
         stage1_num_valid = ck_hf_korder_plan(topk_ids, num_valid)
     metadata.stage1(

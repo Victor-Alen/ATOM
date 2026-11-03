@@ -38,6 +38,12 @@ def _profile_table(device_index):
     data = json.loads(path.read_text())
     if torch.cuda.get_device_properties(device_index).gcnArchName.split(":")[0] != data["arch"]:
         raise RuntimeError("CK HF K-order profile table does not match GPU architecture")
+    if data.get("ck_stage1_metadata_abi") != 1:
+        raise RuntimeError("Rebuild CK to seal its K-order metadata ABI and binary fingerprint")
+    binary = Path(os.environ["AITER_JIT_DIR"]) / (
+        "module_moe_ck2stages_b16_b16_preshuffle_on_b16_silu_no_mulWeightStage2.so")
+    if hashlib.sha256(binary.read_bytes()).hexdigest() != data["ck_binary_sha256"]:
+        raise RuntimeError("CK HF K-order metadata does not match the loaded MoE binary")
     library = Path(data["library"])
     if hashlib.sha256(library.read_bytes()).hexdigest() != data["library_sha256"]:
         raise RuntimeError("CK HF K-order profile table does not match installed hipBLASLt")
