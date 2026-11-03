@@ -2709,3 +2709,11 @@ See `UP_FP64_FIX_VALIDATION.md`. Replaced selected-coordinate trace correction w
 Specified real L27 token467/slot3/expert38/up132: original BF16 up35.5 (0x420E); new CK and HF both35.25 (0x420D), gated948. Both GPUs each 40 repeats have one identical whole-up hash; gate tensor equals baseline. Whole L27 up still has1154/7,096,320 differences vs HF (baseline1324); max falls0.25→0.125. Targeted case is fixed, not full-layer HF bit exact or Step0 accepted.
 
 Fixed M990 stage1 synchronized-call median baseline0.782714ms→1.606979ms (2.053×); not MoE/service tok/s. New production launcher `scripts/start_mellum_up_fp64.sh` successfully completed a real2-token prefill+decode smoke on8003. Candidate remains explicit, original default/JIT untouched. CK branch `mellum/up-block-fp64` commit `14e5a4558`, base `d6e03ebd9`; ATOM branch `dsh/mellum-up-block-fp64` from `277aea37`. Patch `patches/mellum_up_block_fp64.patch`, raw `/workspace/logs/step0_continuation/up_fp64_fix_summary.json`. No upstream push; services stopped, GPU handles0 and both VRAM0%.
+
+## 2026-11-03 continuation: location distribution of 1154 L27 up residuals
+
+See `UP_RESIDUAL_DISTRIBUTION.md`. Fixed real L27 prefill input [990,8,896], CK14e5a4558 vs HF:1154 numerical/bit differences across676 tokens,617 features,8 slots,15 of30 routed experts. All7 feature tiles affected (143–192 residuals each); no isolated tile/lane pattern. Top7 experts account84.23% residuals but87.07% output exposure; expert52's high rate is only1/896 from one routed row, not evidence of a hotspot. Fixed target467/3/132 absent.
+
+1096/1154 differ by1 BF16 representable step. Full-K FP64 reference classifies1005 CK-match,121 HF-match,28 neither; 149 CK-nonmatching coordinates are separately exported. Max273-step distance is near zero (CK -4.917e-7,HF -2.220e-6,FP64 -4.771e-7), not a large absolute error. Original1324 HF differences:634 disappear,690 persist,464 introduced;391 of the introduced points match FP64 on CK side. “HF difference” does not universally mean inferior CK numerical accuracy.
+
+ATOM analysis branch `dsh/mellum-up-residual-distribution` from `c85e8be3`; scripts `probe_up_difference_distribution.py` and `render_up_distribution.py`; no CK production changes, no new Step0 acceptance or performance run. GPU handles0, no push.
