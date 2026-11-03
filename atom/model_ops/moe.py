@@ -638,6 +638,28 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
                 global_num_experts, expert_map,
             )
 
+        if getattr(layer, "model_type", None) == "mellum":
+            combine = envs.ATOM_MELLUM_MOE_COMBINE
+            if combine == "ordered":
+                if (
+                    self.fused_experts is not None
+                    or expert_map is not None
+                    or layer.tp_size != 1
+                    or layer.dp_size != 1
+                    or layer.ep_size != 1
+                ):
+                    raise RuntimeError(
+                        "Mellum ordered CK MoE currently supports TP=DP=EP=1 only"
+                    )
+                from atom.model_ops.mellum_ordered_moe import mellum_ordered_moe
+
+                return mellum_ordered_moe(
+                    x, layer.w13_weight, layer.w2_weight,
+                    topk_weights, topk_ids, activation,
+                )
+            if combine != "atomic":
+                raise ValueError("ATOM_MELLUM_MOE_COMBINE must be ordered or atomic")
+
         if self.fused_experts:
             return self.fused_experts(
                 hidden_states=x,
@@ -2031,6 +2053,7 @@ class FusedMoE(torch.nn.Module):
     ):
         super().__init__()
         self.prefix = prefix
+        self.model_type = getattr(config, "model_type", None)
         layer_quant_config = (
             quant_config.get_layer_quant_config(prefix, check_children=True)
             if quant_config

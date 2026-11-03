@@ -35,6 +35,11 @@ environment_variables: dict[str, Callable[[], Any]] = {
     ),
     "ATOM_USE_TRITON_MLA": lambda: os.getenv("ATOM_USE_TRITON_MLA", "0") == "1",
     "ATOM_USE_TRITON_MOE": lambda: os.getenv("ATOM_USE_TRITON_MOE", "0") == "1",
+    # Mellum bf16, TP=DP=EP=1: deterministic CK stage2 slot combine by default.
+    # Set to "atomic" to restore AITER's original shared-output accumulation.
+    "ATOM_MELLUM_MOE_COMBINE": lambda: os.getenv(
+        "ATOM_MELLUM_MOE_COMBINE", "ordered"
+    ).lower(),
     # --- Kernel Fusion Toggles ---
     # fused_compress_attn: switch between Triton (default historical) and a
     # flydsl drop-in for V4-Pro Compressor (Main BF16 + Indexer FP8) paths.
