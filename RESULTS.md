@@ -2580,3 +2580,12 @@ Final deliverable state:
 | production, B | 1.0000 |
 | production, C | 0.7812 (20 prompts) |
 | Step 0 | **not met** |
+### 2026-11-03 09:43 (continuation): production MoE source and fixed-routing isolation
+
+See `PRODUCTION_MOE_AUDIT.md` for source lines, buffer layout, profiler counts and raw logs. This pass inspected the actual AITER/CK production kernel, not the PyTorch reference path. A mistaken eager-default change was reverted in `b3dc6092`.
+
+For bf16, 64 experts, top-8, M=1/866: production uses Opus sorting plus CK stage1 and stage2. Stage2 writes to the bf16 output with `AtomicAdd` (`device_moe_gemm.hpp:280-281`), while stage1 uses `Set`. Profiler: one `fused_moe` call launches 3 kernels at M=1 and 4 at M=866 (routing and gate GEMM excluded). Sorting clears output; `a2` shape is `[M,8,896]`, final buffer `[M,2304]`.
+
+With actual L0 input/weights and fixed top-k ids/weights, 40 repetitions on each GPU: routing 1 distinct result, stage1 1 distinct result, stage2 40 distinct results, fused MoE 40 distinct results, for both M=1 and M=866. Two GPUs were tested in separate processes; cross-GPU output hash sets had zero overlap. One earlier single-process dual-GPU attempt memory-faulted and was discarded.
+
+The original `ATOM_PROD_DUMP` L0 `max 0.14 / mean 8.2e-4` was **not** reproduced on the same service input. On this frozen M=866 capture, fused MoE vs HF is `max 0.0625 / mean 2.186e-4`; eight single-route CK calls with ordered fp32 sum give `max 0.03125 / mean 1.689e-4`. That comparison changes kernel configuration and is supportive, not an isolated atomic-only attribution. Step 0 remains unpassed.

@@ -269,3 +269,6 @@ cd /workspace/ATOM-tritonmoe && git bundle create /tmp/mellum-step0.bundle --all
 # 或直接拷走文档
 scp -P 2211 root@43.180.254.230:/workspace/ATOM-tritonmoe/{BRIEF-0800.md,DEBUG_GUIDE.md,REPORT-STEP0-2026-11-03.md,HANDOVER.md,RESULTS.md} .
 ```
+## 2026-11-03 09:43 continuation: production MoE source audit
+
+Read `PRODUCTION_MOE_AUDIT.md` before changing MoE. The production bf16 top-8 path is Opus sorting → CK stage1 → CK stage2; CK stage2 uses `AtomicAdd` directly to bf16 `moe_buf`. Fixed-router, fixed-stage1 tests (40 repeats per GPU) locate nondeterminism in stage2 rather than routing. Profiler measured 3 kernels per M=1 `fused_moe` call and 4 per M=866 call, excluding routing. The exact buffer shapes, source lines, precision comparison and raw log paths are in the audit. The original L0 `0.14 / 8.2e-4` statistic was not recreated in this isolated capture. Next engineering step is a same-configuration per-slot stage2 output plus ordered reduction, followed by full production service correctness/throughput checks. The mistaken PyTorch eager-default change was reverted in `b3dc6092`. No push; Step 0 remains unpassed.
