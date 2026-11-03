@@ -254,6 +254,17 @@ class RMSNorm(nn.Module):
         residual: torch.Tensor | None = None,
         x_scale: Optional[torch.Tensor] = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+        if (__import__('os').environ.get('ATOM_MELLUM_EXACT_NORM')=='1'
+                and not self.use_fused_quant and self.tp_size==1
+                and x.dtype==self.weight.dtype==torch.bfloat16
+                and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
+            summed=x if residual is None else x+residual
+            values=summed.float()
+            variance=values.pow(2).mean(-1,keepdim=True)
+            normalized=(values*torch.rsqrt(variance+self.eps)).to(summed.dtype)
+            result=self.weight*normalized
+            return result if residual is None else (result,summed)
+
         if (envs.ATOM_MELLUM_HF_NORM_PREFILL and x.ndim==2 and x.shape[0]>1 and x.shape[1]==2304
                 and x.dtype==self.weight.dtype==torch.bfloat16 and self.tp_size==1
                 and not self.use_fused_quant
