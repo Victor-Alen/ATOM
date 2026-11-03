@@ -53,6 +53,7 @@ class TensorRecorder:
                 if self.active:
                     ctx=kwargs.get('fwd_ctx',args[-1] if args else None)
                     am=ctx.attn_metadata
+                    if am.block_tables is None: return result
                     q,k,v,kc,vc,ks,vs=result
                     n=int(am.context_lens[0]);bs=kc.shape[3] if kc.ndim==5 else kc.shape[1]
                     blocks=am.block_tables[0,:(n+bs-1)//bs].long()

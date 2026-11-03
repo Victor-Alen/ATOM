@@ -9,6 +9,7 @@ from aiter import dtypes
 from typing import Union, Optional
 
 from atom.utils.decorators import mark_trace
+from atom.utils import envs
 
 
 def apply_rotary_emb(
@@ -64,7 +65,8 @@ class RotaryEmbedding(nn.Module):
         inv_freq = 1.0 / (
             base
             ** (
-                torch.arange(0, self.rotary_dim, 2, dtype=dtypes.fp32) / self.rotary_dim
+                torch.arange(0, self.rotary_dim, 2, dtype=dtypes.fp32,
+                    device="cpu" if envs.ATOM_MELLUM_HF_ROPE_INV_FREQ else None) / self.rotary_dim
             )
         )
         return inv_freq
@@ -74,7 +76,7 @@ class RotaryEmbedding(nn.Module):
         inv_freq = self._compute_inv_freq(self.base)
         t = torch.arange(self.max_position_embeddings, dtype=dtypes.fp32)
 
-        freqs = torch.einsum("i,j -> ij", t, inv_freq)
+        freqs = torch.einsum("i,j -> ij", t, inv_freq.to(t.device))
         cos = freqs.cos().unsqueeze(-2).unsqueeze(-2)
         sin = freqs.sin().unsqueeze(-2).unsqueeze(-2)
         return cos, sin
