@@ -3512,11 +3512,11 @@ def _atom_moe_triple(layer, x, topk_weights, topk_ids, activation, expert_map, p
 
 
 def _atom_moe_hf_order(layer, x, topk_weights, topk_ids):
-    """Bit-for-bit imitation of HF Mellum's sparse MoE combine.
+    """Legacy per-expert diagnostic MoE; not the active HF 5.2 path.
 
-    HF keeps the accumulator in bf16 and adds each expert's contribution in
-    ascending expert id via index_add_. aiter ships shuffled weights, so the
-    (16,16) shuffle is inverted and cached on the layer once.
+    Active HF uses grouped_mm followed by reshape-and-sum. This helper uses
+    per-expert matmuls and index_add_, so it is not bit-exact HF. AITER ships
+    shuffled weights, which are inverted and cached on the layer once.
     """
     import torch as _torch
 

@@ -24,7 +24,7 @@
 
 ## 为什么与 HF 仍有误差
 
-在同一 L0 M=866 捕获数据上，实际 HF 5.2.0 Mellum 参考走 `grouped_mm_experts_forward`，最后 `reshape(...).sum(dim=1)`；重建其输出与捕获文件逐值一致（1,995,264/1,995,264）。这不是运行中的逐专家 Python `index_add_` 循环。旧 ATOM `_atom_moe_hf_order` 循环内用 `index_add_`，Python 外层顺序本身无法保证 GPU 重复索引累加的顺序。
+在同一 L0 M=866 捕获数据上，实际 HF 5.2.0 Mellum 参考走 `grouped_mm_experts_forward`，最后 `reshape(...).sum(dim=1)`；重建其输出与捕获文件逐值一致（1,995,264/1,995,264）。这不是运行中的逐专家 Python `index_add_` 循环。旧 ATOM `_atom_moe_hf_order` 是另一条诊断实现，使用逐专家矩阵乘法和 `index_add_`；它既不复刻当前 HF 运算顺序，也不能仅凭 Python 循环或 `index_add_` 的通用文档推断这个具体输入必然确定或不确定。此处没有对该诊断循环做固定输入重复隔离测试。
 
 | L0 对照 | max 绝对误差 | mean 绝对误差 |
 |---|---:|---:|
