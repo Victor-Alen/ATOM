@@ -639,6 +639,9 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
             )
 
         if getattr(layer, "model_type", None) == "mellum":
+            if __import__('os').environ.get('ATOM_MELLUM_HF_GEMM_MOE')=='1':
+                from atom.model_ops.mellum_hf_gemm_moe import apply
+                return apply(layer,x,router_logits)
             combine = envs.ATOM_MELLUM_MOE_COMBINE
             if combine == "ordered":
                 if (
