@@ -352,3 +352,8 @@ Generation did NOT pass: A10x64 214/640=.334375; C10x8 57/80=.7125. New A0 first
 ## 2026-11-03：L0 CK K grouping / StaggerU / LocalSplitU 首差续测
 
 实际CK实验80f4da570在独立worktree/JIT，修正原L0/e55/Gate407首标量，但未合入默认。全批CK仍Gate1512、Up1483不同；整体首差仍token0/e49/Up783。按HF实际GEMM配置还原的独立Triton探针覆盖51专家，Gate剩1、Up剩4（各7096320），最早token1/e17/Up275；不是生产通过。官方A0当前5/64，最新A10/C10未测。完整冻结配置、原始证据和剩余事项见ATTENTION-FIRST-DIVERGENCE-PROGRESS.md。
+
+
+## 2026-11-03：生产 CK Up783 已接入，A10/C10×64 复测
+
+目标token0/e49/Up783已在8003生产候选服务修正；L0 token0 Gate/Up各7168值全量一致。运行ATOM9082ed20、CK5082d415d，PID856843。当前CK stage1最早首差token1/e17/Up275，不能把Triton探针的1+4个残差当作CK已对齐。A10×64=131/640（20.46875%，1/10全对）；C10×64=320/640（50%，4/10全对），均未过0.90。C参考已现场重算并复核C0/C1。全部证据、约3%两例性能差异及启动器见CK-PRODUCTION-UP783-FIX.md。

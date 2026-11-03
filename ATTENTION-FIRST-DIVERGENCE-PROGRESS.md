@@ -56,3 +56,8 @@ CK实验的Gate最早差异已移至token4/e6/feature326，但整体MoE最早仍
 - 原始证据：`/workspace/logs/step0_continuation/norm990_active_prod/` 下 `ck_stage_isolation.json`、`fixed_router_replay_gpu1.json`、`expert55_lds_korder_probe.json`、`all51_korder_summary.json`、`local_split_remaining5.json`、`ck_stage_isolation_korder.json`、`ck_korder_first_difference.json` 及对应log/实际HF汇编。
 - 初次CK lane选择实现产生大偏差，已拒绝并修正；失败日志保留为`ck_korder_rejected_lane_select.log`，未作为修复证据。
 - 本轮未改变生产默认、未替换正在运行的服务、未推送。新方案服务性能未测，Stage2残余173值尚未修，A/C验收仍待完整修复后复测。
+
+
+## 2026-11-03：生产 CK Up783 已接入，A10/C10×64 复测
+
+最新生产状态以CK-PRODUCTION-UP783-FIX.md为准：Up783已在实际CK和8003服务修正；stage1最早首差现在为token1/e17/Up275。旧80f4da570实验不是活跃版本。当前CK仍Gate1387、Up1394不同，A10=20.46875%、C10=50%，Step0未通过。
