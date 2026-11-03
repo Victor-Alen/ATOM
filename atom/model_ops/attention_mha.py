@@ -792,6 +792,14 @@ class PagedAttentionImpl(nn.Module):
             return ref
         return o
 
+    def prefill_attention_hf_rounding(self,q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx):
+        from atom.model_ops.mellum_hf_attention import dense_prefill_hf_rounding
+        am=fwd_ctx.attn_metadata
+        if (q.shape!=(990,32,128) or k.shape!=(990,4,128) or v.shape!=(990,4,128)
+                or am.context_lens.numel()!=1 or self.sinks is not None):
+            return self.prefill_attention(q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx)
+        return dense_prefill_hf_rounding(q,k,v,self.scale,self.sliding_window)
+
     def paged_attention_hf_rounding(self,q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx):
         from atom.model_ops.mellum_hf_attention import paged_decode_hf_rounding
         am=fwd_ctx.attn_metadata
@@ -815,6 +823,13 @@ class PagedAttentionImpl(nn.Module):
                 and self.kv_cache_dtype=='bf16'
                 and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
             return self.paged_attention_hf_rounding
+
+        if (ctx.is_prefill
+                and __import__('os').environ.get('ATOM_MELLUM_HF_ATTN_PREFILL_ROUNDING')=='1'
+                and self.sliding_window==1024 and self.head_dim==128
+                and self.kv_cache_dtype=='bf16' and not self.use_flash_layout
+                and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
+            return self.prefill_attention_hf_rounding
 
         if ctx.is_prefill:
             if self.use_flash_layout:

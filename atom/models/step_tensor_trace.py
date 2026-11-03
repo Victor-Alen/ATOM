@@ -46,6 +46,19 @@ class TensorRecorder:
             tag=f'L{i}.layer'
             self.handles.append(layer.register_forward_hook(self.post(tag),with_kwargs=True))
         if os.environ.get('ATOM_STEP_TRACE_L0_DETAIL')=='1':
+            for name,sub in [('input_norm',model.layers[0].input_layernorm),
+                             ('post_norm',model.layers[0].post_attention_layernorm),
+                             ('mlp',model.layers[0].mlp)]:
+                def pre_full(module,args,kwargs,name=name):
+                    if not self.active:return
+                    for key,t in enumerate(args):
+                        if torch.is_tensor(t):self.detail[f'L0.full.{name}.in{key}']=t.detach().cpu().clone()
+                def post_full(module,args,kwargs,out,name=name):
+                    if not self.active:return
+                    for key,t in enumerate(out if isinstance(out,(tuple,list)) else [out]):
+                        if torch.is_tensor(t):self.detail[f'L0.full.{name}.out{key}']=t.detach().cpu().clone()
+                self.handles.append(sub.register_forward_pre_hook(pre_full,with_kwargs=True))
+                self.handles.append(sub.register_forward_hook(post_full,with_kwargs=True))
             inner=model.layers[0].self_attn.attn.impl
             original_rope_cache=inner.rope_cache
             def rope_cache(*args,**kwargs):
@@ -53,6 +66,9 @@ class TensorRecorder:
                 if self.active:
                     ctx=kwargs.get('fwd_ctx',args[-1] if args else None)
                     am=ctx.attn_metadata
+                    import inspect
+                    self.detail["rope.class_file"]=inspect.getfile(type(inner.rotary_emb))
+                    self.detail["rope.hf_inv_freq_flag"]=os.getenv("AITER_MELLUM_HF_ROPE_INV_FREQ")
                     if am.block_tables is None: return result
                     q,k,v,kc,vc,ks,vs=result
                     n=int(am.context_lens[0]);bs=kc.shape[3] if kc.ndim==5 else kc.shape[1]
