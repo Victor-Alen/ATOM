@@ -52,6 +52,10 @@ def mellum_ordered_moe(
     if metadata.run_1stage or metadata.ksplit != 0:
         raise RuntimeError("Mellum ordered MoE requires the CK two-stage, unsplit dispatch")
 
+    if envs.ATOM_STEP_TRACE_DIR:
+        from atom.models.step_tensor_trace import record_moe
+        record_moe(layer_name, hidden_states, topk_ids, topk_weights, metadata.block_m)
+
     sorted_ids, sorted_weights, sorted_experts, num_valid, _ = moe_sorting(
         topk_ids, topk_weights, experts, model_dim, hidden_states.dtype,
         metadata.block_m,

@@ -76,6 +76,9 @@ class Sampler(nn.Module):
         """
         # Temperature 0 must be a true argmax: the plain-temperature path
         # below runs a Gumbel race with fresh noise on every call.
+        if os.environ.get("ATOM_STEP_TRACE_DIR"):
+            from atom.models.step_tensor_trace import capture_sampler
+            capture_sampler(logits, temperatures)
         if all_greedy:
             if os.environ.get('ATOM_LOGITS_BF16_ARGMAX') == '1':
                 logits = logits.to(torch.bfloat16).float()

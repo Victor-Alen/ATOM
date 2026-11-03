@@ -1,0 +1,46 @@
+diff --git a/csrc/kernels/rmsnorm_quant_kernels.cu b/csrc/kernels/rmsnorm_quant_kernels.cu
+index dbc4c5c23..c8c0788d6 100644
+--- a/csrc/kernels/rmsnorm_quant_kernels.cu
++++ b/csrc/kernels/rmsnorm_quant_kernels.cu
+@@ -97,6 +97,12 @@ __global__ void add_rmsnorm_quant_kernel(
+                 for(int i = 0; i < thread_data_size; i++)
+                 {
+                     thread_data_float[i] = static_cast<float>(thread_data_i[i]) + static_cast<float>(thread_data_residual_in[i]);
++                    if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++                    {
++                        // HF materializes the residual sum in BF16 before RMS reduction.
++                        thread_data_float[i] = opus::bf16_to_fp32(
++                            opus::fp32_to_bf16<0>(thread_data_float[i]));
++                    }
+                 }
+ 
+                 if constexpr(use_prefetch)
+@@ -158,6 +164,13 @@ __global__ void add_rmsnorm_quant_kernel(
+ #endif
+             }
+             
++            if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++            {
++                // HF rounds the normalized value before multiplying the BF16 weight.
++                for(int i = 0; i < thread_data_size; ++i)
++                    thread_data_float[i] = opus::bf16_to_fp32(
++                        opus::fp32_to_bf16<0>(thread_data_float[i]));
++            }
+             float* thread_data_weight2 = reinterpret_cast<float*>(&thread_data_weight);
+             for(int i = 0; i < thread_data_size / 2; i++)
+             {
+@@ -196,6 +209,14 @@ __global__ void add_rmsnorm_quant_kernel(
+ #endif
+             }
+ 
++            if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++            {
++                // Explicit RNE keeps nonquantized BF16 independent of Opus defaults.
++                for(int i = 0; i < thread_data_size; ++i)
++                    thread_data_float[i] = opus::bf16_to_fp32(
++                        opus::fp32_to_bf16<0>(thread_data_float[i]));
++            }
++
+             if constexpr(FUSE_QUANT)
+             {
+                 float thread_max = 1e-10f;

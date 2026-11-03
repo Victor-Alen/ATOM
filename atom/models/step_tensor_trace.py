@@ -1,0 +1,111 @@
+"""Opt-in, armed capture of one real generation step; no arithmetic overrides."""
+import os
+from pathlib import Path
+import torch
+
+RECORDER=None
+
+class TensorRecorder:
+    def __init__(self,outdir,target):
+        self.root=Path(outdir); self.root.mkdir(parents=True,exist_ok=True)
+        self.target=target; self.active=False; self.data={}; self.detail={}; self.step=-1
+    def begin(self,step):
+        self.step=step; self.active=step==self.target
+        if self.active: self.data={}
+    def add(self,key,value):
+        if not self.active: return
+        if torch.is_tensor(value):
+            t=value.detach()
+            if t.ndim>=2: t=t.reshape(-1,t.shape[-1])[-1:]
+            self.data[key]=t.cpu().clone()
+    def pre(self,tag):
+        def hook(module,args,kwargs):
+            if not self.active: return
+            for i,x in enumerate(args): self.add(f'{tag}.in{i}',x)
+            for name in ('hidden_states','input_ids','positions','position_ids'):
+                if name in kwargs: self.add(f'{tag}.kw.{name}',kwargs[name])
+        return hook
+    def post(self,tag):
+        def hook(module,args,kwargs,output):
+            if not self.active: return
+            values=output if isinstance(output,(tuple,list)) else [output]
+            for i,x in enumerate(values): self.add(f'{tag}.out{i}',x)
+            if hasattr(module,'weight') and ('norm' in tag or tag.endswith('.router')):
+                self.data[f'{tag}.weight']=module.weight.detach().cpu().clone()
+        return hook
+    def attach(self,model):
+        self.handles=[]
+        for i,layer in enumerate(model.layers):
+            for label,name in [('input_norm','input_layernorm'),('attn','self_attn'),('post_norm','post_attention_layernorm'),('mlp','mlp')]:
+                sub=getattr(layer,name); tag=f'L{i}.{label}'
+                self.handles.append(sub.register_forward_pre_hook(self.pre(tag),with_kwargs=True))
+                self.handles.append(sub.register_forward_hook(self.post(tag),with_kwargs=True))
+            tag=f'L{i}.router'; sub=layer.mlp.gate
+            self.handles.append(sub.register_forward_pre_hook(self.pre(tag),with_kwargs=True))
+            self.handles.append(sub.register_forward_hook(self.post(tag),with_kwargs=True))
+            tag=f'L{i}.layer'
+            self.handles.append(layer.register_forward_hook(self.post(tag),with_kwargs=True))
+        if os.environ.get('ATOM_STEP_TRACE_L0_DETAIL')=='1':
+            for name in ('qkv_proj','q_norm','k_norm','rotary_emb','attn','o_proj'):
+                sub=getattr(model.layers[0].self_attn,name)
+                def before(module,args,kwargs,name=name):
+                    if self.step<0 or self.step>self.target: return
+                    for key,value in list(enumerate(args))+list(kwargs.items()):
+                        if torch.is_tensor(value):
+                            self.detail[f'L0.step{self.step}.{name}.in{key}']=value.detach().cpu().clone()
+                def after(module,args,kwargs,value,name=name):
+                    if self.step<0 or self.step>self.target: return
+                    if name=='attn':
+                        for key,t in kwargs.items():
+                            if torch.is_tensor(t):
+                                self.detail[f'L0.step{self.step}.{name}.after{key}']=t.detach().cpu().clone()
+                    values=value if isinstance(value,(tuple,list)) else [value]
+                    for key,t in enumerate(values):
+                        if torch.is_tensor(t):
+                            self.detail[f'L0.step{self.step}.{name}.out{key}']=t.detach().cpu().clone()
+                self.handles.append(sub.register_forward_pre_hook(before,with_kwargs=True))
+                self.handles.append(sub.register_forward_hook(after,with_kwargs=True))
+        self.handles.append(model.norm.register_forward_pre_hook(self.pre('final_norm'),with_kwargs=True))
+        self.handles.append(model.norm.register_forward_hook(self.post('final_norm'),with_kwargs=True))
+    def save(self):
+        if self.active:
+            torch.save({'step':self.step,'tensors':{**self.detail,**self.data}},self.root/f'step_{self.step}.pt')
+
+def install_step_trace(model):
+    global RECORDER
+    if RECORDER is not None: return
+    rec=TensorRecorder(os.environ['ATOM_STEP_TRACE_DIR'],int(os.environ.get('ATOM_STEP_TRACE_STEP','27')))
+    rec.attach(model); RECORDER=rec
+    original=model.forward; counter=[0]
+    def forward(*args,**kwargs):
+        if not (rec.root/'ARMED').is_file(): return original(*args,**kwargs)
+        rec.begin(counter[0]); counter[0]+=1
+        rec.add('model.input_ids',kwargs.get('input_ids'))
+        rec.add('model.positions',kwargs.get('positions'))
+        try: return original(*args,**kwargs)
+        finally: rec.save()
+    model.forward=forward
+
+def record_moe(layer_name,x,ids,weights,block_m):
+    rec=RECORDER
+    if rec is None or not rec.active: return
+    import re
+    idx=int(re.search(r'layers\.(\d+)\.',layer_name).group(1))
+    rec.add(f'L{idx}.routing.input',x); rec.add(f'L{idx}.routing.ids',ids)
+    rec.add(f'L{idx}.routing.weights',weights)
+    rec.data[f'L{idx}.routing.block_m']=block_m
+
+def capture_head(logits,x,weight):
+    rec=RECORDER
+    if rec is None or not rec.active: return
+    rec.add('head.input',x); rec.add('head.logits',logits)
+    candidates=[int(v) for v in os.environ.get('ATOM_STEP_TRACE_CANDIDATES','').split(',') if v]
+    candidates=sorted(set(candidates+logits[-1].topk(10).indices.tolist()))
+    rec.data['head.weight_ids']=torch.tensor(candidates)
+    rec.data['head.weight_rows']=weight[candidates].detach().cpu().clone()
+    rec.save()
+
+def capture_sampler(logits,temperatures):
+    rec=RECORDER
+    if rec is None or not rec.active: return
+    rec.add('sampler.logits',logits); rec.add('sampler.temperatures',temperatures);rec.save()

@@ -338,3 +338,12 @@ See `UP_FP64_AC10_RESULTS.md`. Tested A-0000..0009×64 and C-0000..0009×8 seque
 A10:199/640=0.3109375, exact1/10; C10:66/80=0.825, exact7/10. **Neither reaches0.90.** C failing requests C-0001 5/8(first5),C-0006 0/8(first0),C-0008 5/8(first5). Earlier successful L27 scalar correction does not establish generation acceptance. No B/full20/full200 or three-port acceptance in this run.
 
 Raw `/workspace/logs/step0_continuation/up_fp64_ac10/` includes server logs, output JSONL, per-prompt comparisons and `run.json` with versions/env/hashes/token ids. Service exited after requests completed; GPU handles0, both VRAM0%, no push.
+
+
+## 2026-11-03 production first-divergence continuation
+
+See FIRST-DIVERGENCE-NORM-FIX.md for full evidence and source pins. L27 selected prefill up scalar was corrected; full up tensor still differed 1154/7096320. At old A0 decode step27, same-input/same-route L27 MoE is exact, head/sampler are exact, upstream drift remains.
+
+Confirmed actual HIP rmsnorm_quant uses Opus BF16 truncate and different materialization boundaries. AITER independent commit 9d4907d8d fixes nonquant BF16 RNE boundaries. Same-input 57-node replay: norm mismatches 68147->38/131328; residual mismatches 36309->0/129024. Candidate launcher start_mellum_norm_hf.sh preserves generic CK14e5a4558 and ordered stage2; original default launcher unchanged.
+
+Generation did NOT pass: A10x64 214/640=.334375; C10x8 57/80=.7125. New A0 first mismatch index3. Native HF reference revalidated. L0 input norm exact, attention output differs. Fixed production rotated Q/K/V eager replay still differs1178/4096 (max .00048828125); actual paged cache not yet directly checked. Next: verify cache, split QK/scale/softmax/PV/reduce. Do not infer all attention correctness from earlier limited probes. No throughput validation for norm candidate; no push.

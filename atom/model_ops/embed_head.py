@@ -179,6 +179,9 @@ class ParallelLMHead(VocabParallelEmbedding):
                 last_indices = attn_metadata.cu_seqlens_q[1:] - 1
                 x = x[last_indices].contiguous()
         logits = tgemm.mm(x, self.weight, self.bias)
+        if envs.ATOM_STEP_TRACE_DIR:
+            from atom.models.step_tensor_trace import capture_head
+            capture_head(logits, x, self.weight)
         if self.tp_size > 1:
             use_custom = envs.ATOM_USE_CUSTOM_ALL_GATHER
             logits = tensor_model_parallel_all_gather(logits, use_custom=use_custom)

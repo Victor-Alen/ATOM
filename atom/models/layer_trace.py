@@ -93,6 +93,9 @@ def _flush(step_idx, records):
 
 
 def install_layer_trace(model):
+    if os.environ.get("ATOM_STEP_TRACE_DIR"):
+        from atom.models.step_tensor_trace import install_step_trace
+        return install_step_trace(model)
     if STATE["installed"]:
         return
     outdir = os.environ.get("ATOM_LAYER_TRACE_DIR")
