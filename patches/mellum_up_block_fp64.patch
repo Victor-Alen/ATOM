@@ -1,0 +1,90 @@
+diff --git a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+index 3fc204e6a..ca5c8b3a0 100644
+--- a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
++++ b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+@@ -525,6 +525,33 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+         // Initialize C
+         c_thread_buf.Clear();
+         c_thread_buf_up.Clear();
++        // BF16 V3 variant: independent up-projection MFMA chunks, FP64 merge.
++        // Applies uniformly to every output register, with no target-coordinate logic.
++        constexpr bool UpFp64Merge = is_same_v<ADataType, bhalf_t> &&
++                                     is_same_v<BDataType, bhalf_t>;
++        auto up_fp64 = make_static_buffer<AddressSpaceEnum::Vgpr, double>(
++            Number<CThreadBuffer::Size()>{});
++        if constexpr(UpFp64Merge) up_fp64.Clear();
++        auto begin_up_chunk = [&](auto offset) {
++            if constexpr(UpFp64Merge)
++            {
++                static_for<0, CThreadBuffer::s_per_v, 1>{}([&](auto j) {
++                    constexpr auto reg = Number<decltype(offset)::value + decltype(j)::value>{};
++                    c_thread_buf_up(reg) = 0.0f;
++                });
++            }
++        };
++        auto merge_up_chunk = [&](auto offset) {
++            if constexpr(UpFp64Merge)
++            {
++                static_for<0, CThreadBuffer::s_per_v, 1>{}([&](auto j) {
++                    constexpr auto reg = Number<decltype(offset)::value + decltype(j)::value>{};
++                    up_fp64(reg) += static_cast<double>(c_thread_buf_up[reg]);
++                    c_thread_buf_up(reg) = static_cast<float>(up_fp64[reg]);
++                });
++            }
++        };
++
+ 
+         __builtin_amdgcn_sched_barrier(0);
+ 
+@@ -590,11 +617,13 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                                 a_thread_vec.template AsType<mfma_input_type>(),
+                                 b_thread_vec.template AsType<mfma_input_type>(),
+                                 c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+ 
+                             xdlops_gemm.Run(
+                                 a_thread_vec.template AsType<mfma_input_type>(),
+                                 b_thread_vec_up.template AsType<mfma_input_type>(),
+                                 c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                         });
+ 
+                         if constexpr(m0.value == MRepeat - 2)
+@@ -732,10 +761,12 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+ 
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                 });
+                 if constexpr(m0.value == (MRepeat - 2))
+                 {
+@@ -832,10 +863,12 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+ 
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                 });
+ 
+                 if constexpr(m0.value < (MRepeat - 2))
+@@ -895,9 +928,11 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                 });
+ 
+                 if constexpr(m0.value < (MRepeat - 2))
