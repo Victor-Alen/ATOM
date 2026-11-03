@@ -5,7 +5,7 @@ import logging
 import math
 import os
 import time
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from typing import Any, Optional, Union
 
 import numpy as np
@@ -504,6 +504,31 @@ class tokenIDProcessor:
 
 
 class ModelRunner:
+
+    @contextmanager
+    def _mellum_ordered_moe(self):
+        """Use the measured deterministic Mellum MoE for eager forwards.
+
+        Scope the switch to the synchronous model call because
+        MellumSparseMoeBlock reads it in its forward method.
+        """
+        if (
+            not self.enforce_eager
+            or self.hf_text_config.model_type != "mellum"
+            or os.environ.get("ATOM_MELLUM_ORDERED_MOE", "1") == "0"
+        ):
+            yield
+            return
+
+        previous = os.environ.get("ATOM_PROD_MOE")
+        os.environ["ATOM_PROD_MOE"] = "ref"
+        try:
+            yield
+        finally:
+            if previous is None:
+                os.environ.pop("ATOM_PROD_MOE", None)
+            else:
+                os.environ["ATOM_PROD_MOE"] = previous
 
     def __init__(self, rank: int, config: Config):
         self.config = config
@@ -1861,12 +1886,13 @@ class ModelRunner:
                         input_ids, text_embeds, vision_embeds
                     )
 
-                if inputs_embeds is None:
-                    model_output = self.model(input_ids, positions)
-                else:
-                    model_output = self.model(
-                        input_ids, positions, inputs_embeds=inputs_embeds
-                    )
+                with self._mellum_ordered_moe():
+                    if inputs_embeds is None:
+                        model_output = self.model(input_ids, positions)
+                    else:
+                        model_output = self.model(
+                            input_ids, positions, inputs_embeds=inputs_embeds
+                        )
                 if self.use_aux_hidden_state_outputs:
                     hidden_states, self._aux_hidden_states = model_output
                 else:
