@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Teacher-force the shared prefix, capture HF target step, isolate production ops."""
+"""Diagnostic manual cached loop; not the Step0 generate protocol.
+Use hf_generate_step_trace.py for validated Step0 traces."""
 import importlib.util
 import os
 import json

@@ -15,6 +15,20 @@ expected={f'model.layers.{i}.mlp.experts.{n}' for i in range(28) for n in ['gate
 load_checkpoint_experts(model,MODEL_PATH);model=model.cuda().eval();print('HF_READY',time.monotonic()-start,'skipped',len(skipped),flush=True)
 spec=importlib.util.spec_from_file_location('standalone_step_trace','/workspace/ATOM-tritonmoe/atom/models/step_tensor_trace.py');trace=importlib.util.module_from_spec(spec);spec.loader.exec_module(trace)
 recorder=trace.TensorRecorder(root/'hf',target);recorder.attach(model.model);counter=[0]
+if os.environ.get('MELLUM_TRACE_FULL_LAYER') is not None:
+ layer_id=int(os.environ['MELLUM_TRACE_FULL_LAYER']);layer=model.model.layers[layer_id]
+ modules=[('input_norm',layer.input_layernorm),('attn',layer.self_attn),('post_norm',layer.post_attention_layernorm),('router',layer.mlp.gate),('mlp',layer.mlp),('experts',layer.mlp.experts)]
+ for name,module in modules:
+  def pre_full(module,args,kwargs,name=name):
+   if not recorder.active:return
+   for key,t in list(enumerate(args))+list(kwargs.items()):
+    if torch.is_tensor(t):recorder.data[f'L{layer_id}.full.{name}.in{key}']=t.detach().cpu().clone()
+  def post_full(module,args,out,name=name):
+   if not recorder.active:return
+   for key,t in enumerate(out if isinstance(out,(tuple,list)) else [out]):
+    if torch.is_tensor(t):recorder.data[f'L{layer_id}.full.{name}.out{key}']=t.detach().cpu().clone()
+  module.register_forward_pre_hook(pre_full,with_kwargs=True);module.register_forward_hook(post_full)
+
 def begin(module,args,kwargs):
  step=counter[0];counter[0]+=1;recorder.begin(step)
  ids=kwargs.get('input_ids',args[0] if args else None);pos=kwargs.get('position_ids')

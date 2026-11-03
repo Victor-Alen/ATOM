@@ -18,7 +18,7 @@ from aiter.dist.parallel_state import get_tensor_model_parallel_world_size
 from aiter.jit.utils.torch_guard import torch_compile_guard
 from aiter.ops.gated_rmsnorm_fp8_group_quant import gated_rmsnorm_fp8_group_quant
 from aiter.ops.triton.fused_add_rmsnorm_pad import fused_add_rmsnorm_pad
-from atom.config import QuantizationConfig
+from atom.config import QuantizationConfig, get_current_atom_config
 from atom.model_ops.utils import atom_parameter
 from atom.quant_spec import LayerQuantConfig
 from atom.utils.decorators import mark_trace
@@ -254,6 +254,14 @@ class RMSNorm(nn.Module):
         residual: torch.Tensor | None = None,
         x_scale: Optional[torch.Tensor] = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+        if (envs.ATOM_MELLUM_HF_NORM_PREFILL and x.shape==(990,2304)
+                and x.dtype==self.weight.dtype==torch.bfloat16 and self.tp_size==1
+                and not self.use_fused_quant and not self.fused_allreduce
+                and self.x_pad_to_multiple==0 and x_scale is None
+                and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
+            from atom.model_ops.mellum_hf_norm import rmsnorm_hf_prefill
+            return rmsnorm_hf_prefill(x,self.weight,self.eps,residual)
+
         if __import__('os').environ.get('ATOM_NORM_HF_BF16') == '1':
             _x = x if residual is None else x + residual
             _f = _x.float()

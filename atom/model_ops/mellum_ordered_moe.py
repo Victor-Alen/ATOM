@@ -70,6 +70,10 @@ def mellum_ordered_moe(
         sorted_weights=None,
     )
 
+    if envs.ATOM_STEP_TRACE_DIR:
+        from atom.models.step_tensor_trace import record_moe_intermediate
+        record_moe_intermediate(layer_name,'stage1',a2)
+
     # AITER packs token in the low 24 bits and slot in the high 8 bits.
     # Map each valid (token, slot) to a unique output row. Padding maps to
     # an out-of-range row and is skipped by the original CK bounds checks.
@@ -90,6 +94,10 @@ def mellum_ordered_moe(
     )
 
     per_slot = per_slot.view(tokens, topk, model_dim)
+    if envs.ATOM_STEP_TRACE_DIR:
+        from atom.models.step_tensor_trace import record_moe_intermediate
+        record_moe_intermediate(layer_name,'stage2_weighted_slots',per_slot)
+
     combined = torch.zeros(
         (tokens, model_dim), dtype=torch.float32, device=hidden_states.device,
     )

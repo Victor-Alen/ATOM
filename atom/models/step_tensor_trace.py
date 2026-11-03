@@ -133,6 +133,10 @@ def record_moe(layer_name,x,ids,weights,block_m):
     rec.add(f'L{idx}.routing.input',x); rec.add(f'L{idx}.routing.ids',ids)
     rec.add(f'L{idx}.routing.weights',weights)
     rec.data[f'L{idx}.routing.block_m']=block_m
+    if idx==0 and os.environ.get('ATOM_STEP_TRACE_L0_DETAIL')=='1':
+        for name,t in [('input',x),('ids',ids),('weights',weights)]:
+            rec.detail[f'L0.full.routing.{name}']=t.detach().cpu().clone()
+
 
 def capture_head(logits,x,weight):
     rec=RECORDER
@@ -148,3 +152,11 @@ def capture_sampler(logits,temperatures):
     rec=RECORDER
     if rec is None or not rec.active: return
     rec.add('sampler.logits',logits); rec.add('sampler.temperatures',temperatures);rec.save()
+
+
+def record_moe_intermediate(layer_name,name,value):
+    rec=RECORDER
+    if rec is None or not rec.active or os.environ.get('ATOM_STEP_TRACE_L0_DETAIL')!='1':return
+    import re
+    idx=int(re.search(r'layers\.(\d+)\.',layer_name).group(1))
+    if idx==0:rec.detail[f'L0.full.moe.{name}']=value.detach().cpu().clone()

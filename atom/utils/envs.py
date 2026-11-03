@@ -48,6 +48,7 @@ environment_variables: dict[str, Callable[[], Any]] = {
     "ATOM_MELLUM_HF_ATTN_ROUNDING": lambda: os.getenv("ATOM_MELLUM_HF_ATTN_ROUNDING", "0") == "1",
     "ATOM_MELLUM_SPLIT_QKV_PREFILL": lambda: os.getenv("ATOM_MELLUM_SPLIT_QKV_PREFILL", "0") == "1",
     "ATOM_MELLUM_HF_ATTN_PREFILL_ROUNDING": lambda: os.getenv("ATOM_MELLUM_HF_ATTN_PREFILL_ROUNDING", "0") == "1",
+    "ATOM_MELLUM_HF_NORM_PREFILL": lambda: os.getenv("ATOM_MELLUM_HF_NORM_PREFILL", "0") == "1",
     "ATOM_STEP_TRACE_DIR": lambda: os.getenv("ATOM_STEP_TRACE_DIR"),
     "ATOM_STEP_TRACE_L0_DETAIL": lambda: os.getenv("ATOM_STEP_TRACE_L0_DETAIL", "0") == "1",
     "ATOM_STEP_TRACE_STEP": lambda: int(os.getenv("ATOM_STEP_TRACE_STEP", "27")),
