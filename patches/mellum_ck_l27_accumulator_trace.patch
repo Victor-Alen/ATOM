@@ -1,0 +1,306 @@
+diff --git a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v1.hpp b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v1.hpp
+index c5e040cfb..b404f60b7 100644
+--- a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v1.hpp
++++ b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v1.hpp
+@@ -258,7 +258,11 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v1<BlockGemmPipelineSch
+                         const BBlockTransferStep& b_block_copy_step,
+                         CThreadBuffer& c_thread_buf,
+                         CThreadBuffer& c_thread_buf_up,
+-                        index_t num_loop) const
++                        index_t num_loop,
++                        float* mellum_trace = nullptr,
++                        index_t mellum_trace_thread = -1,
++                        index_t mellum_trace_register = -1,
++                        index_t mellum_trace_correct = 0) const
+     {
+         ignore = b_block_buf;
+         __builtin_amdgcn_sched_barrier(0);
+diff --git a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+index 3fc204e6a..8f4091367 100644
+--- a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
++++ b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+@@ -469,7 +469,11 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                         const BBlockTransferStep& b_block_copy_step,
+                         CThreadBuffer& c_thread_buf,
+                         CThreadBuffer& c_thread_buf_up,
+-                        index_t num_loop) const
++                        index_t num_loop,
++                        float* mellum_trace = nullptr,
++                        index_t mellum_trace_thread = -1,
++                        index_t mellum_trace_register = -1,
++                        index_t mellum_trace_correct = 0) const
+     {
+         ignore = b_block_buf;
+         __builtin_amdgcn_sched_barrier(0);
+@@ -525,6 +529,44 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+         // Initialize C
+         c_thread_buf.Clear();
+         c_thread_buf_up.Clear();
++        index_t mellum_trace_update = 0;
++        double mellum_trace_total = 0.0;
++        auto prepare_mellum_trace = [&](auto offset) {
++            if(mellum_trace != nullptr && mellum_trace_correct &&
++               get_thread_local_1d_id() == mellum_trace_thread)
++            {
++                static_for<0, CThreadBuffer::s_per_v, 1>{}([&](auto j) {
++                    constexpr auto reg = Number<decltype(offset)::value + decltype(j)::value>{};
++                    if(mellum_trace_register == reg) c_thread_buf_up(reg) = 0.0f;
++                });
++            }
++        };
++        auto save_mellum_trace = [&](auto offset) {
++            if(mellum_trace != nullptr &&
++               get_thread_local_1d_id() == mellum_trace_thread)
++            {
++                static_for<0, CThreadBuffer::s_per_v, 1>{}([&](auto j) {
++                    constexpr auto reg = Number<decltype(offset)::value + decltype(j)::value>{};
++                    if(mellum_trace_register == reg)
++                    {
++                        const float partial = c_thread_buf_up[reg];
++                        mellum_trace[512 + mellum_trace_update] = partial;
++                        if(mellum_trace_correct)
++                        {
++                            mellum_trace_total += static_cast<double>(partial);
++                            c_thread_buf_up(reg) = static_cast<float>(mellum_trace_total);
++                        }
++                        mellum_trace[16 + mellum_trace_update] = c_thread_buf_up[reg];
++                        ++mellum_trace_update;
++                        mellum_trace[4] = mellum_trace_update;
++                        mellum_trace[5] = num_loop;
++                        mellum_trace[6] = KPerBlock;
++                        mellum_trace[7] = KRepeat;
++                    }
++                });
++            }
++        };
++
+ 
+         __builtin_amdgcn_sched_barrier(0);
+ 
+@@ -590,11 +632,13 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                                 a_thread_vec.template AsType<mfma_input_type>(),
+                                 b_thread_vec.template AsType<mfma_input_type>(),
+                                 c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            prepare_mellum_trace(Number<c_offset>{});
+ 
+                             xdlops_gemm.Run(
+                                 a_thread_vec.template AsType<mfma_input_type>(),
+                                 b_thread_vec_up.template AsType<mfma_input_type>(),
+                                 c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            save_mellum_trace(Number<c_offset>{});
+                         });
+ 
+                         if constexpr(m0.value == MRepeat - 2)
+@@ -732,10 +776,12 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            prepare_mellum_trace(Number<c_offset>{});
+ 
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            save_mellum_trace(Number<c_offset>{});
+                 });
+                 if constexpr(m0.value == (MRepeat - 2))
+                 {
+@@ -832,10 +878,12 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            prepare_mellum_trace(Number<c_offset>{});
+ 
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            save_mellum_trace(Number<c_offset>{});
+                 });
+ 
+                 if constexpr(m0.value < (MRepeat - 2))
+@@ -895,9 +943,11 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            prepare_mellum_trace(Number<c_offset>{});
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            save_mellum_trace(Number<c_offset>{});
+                 });
+ 
+                 if constexpr(m0.value < (MRepeat - 2))
+diff --git a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+index 5ac6ff88e..34070f360 100644
+--- a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
++++ b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+@@ -754,6 +754,10 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                       << "NBlock: " << NBlock << "}" << std::endl;
+         }
+ 
++        unsigned long long MellumTracePtr = 0;
++        index_t MellumTraceBlockM = -1, MellumTraceBlockN = -1;
++        index_t MellumTraceThread = -1, MellumTraceRegister = -1;
++        index_t MellumTraceCorrect = 0;
+         index_t MellumStage1Mode = 0;
+         index_t MellumStage2Round = 0;
+         index_t NumTokens;
+@@ -841,6 +845,25 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                 }
+             }
+ 
++            if constexpr(IsInputGemm && is_same_v<ADataType, bhalf_t> &&
++                         is_same_v<BDataType, bhalf_t> && is_same_v<CDataType, bhalf_t>)
++            {
++                if(N_ == 896 && K_ == 2304)
++                {
++                    const char* ptr = std::getenv("CK_MELLUM_TRACE_PTR");
++                    this->MellumTracePtr = ptr ? std::strtoull(ptr, nullptr, 0) : 0;
++                    auto env_int = [](const char* name) {
++                        const char* value = std::getenv(name);
++                        return value ? std::atoi(value) : -1;
++                    };
++                    this->MellumTraceBlockM = env_int("CK_MELLUM_TRACE_BLOCK_M");
++                    this->MellumTraceBlockN = env_int("CK_MELLUM_TRACE_BLOCK_N");
++                    this->MellumTraceThread = env_int("CK_MELLUM_TRACE_THREAD");
++                    this->MellumTraceRegister = env_int("CK_MELLUM_TRACE_REGISTER");
++                    this->MellumTraceCorrect = env_int("CK_MELLUM_TRACE_CORRECT") == 1;
++                }
++            }
++
+             // populate pointer, desc for Ds
+             static_for<0, NumDTensor, 1>{}([&](auto i) {
+                 using DDataType_ = remove_cvref_t<tuple_element_t<i.value, DsDataType>>;
+@@ -1367,7 +1390,13 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                 b_block_slice_copy_step,
+                 c_thread_buf,
+                 c_thread_buf_up,
+-                num_k_block_main_loop);
++                num_k_block_main_loop,
++                (block_m_id == problem.MellumTraceBlockM &&
++                 block_n_id == problem.MellumTraceBlockN)
++                    ? reinterpret_cast<float*>(problem.MellumTracePtr) : nullptr,
++                problem.MellumTraceThread,
++                problem.MellumTraceRegister,
++                problem.MellumTraceCorrect);
+         }
+         else
+         {
+@@ -1485,6 +1514,25 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate *= 16;
+                                         up *= 16;
+                                     }
++                                    if(problem.MellumTracePtr != 0 &&
++                                       block_m_id == problem.MellumTraceBlockM &&
++                                       block_n_id == problem.MellumTraceBlockN)
++                                    {
++                                        const auto fused = p_sorted_token_ids[m_pos + m4];
++                                        const auto feature = block_n_id * NPerBlock +
++                                            n0 * NWave * NPerXdl +
++                                            (get_warp_local_1d_id() % NWave) * NPerXdl +
++                                            threadIdx.x % NPerXdl;
++                                        if((fused & 0xffffff) == 467 && (fused >> 24) == 3 &&
++                                           feature == 132)
++                                        {
++                                            auto* trace = reinterpret_cast<float*>(problem.MellumTracePtr);
++                                            trace[0] = threadIdx.x;
++                                            trace[1] = cidx;
++                                            trace[2] = up;
++                                            trace[3] = gate;
++                                        }
++                                    }
+                                     c_thread_buf_fp32(cidx) =
+                                         MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+@@ -1577,6 +1625,25 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate = gate * topk_weights.template AsType<float>()[m4];
+                                         up   = up * topk_weights.template AsType<float>()[m4];
+                                     }
++                                    if(problem.MellumTracePtr != 0 &&
++                                       block_m_id == problem.MellumTraceBlockM &&
++                                       block_n_id == problem.MellumTraceBlockN)
++                                    {
++                                        const auto fused = p_sorted_token_ids[m_pos + m4];
++                                        const auto feature = block_n_id * NPerBlock +
++                                            n0 * NWave * NPerXdl +
++                                            (get_warp_local_1d_id() % NWave) * NPerXdl +
++                                            threadIdx.x % NPerXdl;
++                                        if((fused & 0xffffff) == 467 && (fused >> 24) == 3 &&
++                                           feature == 132)
++                                        {
++                                            auto* trace = reinterpret_cast<float*>(problem.MellumTracePtr);
++                                            trace[0] = threadIdx.x;
++                                            trace[1] = cidx;
++                                            trace[2] = up;
++                                            trace[3] = gate;
++                                        }
++                                    }
+                                     c_thread_buf_fp32(cidx) =
+                                         MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+@@ -1878,7 +1945,13 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                 b_block_slice_copy_step,
+                 c_thread_buf,
+                 c_thread_buf_up,
+-                num_k_block_main_loop);
++                num_k_block_main_loop,
++                (block_m_id == problem.MellumTraceBlockM &&
++                 block_n_id == problem.MellumTraceBlockN)
++                    ? reinterpret_cast<float*>(problem.MellumTracePtr) : nullptr,
++                problem.MellumTraceThread,
++                problem.MellumTraceRegister,
++                problem.MellumTraceCorrect);
+         }
+         else
+         {
+@@ -1996,6 +2069,25 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate *= 16;
+                                         up *= 16;
+                                     }
++                                    if(problem.MellumTracePtr != 0 &&
++                                       block_m_id == problem.MellumTraceBlockM &&
++                                       block_n_id == problem.MellumTraceBlockN)
++                                    {
++                                        const auto fused = p_sorted_token_ids[m_pos + m4];
++                                        const auto feature = block_n_id * NPerBlock +
++                                            n0 * NWave * NPerXdl +
++                                            (get_warp_local_1d_id() % NWave) * NPerXdl +
++                                            threadIdx.x % NPerXdl;
++                                        if((fused & 0xffffff) == 467 && (fused >> 24) == 3 &&
++                                           feature == 132)
++                                        {
++                                            auto* trace = reinterpret_cast<float*>(problem.MellumTracePtr);
++                                            trace[0] = threadIdx.x;
++                                            trace[1] = cidx;
++                                            trace[2] = up;
++                                            trace[3] = gate;
++                                        }
++                                    }
+                                     c_thread_buf_fp32(cidx) =
+                                         MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+@@ -2088,6 +2180,25 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate = gate * topk_weights.template AsType<float>()[m4];
+                                         up   = up * topk_weights.template AsType<float>()[m4];
+                                     }
++                                    if(problem.MellumTracePtr != 0 &&
++                                       block_m_id == problem.MellumTraceBlockM &&
++                                       block_n_id == problem.MellumTraceBlockN)
++                                    {
++                                        const auto fused = p_sorted_token_ids[m_pos + m4];
++                                        const auto feature = block_n_id * NPerBlock +
++                                            n0 * NWave * NPerXdl +
++                                            (get_warp_local_1d_id() % NWave) * NPerXdl +
++                                            threadIdx.x % NPerXdl;
++                                        if((fused & 0xffffff) == 467 && (fused >> 24) == 3 &&
++                                           feature == 132)
++                                        {
++                                            auto* trace = reinterpret_cast<float*>(problem.MellumTracePtr);
++                                            trace[0] = threadIdx.x;
++                                            trace[1] = cidx;
++                                            trace[2] = up;
++                                            trace[3] = gate;
++                                        }
++                                    }
+                                     c_thread_buf_fp32(cidx) =
+                                         MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
