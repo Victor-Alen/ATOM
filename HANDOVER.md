@@ -330,3 +330,11 @@ See `UP_RESIDUAL_DISTRIBUTION.md`. Fixed real L27 prefill input [990,8,896], CK1
 1096/1154 differ by1 BF16 representable step. Full-K FP64 reference classifies1005 CK-match,121 HF-match,28 neither; 149 CK-nonmatching coordinates are separately exported. Max273-step distance is near zero (CK -4.917e-7,HF -2.220e-6,FP64 -4.771e-7), not a large absolute error. Original1324 HF differences:634 disappear,690 persist,464 introduced;391 of the introduced points match FP64 on CK side. “HF difference” does not universally mean inferior CK numerical accuracy.
 
 ATOM analysis branch `dsh/mellum-up-residual-distribution` from `c85e8be3`; scripts `probe_up_difference_distribution.py` and `render_up_distribution.py`; no CK production changes, no new Step0 acceptance or performance run. GPU handles0, no push.
+
+## 2026-11-03 continuation: latest generic CK up fix A10/C10 generation gate
+
+See `UP_FP64_AC10_RESULTS.md`. Tested A-0000..0009×64 and C-0000..0009×8 sequentially on8003 using CK14e5a4558 (binarySHA e7e648c5b818975b7d4e1eefd10b0b30e0c86bcce1db06d27c3df073c61b18e9), ATOM runtime4e6855ae. Enabled V3 up block-FP64 merge, stage1/stage2 BF16 rounding, ordered slots AND router-weight BF16 rounding. Actual parent environment recorded; no HF/PyTorch MoE substitution. Reference hashes verified against frozen manifest before startup.
+
+A10:199/640=0.3109375, exact1/10; C10:66/80=0.825, exact7/10. **Neither reaches0.90.** C failing requests C-0001 5/8(first5),C-0006 0/8(first0),C-0008 5/8(first5). Earlier successful L27 scalar correction does not establish generation acceptance. No B/full20/full200 or three-port acceptance in this run.
+
+Raw `/workspace/logs/step0_continuation/up_fp64_ac10/` includes server logs, output JSONL, per-prompt comparisons and `run.json` with versions/env/hashes/token ids. Service exited after requests completed; GPU handles0, both VRAM0%, no push.
