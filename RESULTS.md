@@ -2601,3 +2601,9 @@ This isolates stage2 shared-output combine as the source of observed nondetermin
 ### 2026-11-03 (continuation): two-case ordered-slot MoE latency microbenchmark
 
 `MOE_ORDERED_PERF.md` and `scripts/bench_moe_slot_stage2.py` record an isolated GPU0 MI308X latency comparison using real captured L0 input/weights/routes. Both modes exclude gate GEMM/routing, include a complete MoE call, warm up 10 times, and alternate 50 synchronized wall-clock samples each. M=1: current AITER fused MoE median `0.229519 ms`, ordered-slot prototype `0.432941 ms` (**1.886× latency**, about 47% lower equivalent-call throughput). M=866: `1.175128 ms` vs `1.4303945 ms` (**1.217× latency**, about 18% lower equivalent-call throughput). Raw samples: `/workspace/logs/step0_continuation/bench_slot_stage2_gpu0.json`. This is not production-service tok/s; the ordered variant is not wired into the service.
+
+### 2026-11-03 continuation: HF eager cached-reference repeatability correction
+
+See `HF_REFERENCE_REPEAT_CHECK.md`. Repeated native HF Mellum generation under the saved eager/bf16/greedy/`use_cache=True` protocol in one process: A-0000 (990 prompt tokens, 16 generated) 3/3 identical and equal to saved eager prefix; C-0001 (12,580 prompt tokens, 8 generated) 3/3 identical and equal to saved eager prefix `[233,233,37,6539,233,889,2335,233]`. Two saved eager C files also agree exactly on all five overlapping prompts, 64 tokens each, including C-0001. Raw data: `/workspace/logs/step0_continuation/hf_repeat_cached.json`.
+
+This supersedes the unconditional round-66/T5 claim that C-0001 cannot be reproduced by HF itself. The old fresh-vs-file mismatch needs protocol reconciliation; it cannot establish nondeterminism of a fixed HF configuration. Separately, the sdpa and eager C-200 files agree at only 3469/12800 token positions, a backend comparison rather than repeatability test. Full 200-prompt repeated HF generation remains untested.

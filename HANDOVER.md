@@ -276,3 +276,7 @@ Read `PRODUCTION_MOE_AUDIT.md` before changing MoE. The production bf16 top-8 pa
 ## 2026-11-03 10:01 continuation: stage2 combine isolated under same CK GEMM
 
 The requested per-slot stage2 + ordered reduce experiment is complete. See `SLOT_STAGE2_ORDERED_REDUCE.md` and `scripts/probe_moe_slot_stage2.py`. With fixed sorting and fixed stage1, both GPUs showed original CK stage2 40/40 distinct outputs, but per-slot CK stage2 and ordered reduction 1/40 distinct output; ordered hashes were equal across GPUs. The original and per-slot calls used the same compiled CK GEMM kernel name/tile, with runtime topk and row indexing changed to separate slots. At M=866, vs HF mean fell from about `2.186e-4` to `1.689e-4`, max from `0.0625` to `0.03125`. This is a diagnostic implementation, not a production-service switch; full token correctness and throughput remain untested. Step 0 remains unpassed.
+
+## 2026-11-03 continuation: HF oracle repeatability correction
+
+The earlier handover/T5 wording that C-0001's saved HF output is inherently unreproducible is superseded for the **eager, bf16, greedy, `use_cache=True`** reference. A fresh three-repeat native HF run matched its saved first 8 tokens each time; two saved eager reference files match C-0001 for all 64 tokens. A-0000 also matched its saved first 16 tokens in three repeats. See `HF_REFERENCE_REPEAT_CHECK.md` and raw `/workspace/logs/step0_continuation/hf_repeat_cached.json`. Keep attention backend and cache protocol fixed for acceptance. The 200-prompt full repeatability check is still not done.
