@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 
 
-def attention(q, k, v, kc, vc, metadata, scale, window):
+def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
     assert q.ndim == 3 and q.shape[-1] == 128
     assert q.dtype == k.dtype == v.dtype == torch.bfloat16
     lengths = metadata.context_lens.tolist()
@@ -29,7 +29,13 @@ def attention(q, k, v, kc, vc, metadata, scale, window):
             assert vc.shape[-1] == block_size
             blocks = metadata.block_tables[b, :(context_length+block_size-1)//block_size].long()
             key = kc.index_select(0,blocks).permute(0,3,1,2,4).reshape(-1,kvheads,dim)[:context_length]
-            value = vc.index_select(0,blocks).permute(0,3,1,2).reshape(-1,kvheads,dim)[:context_length]
+            cached_value=vc.index_select(0,blocks)
+            if cache_format == 'SHUFFLE':
+                pack=16//vc.element_size()
+                value=cached_value.view(len(blocks),kvheads,block_size//pack,dim,pack).permute(0,2,4,1,3).reshape(-1,kvheads,dim)[:context_length]
+            else:
+                assert cache_format == 'NHD',cache_format
+                value=cached_value.permute(0,3,1,2).reshape(-1,kvheads,dim)[:context_length]
         query = q[start:stop].transpose(0,1).unsqueeze(0)
         key = key.transpose(0,1).unsqueeze(0)
         value = value.transpose(0,1).unsqueeze(0)

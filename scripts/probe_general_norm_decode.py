@@ -16,10 +16,13 @@ for key in sorted(data):
  r=data.get(base+'.in1');r=None if r is None else r.cuda()
  summed=x if r is None else x+r
  f=summed.float();ref=w*(f*torch.rsqrt(f.square().mean(-1,keepdim=True)+1e-6)).to(x.dtype)
- actual=rmsnorm_hf_prefill(x,w,1e-6,r)
- y=actual if r is None else actual[0]
+ actual=rmsnorm_hf_prefill(x,w,1e-6,r,return_stats=True)
+ y=actual[0]
  delta=(y.float()-ref.float()).abs()
  row={'tag':base,'different':int((delta!=0).sum()),'max':float(delta.max()),'total':delta.numel()}
+ variance=f.square().mean(-1)+1e-6
+ row['variance_different']=int((actual[2][:,1]!=variance).sum())
+ row['rsqrt_different']=int((actual[2][:,2]!=torch.rsqrt(variance)).sum())
  if r is not None:row['residual_different']=int((actual[1]!=summed).sum())
  reports.append(row)
  print(json.dumps(row),flush=True)

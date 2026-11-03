@@ -31,10 +31,13 @@ for n in [17,65,990,1574]:
    mask=torch.zeros(count,n,device='cuda',dtype=q.dtype).masked_fill(~allowed,torch.finfo(q.dtype).min)[None,None]
    reference,_=hf.eager_attention_forward(SimpleNamespace(num_key_value_groups=8,training=False),qq.transpose(0,1)[None],k.transpose(0,1)[None],v.transpose(0,1)[None],mask,128**-0.5)
    metadata=SimpleNamespace(context_lens=torch.tensor([n],device='cuda'),cu_seqlens_q=torch.tensor([0,count],device='cuda'),block_tables=permutation[None])
-   actual=attention(qq,k[-count:],v[-count:],kc,vc,metadata,128**-0.5,window)
-   delta=(actual.float()-reference.reshape_as(actual).float()).abs()
-   row={'n':n,'query_count':count,'window':window,'different':int((delta!=0).sum()),'max':float(delta.max())}
-   reports.append(row);print(json.dumps(row),flush=True)
+   shuffled=vp.view(nb,2,8,4,128).permute(0,3,1,4,2).contiguous().view(nb,4,128,16)
+   vcs=torch.empty_like(shuffled);vcs[permutation]=shuffled
+   for cache_format,cache in [('NHD',vc),('SHUFFLE',vcs)]:
+    actual=attention(qq,k[-count:],v[-count:],kc,cache,metadata,128**-0.5,window,cache_format)
+    delta=(actual.float()-reference.reshape_as(actual).float()).abs()
+    row={'n':n,'query_count':count,'window':window,'cache_format':cache_format,'different':int((delta!=0).sum()),'max':float(delta.max())}
+    reports.append(row);print(json.dumps(row),flush=True)
 Path('/workspace/logs/step0_causal_boundary/bf16_attention_probe.json').write_text(json.dumps(reports,indent=2))
 assert not any(r['different'] for r in reports)
 print('BF16_ATTENTION_EXACT_ALL_CASES',flush=True)

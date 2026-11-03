@@ -812,7 +812,7 @@ class PagedAttentionImpl(nn.Module):
 
     def attention_bf16_hf_order(self,q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx):
         from atom.model_ops.mellum_bf16_attention import attention
-        return attention(q,k,v,k_cache,v_cache,fwd_ctx.attn_metadata,self.scale,self.sliding_window)
+        return attention(q,k,v,k_cache,v_cache,fwd_ctx.attn_metadata,self.scale,self.sliding_window,self._cache_format)
 
     def dispatch_backend(self, fwd_ctx: ForwardContext):
 
