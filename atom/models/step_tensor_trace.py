@@ -46,6 +46,28 @@ class TensorRecorder:
             tag=f'L{i}.layer'
             self.handles.append(layer.register_forward_hook(self.post(tag),with_kwargs=True))
         if os.environ.get('ATOM_STEP_TRACE_L0_DETAIL')=='1':
+            inner=model.layers[0].self_attn.attn.impl
+            original_rope_cache=inner.rope_cache
+            def rope_cache(*args,**kwargs):
+                result=original_rope_cache(*args,**kwargs)
+                if self.active:
+                    ctx=kwargs.get('fwd_ctx',args[-1] if args else None)
+                    am=ctx.attn_metadata
+                    q,k,v,kc,vc,ks,vs=result
+                    n=int(am.context_lens[0]);bs=kc.shape[3] if kc.ndim==5 else kc.shape[1]
+                    blocks=am.block_tables[0,:(n+bs-1)//bs].long()
+                    self.detail['kv.k_raw']=kc.index_select(0,blocks).detach().cpu().clone()
+                    self.detail['kv.v_raw']=vc.index_select(0,blocks).detach().cpu().clone()
+                    self.detail['kv.context_lens']=am.context_lens.detach().cpu().clone()
+                    self.detail['kv.block_tables']=am.block_tables.detach().cpu().clone()
+                    self.detail['kv.slot_mapping']=am.slot_mapping.detach().cpu().clone()
+                    self.detail['kv.format']=getattr(inner,'_cache_format',None)
+                    self.detail['kv.use_flash_layout']=inner.use_flash_layout
+                    self.detail['kv.q']=q.detach().cpu().clone()
+                    self.detail['kv.k']=k.detach().cpu().clone()
+                    self.detail['kv.v']=v.detach().cpu().clone()
+                return result
+            inner.rope_cache=rope_cache
             for name in ('qkv_proj','q_norm','k_norm','rotary_emb','attn','o_proj'):
                 sub=getattr(model.layers[0].self_attn,name)
                 def before(module,args,kwargs,name=name):

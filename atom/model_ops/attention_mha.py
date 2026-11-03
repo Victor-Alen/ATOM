@@ -792,12 +792,29 @@ class PagedAttentionImpl(nn.Module):
             return ref
         return o
 
+    def paged_attention_hf_rounding(self,q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx):
+        from atom.model_ops.mellum_hf_attention import paged_decode_hf_rounding
+        am=fwd_ctx.attn_metadata
+        if (am.max_seqlen_q != 1 or self.use_flash_layout or k_cache.ndim != 5
+                or v_cache.ndim != 4 or v_cache.shape[-1] != k_cache.shape[3]
+                or self.num_heads // self.num_kv_heads > 16):
+            return self.paged_attention_triton(q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx)
+        return paged_decode_hf_rounding(q,k_cache,v_cache,am.block_tables,
+            am.context_lens,self.scale,self.sliding_window)
+
     def dispatch_backend(self, fwd_ctx: ForwardContext):
 
         ctx = fwd_ctx.context
 
         if __import__("os").environ.get("ATOM_EAGER_ATTN") == "1":
             return self.eager_attention_hf
+
+        if (not ctx.is_prefill
+                and __import__('os').environ.get('ATOM_MELLUM_HF_ATTN_ROUNDING')=='1'
+                and self.sliding_window==1024 and self.head_dim==128
+                and self.kv_cache_dtype=='bf16'
+                and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
+            return self.paged_attention_hf_rounding
 
         if ctx.is_prefill:
             if self.use_flash_layout:
