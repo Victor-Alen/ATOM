@@ -44,6 +44,7 @@ environment_variables: dict[str, Callable[[], Any]] = {
     "ATOM_MELLUM_MOE_BF16_ROUTER_WEIGHTS": lambda: os.getenv(
         "ATOM_MELLUM_MOE_BF16_ROUTER_WEIGHTS", "0"
     ) == "1",
+    "ATOM_MELLUM_MOE_HF_KORDER": lambda: os.getenv("ATOM_MELLUM_MOE_HF_KORDER", "0") == "1",
     "ATOM_MELLUM_MOE_CAPTURE_DIR": lambda: os.getenv("ATOM_MELLUM_MOE_CAPTURE_DIR"),
     "ATOM_MELLUM_HF_ATTN_ROUNDING": lambda: os.getenv("ATOM_MELLUM_HF_ATTN_ROUNDING", "0") == "1",
     "ATOM_MELLUM_SPLIT_QKV_PREFILL": lambda: os.getenv("ATOM_MELLUM_SPLIT_QKV_PREFILL", "0") == "1",

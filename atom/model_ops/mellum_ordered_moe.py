@@ -66,8 +66,12 @@ def mellum_ordered_moe(
         (tokens, topk, inter_dim), dtype=hidden_states.dtype,
         device=hidden_states.device,
     )
+    stage1_num_valid = num_valid
+    if envs.ATOM_MELLUM_MOE_HF_KORDER:
+        from atom.model_ops.mellum_ck_korder import ck_hf_korder_plan
+        stage1_num_valid = ck_hf_korder_plan(topk_ids, num_valid)
     metadata.stage1(
-        hidden_states, w13, w2, sorted_ids, sorted_experts, num_valid,
+        hidden_states, w13, w2, sorted_ids, sorted_experts, stage1_num_valid,
         a2, topk, block_m=metadata.block_m, a1_scale=None, w1_scale=None,
         sorted_weights=None,
     )
@@ -75,6 +79,30 @@ def mellum_ordered_moe(
     if envs.ATOM_STEP_TRACE_DIR:
         from atom.models.step_tensor_trace import record_moe_intermediate
         record_moe_intermediate(layer_name,'stage1',a2)
+        # Optional read-only raw GEMM captures; outputs never enter model arithmetic.
+        from atom.models import step_tensor_trace as trace
+        import os
+        rec = trace.RECORDER
+        if (os.getenv("ATOM_STEP_TRACE_CK_GEMM") == "1" and rec is not None
+                and rec.active and "layers.0." in layer_name and tokens > 1):
+            original_mode = os.environ.get("CK_MELLUM_STAGE1_MODE")
+            try:
+                for mode, name in ((2, "stage1_gate"), (3, "stage1_up")):
+                    os.environ["CK_MELLUM_STAGE1_MODE"] = str(mode)
+                    raw = torch.empty_like(a2)
+                    metadata.stage1(
+                        hidden_states, w13, w2, sorted_ids, sorted_experts,
+                        stage1_num_valid, raw, topk, block_m=metadata.block_m,
+                        a1_scale=None, w1_scale=None, sorted_weights=None,
+                    )
+                    record_moe_intermediate(layer_name, name, raw)
+            finally:
+                if original_mode is None:
+                    os.environ.pop("CK_MELLUM_STAGE1_MODE", None)
+                else:
+                    os.environ["CK_MELLUM_STAGE1_MODE"] = original_mode
+            record_moe_intermediate(layer_name, "stage1_korder_plan", stage1_num_valid)
+
 
     # AITER packs token in the low 24 bits and slot in the high 8 bits.
     # Map each valid (token, slot) to a unique output row. Padding maps to

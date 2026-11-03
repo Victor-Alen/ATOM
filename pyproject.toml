@@ -37,3 +37,6 @@ atom = "atom.plugin.vllm.register:register_platform"
 # but the plugin mode for models can be disabled by 
 # ATOM_DISABLE_VLLM_PLUGIN_ATTENTION=1
 atom_model_registry = "atom.plugin.vllm.register:register_model"
+
+[tool.setuptools.package-data]
+"atom.model_ops" = ["mellum_hf_gateup_profiles.json"]
