@@ -1319,6 +1319,18 @@ class QKVParallelLinear(ColumnParallelLinear):
             prefix=prefix,
         )
 
+    def forward(self,x:torch.Tensor,x_scale=None,otype=dtypes.bf16):
+        if (envs.ATOM_MELLUM_SPLIT_QKV_PREFILL and x.ndim==2 and x.shape[0]>1
+                and self.tp_size==1 and self.quant_type==QuantType.No
+                and x.dtype==self.weight.dtype==torch.bfloat16
+                and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
+            sizes=(self.num_heads*self.head_size,self.num_kv_heads*self.head_size,
+                   self.num_kv_heads*self.v_head_size)
+            weights=self.weight.split(sizes,dim=0)
+            biases=(None,None,None) if self.bias is None else self.bias.split(sizes)
+            return torch.cat([tgemm.mm(x,w,b,otype=otype) for w,b in zip(weights,biases)],dim=-1)
+        return super().forward(x,x_scale,otype)
+
     def weight_loader(
         self, param: nn.Parameter, loaded_weight: torch.Tensor, loaded_shard_id: str
     ):
