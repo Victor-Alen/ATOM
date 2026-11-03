@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd /workspace/ATOM-general-norm
-logs=/workspace/logs/step0_causal_boundary/general_norm_service
+logs="${CANDIDATE_LOGDIR:-/workspace/logs/step0_causal_boundary/general_norm_service}"
 mkdir -p "$logs"
-old=$(cat /workspace/logs/step0_causal_boundary/server.pid)
+old=$(cat "${PREVIOUS_SERVER_PID_FILE:-/workspace/logs/step0_causal_boundary/server.pid}")
 kill -TERM "$old"
 for i in $(seq 1 60); do
  state=$(ps -p "$old" -o stat= || true)

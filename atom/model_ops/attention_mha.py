@@ -810,9 +810,19 @@ class PagedAttentionImpl(nn.Module):
         return paged_decode_hf_rounding(q,k_cache,v_cache,am.block_tables,
             am.context_lens,self.scale,self.sliding_window)
 
+    def attention_bf16_hf_order(self,q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx):
+        from atom.model_ops.mellum_bf16_attention import attention
+        return attention(q,k,v,k_cache,v_cache,fwd_ctx.attn_metadata,self.scale,self.sliding_window)
+
     def dispatch_backend(self, fwd_ctx: ForwardContext):
 
         ctx = fwd_ctx.context
+
+        if (__import__('os').environ.get('ATOM_MELLUM_BF16_HF_ATTENTION')=='1'
+                and self.head_dim==128 and self.kv_cache_dtype=='bf16'
+                and not self.use_flash_layout and self.sinks is None
+                and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
+            return self.attention_bf16_hf_order
 
         if __import__("os").environ.get("ATOM_EAGER_ATTN") == "1":
             return self.eager_attention_hf
