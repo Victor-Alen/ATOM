@@ -40,6 +40,11 @@ environment_variables: dict[str, Callable[[], Any]] = {
     "ATOM_MELLUM_MOE_COMBINE": lambda: os.getenv(
         "ATOM_MELLUM_MOE_COMBINE", "ordered"
     ).lower(),
+    # Opt-in Mellum numerical audit; default production behavior is unchanged.
+    "ATOM_MELLUM_MOE_BF16_ROUTER_WEIGHTS": lambda: os.getenv(
+        "ATOM_MELLUM_MOE_BF16_ROUTER_WEIGHTS", "0"
+    ) == "1",
+    "ATOM_MELLUM_MOE_CAPTURE_DIR": lambda: os.getenv("ATOM_MELLUM_MOE_CAPTURE_DIR"),
     # --- Kernel Fusion Toggles ---
     # fused_compress_attn: switch between Triton (default historical) and a
     # flydsl drop-in for V4-Pro Compressor (Main BF16 + Indexer FP8) paths.

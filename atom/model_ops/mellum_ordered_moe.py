@@ -5,9 +5,13 @@ bf16 row per routed slot, avoiding expert collisions in its AtomicAdd output.
 The eight rows are then accumulated in a fixed fp32 order.
 """
 
+import re
+from pathlib import Path
+
 import torch
 from aiter import ActivationType, QuantType
 from aiter.fused_moe import get_2stage_cfgs, get_padded_M, moe_sorting
+from atom.utils import envs
 
 
 def mellum_ordered_moe(
@@ -17,6 +21,7 @@ def mellum_ordered_moe(
     topk_weights: torch.Tensor,
     topk_ids: torch.Tensor,
     activation: ActivationType,
+    layer_name: str = "",
 ) -> torch.Tensor:
     if (
         hidden_states.dtype != torch.bfloat16
@@ -34,6 +39,9 @@ def mellum_ordered_moe(
     model_dim, inter_dim = w2.shape[1:]
     if topk != 8 or w2.shape[0] != experts or hidden_states.shape != (tokens, model_dim):
         raise ValueError("Unexpected Mellum MoE shape")
+
+    if envs.ATOM_MELLUM_MOE_BF16_ROUTER_WEIGHTS:
+        topk_weights = topk_weights.to(torch.bfloat16).float()
 
     metadata = get_2stage_cfgs(
         get_padded_M(tokens), model_dim, inter_dim, experts, topk,
@@ -83,4 +91,18 @@ def mellum_ordered_moe(
     )
     for slot_index in range(topk):
         combined.add_(per_slot[:, slot_index, :].float())
-    return combined.to(hidden_states.dtype)
+    result = combined.to(hidden_states.dtype)
+    capture_dir = envs.ATOM_MELLUM_MOE_CAPTURE_DIR
+    if capture_dir and (Path(capture_dir) / "ARMED").is_file():
+        match = re.search(r"layers\.(\d+)\.", layer_name)
+        if match is None:
+            raise RuntimeError(f"Cannot identify Mellum layer: {layer_name}")
+        phase = "prefill" if tokens > 1 else "decode"
+        path = Path(capture_dir) / f"L{int(match.group(1)):02d}_{phase}.pt"
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            torch.save({"h2": hidden_states.detach().cpu(),
+                        "sel": topk_ids.detach().cpu(),
+                        "rw": topk_weights.detach().cpu(),
+                        "moe": result.detach().cpu(), "layer_name": layer_name}, path)
+    return result

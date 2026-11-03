@@ -655,7 +655,7 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
 
                 return mellum_ordered_moe(
                     x, layer.w13_weight, layer.w2_weight,
-                    topk_weights, topk_ids, activation,
+                    topk_weights, topk_ids, activation, layer_name=layer.prefix,
                 )
             if combine != "atomic":
                 raise ValueError("ATOM_MELLUM_MOE_COMBINE must be ordered or atomic")
