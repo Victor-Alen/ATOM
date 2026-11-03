@@ -254,7 +254,7 @@ class RMSNorm(nn.Module):
         residual: torch.Tensor | None = None,
         x_scale: Optional[torch.Tensor] = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        if (envs.ATOM_MELLUM_HF_NORM_PREFILL and x.shape==(990,2304)
+        if (envs.ATOM_MELLUM_HF_NORM_PREFILL and x.ndim==2 and x.shape[0]>1 and x.shape[1]==2304
                 and x.dtype==self.weight.dtype==torch.bfloat16 and self.tp_size==1
                 and not self.use_fused_quant
                 and self.x_pad_to_multiple==0 and x_scale is None

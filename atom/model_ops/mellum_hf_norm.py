@@ -1,4 +1,4 @@
-"""Opt-in HF-profiled BF16 RMSNorm for M990,N2304; one real GPU kernel."""
+"""Opt-in HF-profiled BF16 RMSNorm for arbitrary prefill rows, N2304; one real GPU kernel."""
 import torch
 import triton as tr
 import triton.language as tl
@@ -34,10 +34,10 @@ def _norm(X,R,W,Y,RO,Stats,XS:tl.constexpr,RS:tl.constexpr,EPS:tl.constexpr,ADD:
    tl.store(Y+row*2304+d,y.to(tl.bfloat16))
 
 def rmsnorm_hf_prefill(x,w,eps=1e-6,residual=None,*,return_stats=False):
- assert x.shape==(990,2304) and x.dtype==w.dtype==torch.bfloat16 and x.stride(-1)==1
+ assert x.ndim==2 and x.shape[0]>0 and x.shape[1]==2304 and x.dtype==w.dtype==torch.bfloat16 and x.stride(-1)==1
  if residual is not None:assert residual.shape==x.shape and residual.dtype==x.dtype and residual.stride(-1)==1
- out=torch.empty_like(x);rout=torch.empty_like(x) if residual is not None else None;stats=torch.empty((990,3),device=x.device,dtype=torch.float32)
- _norm[(990,)](x,residual if residual is not None else x,w,out,rout if rout is not None else x,stats,x.stride(0),residual.stride(0) if residual is not None else 0,eps,residual is not None,num_warps=1,enable_fp_fusion=False)
+ rows=x.shape[0];out=torch.empty(x.shape,device=x.device,dtype=x.dtype);rout=torch.empty_like(out) if residual is not None else None;stats=torch.empty((rows,3),device=x.device,dtype=torch.float32)
+ _norm[(rows,)](x,residual if residual is not None else x,w,out,rout if rout is not None else x,stats,x.stride(0),residual.stride(0) if residual is not None else 0,eps,residual is not None,num_warps=1,enable_fp_fusion=False)
  if __import__('os').getenv('ATOM_STEP_TRACE_DIR'):
   from atom.models.step_tensor_trace import RECORDER
   if RECORDER is not None and RECORDER.active:
