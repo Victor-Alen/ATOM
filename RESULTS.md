@@ -2615,3 +2615,62 @@ Branch `dsh/mellum-ordered-stage2` from `07c11d40`; implementation `f0aed701`. M
 Fixed captured L0 input/routes/weights: M=1 and M=866, 40 repeats on each of two GPUs, 1 distinct hash per case and same hash across GPUs. Production port 8003, A-0000 16-token prompt: 3/3 same on each physical GPU, both GPUs same 16 tokens. A20×64 vs saved HF eager: 246/1280 = 0.1922, 0/20 exact sequences; B20×64: 1280/1280 = 1.0000. Thus the nondeterminism regression checked here is repaired, but Step 0 is **not passed**. The new service throughput, C live HF comparison, full 200, MTP and scheduling stress are unmeasured. Original sorted-slot microbench: M=1 0.229519→0.432941 ms (1.886× latency); M=866 1.175128→1.430395 ms (1.217×); these are not service tok/s.
 
 Residual L0 HF mean remains 1.688606e-4 (max 0.03125). Actual HF 5.2.0 reference is grouped_mm plus reshape/sum and was exactly reconstructed from captured weights/input. Replacing CK stage1 with HF gated lowers final mean to 9.134436e-5. With HF gated and separate HF-style BF16 route-weight multiplication, mean falls to 2.410003e-8, still not zero (164 differing elements). Raw `/workspace/logs/step0_continuation/moe_residual_l0.json`; reproducible probe `scripts/probe_moe_residual.py`. Both production services were shut down cleanly and VRAM returned to 0% on both physical GPUs. No upstream push.
+
+### 2026-11-03 11:35 更正：两块 MI308X 之间是 xGMI，不是我此前写的 PCIe
+
+此前所有文档写的是「PCIe 互联，2 hops，weight 40」。**这个标签是错的**，来源是 `rocm-smi --showtopo`，我没有交叉验证。
+
+## 三个独立来源
+
+**`amd-smi topology`（ROCm 7.2.4 / amd-smi 26.2.2）：**
+
+```
+LINK TYPE TABLE : 0000:22:00.0 <-> 0000:30:00.0  =  XGMI
+HOPS TABLE      : 1
+WEIGHT TABLE    : 15
+NUMA BW TABLE   : 50000-50000  (MB/s = 50 GB/s)
+```
+
+**RCCL 自己算出的拓扑（`NCCL_TOPO_DUMP_FILE=/tmp/topo.xml`，一次 all_reduce 触发）：**
+
+```xml
+<pci busid="0000:30:00.0" vendor="0x1002" device="0x74a2" link_speed="32 GT/s" link_width="16">
+  <gpu dev="1" gcn="gfx942">
+    <xgmi target="0000:22:00.0" count="1"/>
+  </gpu>
+</pci>
+```
+
+运行时真正会用的那条链路，被 RCCL 明确写成了 **xgmi，count=1**。
+
+**`rocm-smi --showtopo`：**
+
+```
+Link Type : PCIE     Hops : 2     Weight : 40
+```
+
+与上面两个来源矛盾。两个工具版本都不旧（rocm-smi 4.0.0 / ROCM-SMI-LIB 7.8.0）。
+
+## 物理一致性检查（这一步我此前漏掉了）
+
+```
+每卡 PCIe 链路   : 32 GT/s x 16  = Gen4 x16，实际上限约 25-28 GB/s
+实测 GPU0->GPU1  : 1 GB 传输 21.25 ms = 50.53 GB/s
+                  56 KiB 传输 28.3 us = 2.02 GB/s（延迟受限）
+```
+
+**实测 50.5 GB/s 超过 Gen4 x16 的 PCIe 上限约一倍，所以这条传输不可能走 PCIe。** 也就是说，我自己测出的带宽数字早就与我自己打的「PCIe」标签相矛盾，我没有做这个检查。
+
+## 影响范围
+
+| 项 | 是否受影响 |
+|---|---|
+| 带宽数值 ~50 GB/s | **不变**（与 amd-smi 的 NUMA BW 50000 MB/s 一致）|
+| PD 分离的 KV 传输估算（2048 token = 112 MiB -> 2.3 ms）| 数值不变，链路名称改为 xGMI |
+| 拓扑参数 | **变**：1 hop / weight 15（此前写 2 hops / weight 40），影响 collective 调度与设备 mesh 假设 |
+| MoE 确定性结论（跨 run / 跨 GPU 不一致）| **不受影响**，与互连无关 |
+| A 场景一致率的结论 | **不受影响**，与互连无关 |
+
+## 说明
+
+xGMI 单链路（count=1）约 50 GB/s，属于很窄的配置；MI300X OAM 那种 7 链路平台要高得多。所以在**这台机器**上做 PD 分离，KV 传输成本按 50 GB/s 算是对的——只是不该把它叫 PCIe。

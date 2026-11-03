@@ -32,7 +32,7 @@
 
 ## 三、环境（冻结配置）
 
-- 硬件：2 × AMD MI308X（gfx942），每卡 192 GiB，80 CU；**PCIe 互联**，实测 P2P 带宽 49 GB/s
+- 硬件：2 × AMD MI308X（gfx942），每卡 192 GiB，80 CU；**xGMI 单链路互联**（amd-smi：XGMI / 1 hop / weight 15；RCCL topo dump 有 <xgmi count="1">），实测 P2P 带宽 50.5 GB/s（1 GB 传输），56 KiB 小传输 2.0 GB/s（延迟受限）
 - 软件：Python 3.12.3、`torch 2.10.0+rocm7.2.4.git3d3aa833`（hip 7.2.53211）、`transformers 5.2.0`
 - 模型：`/data/models/Mellum2.1-12B-A2.5B-Thinking`（MellumForCausalLM，28 层，32 Q / 4 KV head，head_dim 128，hidden 2304，vocab 98304，sliding_window 1024，64 experts top-8，rms_norm_eps 1e-6，max_position 131072，5 分片 22.6 GiB）
 - 数据类型：bf16 权重/激活/KV，无量化
