@@ -347,3 +347,8 @@ See FIRST-DIVERGENCE-NORM-FIX.md for full evidence and source pins. L27 selected
 Confirmed actual HIP rmsnorm_quant uses Opus BF16 truncate and different materialization boundaries. AITER independent commit 9d4907d8d fixes nonquant BF16 RNE boundaries. Same-input 57-node replay: norm mismatches 68147->38/131328; residual mismatches 36309->0/129024. Candidate launcher start_mellum_norm_hf.sh preserves generic CK14e5a4558 and ordered stage2; original default launcher unchanged.
 
 Generation did NOT pass: A10x64 214/640=.334375; C10x8 57/80=.7125. New A0 first mismatch index3. Native HF reference revalidated. L0 input norm exact, attention output differs. Fixed production rotated Q/K/V eager replay still differs1178/4096 (max .00048828125); actual paged cache not yet directly checked. Next: verify cache, split QK/scale/softmax/PV/reduce. Do not infer all attention correctness from earlier limited probes. No throughput validation for norm candidate; no push.
+
+
+## 2026-11-03：L0 CK K grouping / StaggerU / LocalSplitU 首差续测
+
+实际CK实验80f4da570在独立worktree/JIT，修正原L0/e55/Gate407首标量，但未合入默认。全批CK仍Gate1512、Up1483不同；整体首差仍token0/e49/Up783。按HF实际GEMM配置还原的独立Triton探针覆盖51专家，Gate剩1、Up剩4（各7096320），最早token1/e17/Up275；不是生产通过。官方A0当前5/64，最新A10/C10未测。完整冻结配置、原始证据和剩余事项见ATTENTION-FIRST-DIVERGENCE-PROGRESS.md。
