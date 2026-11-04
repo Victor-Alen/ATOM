@@ -44,6 +44,9 @@ def apply(layer, x, router_logits):
         weights = weights / weights.sum(-1, keepdim=True)
     weights = weights.to(router_logits.dtype)
     is_prefill = get_forward_context().context.is_prefill
+    if not is_prefill and __import__('os').environ.get('ATOM_MELLUM_NATIVE_DECODE_MOE') == '1':
+        from atom.model_ops.mellum_native_decode_moe import experts
+        return experts(x, layer.w13_weight, layer.w2_weight, ids, weights)
     # Native HF generate changes experts implementation after prefill.
     function = grouped_mm_experts_forward if is_prefill else batched_mm_experts_forward
     # Decode contains independent matrix-vector products. Batch their
