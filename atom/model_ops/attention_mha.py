@@ -280,7 +280,11 @@ class PagedAttentionImpl(nn.Module):
                 asm_layout = False
             if self.rotary_emb is not None:
                 assert position is not None
-                q, k = self.rotary_emb(position, q, k)
+                if __import__('os').environ.get('ATOM_MELLUM_EXACT_ROPE')=='1':
+                    from atom.model_ops.mellum_hf_rope import rotate
+                    q,k=rotate(get_current_atom_config().hf_config,self.layer_num,position,q,k)
+                else:
+                    q, k = self.rotary_emb(position, q, k)
             if self.q_norm is not None:
                 q = self.q_norm(q)
             if self.k_norm is not None:
