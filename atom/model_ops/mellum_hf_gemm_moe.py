@@ -32,6 +32,11 @@ def apply(layer,x,router_logits):
     is_prefill=get_forward_context().context.is_prefill
     # Native HF generate changes experts implementation after prefill.
     function=grouped_mm_experts_forward if is_prefill else batched_mm_experts_forward
+    # Decode contains independent matrix-vector products. Batch their
+    # submission while retaining each expert GEMM's N=1 reduction extent.
+    if (not is_prefill and
+            __import__('os').environ.get('ATOM_MELLUM_BATCH_DECODE_MOE') == '1'):
+        return batched_mm_experts_forward(cached, x, ids, weights)
     if __import__('os').environ.get('ATOM_MELLUM_REQUEST_GEMM')=='1':
         from atom.model_ops.mellum_request_gemm import ranges
         parts=ranges(x)
