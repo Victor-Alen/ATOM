@@ -32,4 +32,9 @@ def apply(layer,x,router_logits):
     is_prefill=get_forward_context().context.is_prefill
     # Native HF generate changes experts implementation after prefill.
     function=grouped_mm_experts_forward if is_prefill else batched_mm_experts_forward
+    if __import__('os').environ.get('ATOM_MELLUM_REQUEST_GEMM')=='1':
+        from atom.model_ops.mellum_request_gemm import ranges
+        parts=ranges(x)
+        return torch.cat([function(cached,x[a:b],ids[a:b],weights[a:b])
+                          for a,b in parts],dim=0)
     return function(cached,x,ids,weights)

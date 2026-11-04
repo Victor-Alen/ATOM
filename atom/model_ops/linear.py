@@ -529,7 +529,9 @@ class LinearBase(nn.Module):
                 and self.quant_type.value==QuantType.No.value and self.tp_size==1
                 and x.dtype==self.weight.dtype==torch.bfloat16
                 and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
-            return torch.nn.functional.linear(x,self.weight,self.bias)
+            from atom.model_ops.mellum_request_gemm import linear
+            fn=linear if __import__("os").environ.get("ATOM_MELLUM_REQUEST_GEMM")=="1" else torch.nn.functional.linear
+            return fn(x,self.weight,self.bias)
         if self.quant_type.value == QuantType.No.value:
             y = tgemm.mm(
                 x,
@@ -1332,7 +1334,9 @@ class QKVParallelLinear(ColumnParallelLinear):
             sizes=(self.num_heads*self.head_size,self.num_kv_heads*self.head_size,self.num_kv_heads*self.v_head_size)
             weights=self.weight.split(sizes,dim=0)
             biases=(None,None,None) if self.bias is None else self.bias.split(sizes)
-            return torch.cat([torch.nn.functional.linear(x,w,b) for w,b in zip(weights,biases)],dim=-1)
+            from atom.model_ops.mellum_request_gemm import linear
+            fn=linear if __import__("os").environ.get("ATOM_MELLUM_REQUEST_GEMM")=="1" else torch.nn.functional.linear
+            return torch.cat([fn(x,w,b) for w,b in zip(weights,biases)],dim=-1)
         if (envs.ATOM_MELLUM_SPLIT_QKV_PREFILL and x.ndim==2 and x.shape[0]>1
                 and self.tp_size==1 and self.quant_type==QuantType.No
                 and x.dtype==self.weight.dtype==torch.bfloat16

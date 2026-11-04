@@ -7,6 +7,11 @@ export PYTHONPATH="$repo_dir${PYTHONPATH:+:$PYTHONPATH}"
 export AITER_LOG_LEVEL=WARNING
 export ATOM_MELLUM_MOE_COMBINE="${ATOM_MELLUM_MOE_COMBINE:-ordered}"
 
+extra_args=()
+if [[ "${ATOM_MELLUM_REQUEST_GEMM:-0}" == "1" ]]; then
+  extra_args+=(--no-enable_chunked_prefill)
+fi
+
 exec python3 -m atom.entrypoints.openai_server \
   --model /data/models/Mellum2.1-12B-A2.5B-Thinking \
   --level 0 \
@@ -16,4 +21,4 @@ exec python3 -m atom.entrypoints.openai_server \
   --gpu-memory-utilization 0.45 \
   --host 127.0.0.1 \
   --server-port "${MELLUM_SERVER_PORT:-8003}" \
-  --no-enable_prefix_caching
+  --no-enable_prefix_caching "${extra_args[@]}"

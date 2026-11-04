@@ -178,7 +178,11 @@ class ParallelLMHead(VocabParallelEmbedding):
             if context.is_prefill and not context.is_draft:
                 last_indices = attn_metadata.cu_seqlens_q[1:] - 1
                 x = x[last_indices].contiguous()
-        logits = tgemm.mm(x, self.weight, self.bias)
+        if (__import__('os').environ.get('ATOM_MELLUM_REQUEST_GEMM')=='1'
+                and self.tp_size==1 and x.ndim==2 and x.shape[0]>1):
+            logits=torch.cat([tgemm.mm(row,self.weight,self.bias) for row in x.split(1,dim=0)],dim=0)
+        else:
+            logits = tgemm.mm(x, self.weight, self.bias)
         if envs.ATOM_STEP_TRACE_DIR:
             from atom.models.step_tensor_trace import capture_head
             capture_head(logits, x, self.weight)
