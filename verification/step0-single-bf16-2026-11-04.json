@@ -1,0 +1,186 @@
+{
+  "arithmetic_commit": "a787ed595fd4a0c50b9c54aff2a98de3961c26b8",
+  "git_head_at_start": "680591d58f968a944f9f84c1c319265641b0cdc8",
+  "source_unchanged": true,
+  "declared_baseline": {
+    "precision": "bf16",
+    "TP": 1,
+    "MTP": false,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 16384,
+    "prefix_cache": false,
+    "compilation_level": 0,
+    "enforce_eager": true
+  },
+  "gate1_public200": {
+    "requests": 200,
+    "required": 200,
+    "matched_positions": 12800,
+    "total_positions": 12800,
+    "agreement": 1.0,
+    "exact_requests": 200,
+    "complete": true,
+    "passed": true
+  },
+  "gate2_humaneval": {
+    "hf": {
+      "tasks": 164,
+      "required": 164,
+      "passed": 148,
+      "truncated": 3,
+      "complete": true,
+      "pass_at_1": 0.9024390243902439
+    },
+    "atom": {
+      "tasks": 164,
+      "required": 164,
+      "passed": 148,
+      "truncated": 3,
+      "complete": true,
+      "pass_at_1": 0.9024390243902439
+    },
+    "complete": true,
+    "absolute_gap_percentage_points": 0.0,
+    "threshold_percentage_points": 2.0,
+    "paired_protocol_passed": true,
+    "identical_full_generated_token_sequences": 164,
+    "identical_sanitized_programs": 164
+  },
+  "gate3_mtp_enabled": {
+    "status": "cannot_start",
+    "passed": false,
+    "baseline_applicability": "not_enabled_in_baseline",
+    "errors": [
+      "KeyError: 'MellumForCausalLM'",
+      "RuntimeError: Engine Core Mgr: Received unexpected SHUTDOWN signal from DP rank 0 during initialization"
+    ]
+  },
+  "gate4_long_context": {
+    "original_near16k_group": {
+      "input_band": [
+        15360,
+        16384
+      ],
+      "expected_cases": 11,
+      "completed_cases": 11,
+      "matched_positions": 704,
+      "total_positions": 704,
+      "cases": [
+        {
+          "id": "C-0026",
+          "prompt_tokens": 15557,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15557
+        },
+        {
+          "id": "C-0035",
+          "prompt_tokens": 15693,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15693
+        },
+        {
+          "id": "C-0049",
+          "prompt_tokens": 16019,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 16019
+        },
+        {
+          "id": "C-0089",
+          "prompt_tokens": 16003,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 16003
+        },
+        {
+          "id": "C-0141",
+          "prompt_tokens": 15785,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15785
+        },
+        {
+          "id": "C-0147",
+          "prompt_tokens": 15529,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15529
+        },
+        {
+          "id": "C-0156",
+          "prompt_tokens": 15908,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15908
+        },
+        {
+          "id": "C-0158",
+          "prompt_tokens": 15965,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15965
+        },
+        {
+          "id": "C-0175",
+          "prompt_tokens": 15858,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15858
+        },
+        {
+          "id": "C-0189",
+          "prompt_tokens": 15942,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15942
+        },
+        {
+          "id": "C-0195",
+          "prompt_tokens": 15541,
+          "matched": 64,
+          "tokens": 64,
+          "input_tokens": 15541
+        }
+      ]
+    },
+    "strict16384_additional_probe": {
+      "input_tokens": 16384,
+      "derived_additional_probe": true,
+      "source_public_id": "C-0049",
+      "matched_positions": 64,
+      "total_positions": 64,
+      "exact": true
+    }
+  },
+  "gate5_tp2": {
+    "status": "cannot_start",
+    "passed": false,
+    "baseline_applicability": "not_used_in_baseline",
+    "other_parallel_modes": "not formally validated",
+    "errors": [
+      "assert layer.tp_size==layer.dp_size==layer.ep_size==1",
+      "AssertionError",
+      "assert layer.tp_size==layer.dp_size==layer.ep_size==1",
+      "AssertionError",
+      "RuntimeError: Engine Core Mgr: Received unexpected SHUTDOWN signal from DP rank 0 during initialization"
+    ]
+  },
+  "evaluation_scope": {
+    "he_template": "official chat template enable_thinking=False",
+    "he_decoding": "greedy, max2048, EOS28 stop",
+    "he_reference": "fresh paired HF, not published HumanEval+ model-card score",
+    "he_execution": "official original HumanEval tests; chat full-program protocol; 3s timeout; canonical164/164 validated",
+    "he_task_sharding": "all 164 tasks on the same TP1 ATOM instance at port8005; other GPU runs HF reference only",
+    "precision": "bf16 only; fp8 not enabled"
+  },
+  "checks_completed": true,
+  "full_enabled_mtp_tp2_capabilities_passed": false,
+  "old_oom_id_correction": {
+    "previous_report": "C-0059",
+    "correct_dataset_id": "C-0049",
+    "reason": "unique 16019-token prompt; service request IDs are not dataset IDs"
+  },
+  "baseline_single_gpu_bf16_mtp_off_passed": true
+}

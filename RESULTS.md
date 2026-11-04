@@ -2953,3 +2953,8 @@ HF均使用官方`model.generate()`：greedy、use_cache=True、max_new_tokens64
 ## 2026-11-04 — HF-order request-shaped Step 0 acceptance
 
 Frozen arithmetic commit `a787ed595fd4a0c50b9c54aff2a98de3961c26b8`. Actual A20/B20/C20064 correctness and A32 on each GPU passed. Backend: real ATOM engine/paged KV with HF-order GPU operators and request-shaped GEMM/RMSNorm, CK experts bypassed. See [STEP0-ACCEPTANCE-2026-11-04.md](STEP0-ACCEPTANCE-2026-11-04.md) for raw counts, the failed earlier OOM run, workload scope and performance limitations. Audit: `/workspace/logs/step0_causal_boundary/memory_safe_v3_acceptance/final_independent_audit.json`.
+
+
+## 2026-11-04 — Full five-gate scope recheck (single-GPU BF16, MTP off)
+
+Selected baseline: single GPU BF16, MTP off. Baseline recheck PASSED. Public200 1.0; see STEP0-FIVE-GATES-RECHECK-2026-11-04.md for paired HumanEval scores, strict16384 test, and archived MTP/TP2 startup failures. Earlier token-stage acceptance is not an all-feature acceptance.

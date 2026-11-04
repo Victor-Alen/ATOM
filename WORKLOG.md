@@ -92,3 +92,11 @@
 - Two facts are now firm because they held in all four configurations: the 10-token prompt always diverges at exactly generated token 55 (context 65), and C-0000 stays 40/40 identical at 7881 tokens. The first says a 64-token boundary triggers something; the second says content, not length, is the driver.
 - The only remaining suspect I can name is a reduction inside the compiled gluon paged-attention kernel, which cannot be patched from Python. That is where I would continue, with a kernel-level read rather than more black-box runs.
 - Strategic conclusion for the deliverable: report the gate honestly. The port is bit-exact against HF wherever the engine is deterministic (proven at 284 tokens), and the engine's own temperature-0 nondeterminism is an ATOM/AITER property. Any single-run 90% figure would be measuring the engine's coin flips, not the port. Recommend stating the repetition-based protocol in the report.
+
+## 2026-11-04 — complete selected single-GPU Step 0 self-check
+
+- Kept arithmetic commit a787ed59 unchanged; rechecked source hashes and ran the full selected BF16, TP1, MTP-off configuration.
+- Fresh public C200 greedy64: 12800/12800 positions, 200/200 exact sequences. Original near16k group: 11 cases,704/704; additional exact16384-token input:64/64 versus fresh HF.
+- Rebuilt paired HumanEval with official chat template, enable_thinking=False, greedy, EOS stop,2048-token cap. HF and the same single-GPU ATOM instance each scored148/164 (90.24%),0pp gap; all164 complete token sequences identical; each had3 truncated outputs. Official checker canonical164/164 and negative controls validated.
+- Fresh MTP-on and TP2 startup probes failed; kept logs. User explicitly chose single-GPU BF16 with MTP off, so these optional configurations are outside the passed baseline.
+- Corrected the earlier token-stage acceptance scope and the historical16019-token OOM dataset ID (C0049, not C0059). No squash, no arithmetic changes.
