@@ -10,9 +10,8 @@ import torch.nn.functional as F
 def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
     assert q.ndim == 3 and q.shape[-1] == 128
     assert q.dtype == k.dtype == v.dtype == torch.bfloat16
-    lengths = metadata.context_lens.tolist()
-    cu = metadata.cu_seqlens_q
-    offsets = cu.tolist() if cu is not None else list(range(len(lengths) + 1))
+    from atom.model_ops.mellum_request_gemm import cpu_metadata
+    offsets, lengths = cpu_metadata(metadata, with_lengths=True)
     assert len(offsets) == len(lengths) + 1 and offsets[-1] == q.shape[0]
     heads, kvheads, dim = q.shape[1], k.shape[1], q.shape[2]
     assert heads % kvheads == 0
