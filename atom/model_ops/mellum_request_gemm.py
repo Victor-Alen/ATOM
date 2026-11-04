@@ -18,3 +18,14 @@ def linear(x,weight,bias=None):
  parts=ranges(x)
  if len(parts)==1:return F.linear(x,weight,bias)
  return torch.cat([F.linear(x[a:b],weight,bias) for a,b in parts],dim=0)
+
+
+def rmsnorm(x,weight,eps):
+    def one(values):
+        floats=values.float()
+        variance=floats.pow(2).mean(-1,keepdim=True)
+        normalized=(floats*torch.rsqrt(variance+eps)).to(values.dtype)
+        return weight*normalized
+    parts=ranges(x)
+    if len(parts)==1:return one(x)
+    return torch.cat([one(x[a:b]) for a,b in parts],dim=0)

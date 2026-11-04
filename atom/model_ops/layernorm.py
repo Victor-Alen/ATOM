@@ -259,10 +259,14 @@ class RMSNorm(nn.Module):
                 and x.dtype==self.weight.dtype==torch.bfloat16
                 and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
             summed=x if residual is None else x+residual
-            values=summed.float()
-            variance=values.pow(2).mean(-1,keepdim=True)
-            normalized=(values*torch.rsqrt(variance+self.eps)).to(summed.dtype)
-            result=self.weight*normalized
+            if __import__('os').environ.get('ATOM_MELLUM_REQUEST_GEMM')=='1':
+                from atom.model_ops.mellum_request_gemm import rmsnorm
+                result=rmsnorm(summed,self.weight,self.eps)
+            else:
+                values=summed.float()
+                variance=values.pow(2).mean(-1,keepdim=True)
+                normalized=(values*torch.rsqrt(variance+self.eps)).to(summed.dtype)
+                result=self.weight*normalized
             return result if residual is None else (result,summed)
 
         if (envs.ATOM_MELLUM_HF_NORM_PREFILL and x.ndim==2 and x.shape[0]>1 and x.shape[1]==2304
