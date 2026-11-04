@@ -56,6 +56,16 @@ def ranges(x):
 
 def linear(x, weight, bias=None):
     parts = ranges(x)
+    if (
+        __import__("os").environ.get("ATOM_MELLUM_NATIVE_HF_LINEAR") == "1"
+        and not get_forward_context().context.is_prefill
+        and all(stop - start == 1 for start, stop in parts)
+    ):
+        from atom.model_ops.mellum_native_linear import try_linear
+
+        result = try_linear(x, weight, bias)
+        if result is not None:
+            return result
     from atom.model_ops.mellum_piecewise import request_region
 
     return request_region(
