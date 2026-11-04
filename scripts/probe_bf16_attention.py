@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import torch
 from atom.model_ops.mellum_bf16_attention import attention
+from transformers.cache_utils import DynamicSlidingWindowLayer
 sys.path.insert(0,'/workspace/ATOM-general-norm/scripts')
 from hf_reference_generate import load_mellum_classes
 load_mellum_classes()
@@ -25,11 +26,17 @@ for n in [17,65,990,1574]:
  for count in [n,1]:
   for window in [-1,1024]:
    qq=q[-count:]
-   qi=torch.arange(n-count,n,device='cuda')[:,None];ki=torch.arange(n,device='cuda')[None,:]
+   ref_k=k.transpose(0,1)[None];ref_v=v.transpose(0,1)[None]
+   if window>0:
+    cache=DynamicSlidingWindowLayer(window)
+    if count<n:cache.update(ref_k[:,:,:-count],ref_v[:,:,:-count])
+    ref_k,ref_v=cache.update(ref_k[:,:,-count:],ref_v[:,:,-count:])
+   key_length=ref_k.shape[-2]
+   qi=torch.arange(n-count,n,device='cuda')[:,None];ki=torch.arange(n-key_length,n,device='cuda')[None,:]
    allowed=ki<=qi
    if window>0:allowed=allowed & (ki>qi-window)
-   mask=torch.zeros(count,n,device='cuda',dtype=q.dtype).masked_fill(~allowed,torch.finfo(q.dtype).min)[None,None]
-   reference,_=hf.eager_attention_forward(SimpleNamespace(num_key_value_groups=8,training=False),qq.transpose(0,1)[None],k.transpose(0,1)[None],v.transpose(0,1)[None],mask,128**-0.5)
+   mask=torch.zeros(count,key_length,device='cuda',dtype=q.dtype).masked_fill(~allowed,torch.finfo(q.dtype).min)[None,None]
+   reference,_=hf.eager_attention_forward(SimpleNamespace(num_key_value_groups=8,training=False),qq.transpose(0,1)[None],ref_k,ref_v,mask,128**-0.5)
    metadata=SimpleNamespace(context_lens=torch.tensor([n],device='cuda'),cu_seqlens_q=torch.tensor([0,count],device='cuda'),block_tables=permutation[None])
    shuffled=vp.view(nb,2,8,4,128).permute(0,3,1,4,2).contiguous().view(nb,4,128,16)
    vcs=torch.empty_like(shuffled);vcs[permutation]=shuffled

@@ -36,18 +36,25 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             else:
                 assert cache_format == 'NHD',cache_format
                 value=cached_value.permute(0,3,1,2).reshape(-1,kvheads,dim)[:context_length]
+        # HF DynamicSlidingWindowLayer retains window-1 past positions and
+        # concatenates the current query block before returning attention KV.
+        # Match that GEMM extent, rather than multiplying over masked old KV.
+        if count < context_length and window is not None and window > 0:
+            keep=min(context_length,window-1+count)
+            key,value=key[-keep:],value[-keep:]
+        key_length=key.shape[0]
         query = q[start:stop].transpose(0,1).unsqueeze(0)
         key = key.transpose(0,1).unsqueeze(0)
         value = value.transpose(0,1).unsqueeze(0)
-        key = key[:,:,None,:,:].expand(1,kvheads,repeat,context_length,dim).reshape(1,heads,context_length,dim)
-        value = value[:,:,None,:,:].expand(1,kvheads,repeat,context_length,dim).reshape(1,heads,context_length,dim)
+        key = key[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
+        value = value[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         scores = torch.matmul(query,key.transpose(2,3)) * scale
         qi = torch.arange(context_length-count,context_length,device=q.device)[:,None]
-        ki = torch.arange(context_length,device=q.device)[None,:]
+        ki = torch.arange(context_length-key_length,context_length,device=q.device)[None,:]
         allowed = ki <= qi
         if window is not None and window > 0:
             allowed = allowed & (ki > qi-window)
-        mask = torch.zeros((count,context_length),dtype=q.dtype,device=q.device)
+        mask = torch.zeros((count,key_length),dtype=q.dtype,device=q.device)
         mask.masked_fill_(~allowed,torch.finfo(q.dtype).min)
         scores = scores + mask[None,None,:,:]
         probabilities = F.softmax(scores,dim=-1,dtype=torch.float32).to(q.dtype)
