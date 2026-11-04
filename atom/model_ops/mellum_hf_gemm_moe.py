@@ -36,7 +36,14 @@ def apply(layer,x,router_logits):
     # submission while retaining each expert GEMM's N=1 reduction extent.
     if (not is_prefill and
             __import__('os').environ.get('ATOM_MELLUM_BATCH_DECODE_MOE') == '1'):
-        return batched_mm_experts_forward(cached, x, ids, weights)
+        # Bound selected-weight materialization at 64 token rows. Larger
+        # scheduler batches keep the same independent GEMVs in more chunks.
+        if x.shape[0] <= 64:
+            return batched_mm_experts_forward(cached, x, ids, weights)
+        return torch.cat([
+            batched_mm_experts_forward(cached, x[a:a+64], ids[a:a+64], weights[a:a+64])
+            for a in range(0, x.shape[0], 64)
+        ], dim=0)
     if __import__('os').environ.get('ATOM_MELLUM_REQUEST_GEMM')=='1':
         from atom.model_ops.mellum_request_gemm import ranges
         parts=ranges(x)
