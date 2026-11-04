@@ -357,3 +357,8 @@ Generation did NOT pass: A10x64 214/640=.334375; C10x8 57/80=.7125. New A0 first
 ## 2026-11-03：生产 CK Up783 已接入，A10/C10×64 复测
 
 目标token0/e49/Up783已在8003生产候选服务修正；L0 token0 Gate/Up各7168值全量一致。运行ATOM9082ed20、CK5082d415d，PID856843。当前CK stage1最早首差token1/e17/Up275，不能把Triton探针的1+4个残差当作CK已对齐。A10×64=131/640（20.46875%，1/10全对）；C10×64=320/640（50%，4/10全对），均未过0.90。C参考已现场重算并复核C0/C1。全部证据、约3%两例性能差异及启动器见CK-PRODUCTION-UP783-FIX.md。
+
+
+## 2026-11-04 — HF-order request-shaped Step 0 acceptance
+
+Frozen arithmetic commit `a787ed595fd4a0c50b9c54aff2a98de3961c26b8`. Actual A20/B20/C20064 correctness and A32 on each GPU passed. Backend: real ATOM engine/paged KV with HF-order GPU operators and request-shaped GEMM/RMSNorm, CK experts bypassed. See [STEP0-ACCEPTANCE-2026-11-04.md](STEP0-ACCEPTANCE-2026-11-04.md) for raw counts, the failed earlier OOM run, workload scope and performance limitations. Audit: `/workspace/logs/step0_causal_boundary/memory_safe_v3_acceptance/final_independent_audit.json`.

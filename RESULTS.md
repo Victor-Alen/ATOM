@@ -2948,3 +2948,8 @@ HF均使用官方`model.generate()`：greedy、use_cache=True、max_new_tokens64
 - `build_all_v3.log`、`heuristic32768.tsv`：全部5个V3实例编译与配置查询证据。
 
 生成与验证脚本随本次提交入库。本轮不是三端口同批验收，也没有完成200请求或MTP验证。
+
+
+## 2026-11-04 — HF-order request-shaped Step 0 acceptance
+
+Frozen arithmetic commit `a787ed595fd4a0c50b9c54aff2a98de3961c26b8`. Actual A20/B20/C20064 correctness and A32 on each GPU passed. Backend: real ATOM engine/paged KV with HF-order GPU operators and request-shaped GEMM/RMSNorm, CK experts bypassed. See [STEP0-ACCEPTANCE-2026-11-04.md](STEP0-ACCEPTANCE-2026-11-04.md) for raw counts, the failed earlier OOM run, workload scope and performance limitations. Audit: `/workspace/logs/step0_causal_boundary/memory_safe_v3_acceptance/final_independent_audit.json`.
