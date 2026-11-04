@@ -26,15 +26,24 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             assert kc.ndim == 5 and vc.ndim == 4
             block_size = kc.shape[3]
             assert vc.shape[-1] == block_size
-            blocks = metadata.block_tables[b, :(context_length+block_size-1)//block_size].long()
-            key = kc.index_select(0,blocks).permute(0,3,1,2,4).reshape(-1,kvheads,dim)[:context_length]
+            # Read only blocks participating in this attention GEMM. The
+            # original implementation gathered the complete history before
+            # discarding the old sliding-window prefix.
+            first_token = 0
+            if window is not None and window > 0:
+                first_token = max(0, context_length - (window - 1 + count))
+            first_block, skip = divmod(first_token, block_size)
+            block_stop = (context_length + block_size - 1) // block_size
+            blocks = metadata.block_tables[b, first_block:block_stop].long()
+            wanted = context_length - first_token
+            key = kc.index_select(0,blocks).permute(0,3,1,2,4).reshape(-1,kvheads,dim)[skip:skip+wanted]
             cached_value=vc.index_select(0,blocks)
             if cache_format == 'SHUFFLE':
                 pack=16//vc.element_size()
-                value=cached_value.view(len(blocks),kvheads,block_size//pack,dim,pack).permute(0,2,4,1,3).reshape(-1,kvheads,dim)[:context_length]
+                value=cached_value.view(len(blocks),kvheads,block_size//pack,dim,pack).permute(0,2,4,1,3).reshape(-1,kvheads,dim)[skip:skip+wanted]
             else:
                 assert cache_format == 'NHD',cache_format
-                value=cached_value.permute(0,3,1,2).reshape(-1,kvheads,dim)[:context_length]
+                value=cached_value.permute(0,3,1,2).reshape(-1,kvheads,dim)[skip:skip+wanted]
         # HF DynamicSlidingWindowLayer retains window-1 past positions and
         # concatenates the current query block before returning attention KV.
         # Match that GEMM extent, rather than multiplying over masked old KV.
@@ -48,6 +57,26 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
         key = key[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         value = value[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         scores = torch.matmul(query,key.transpose(2,3)) * scale
+        mask = attention_mask(q, count, key_length, context_length, window)
+        scores = scores + mask[None,None,:,:]
+        probabilities = softmax_bf16(scores)
+        del scores
+        result = torch.matmul(probabilities,value)
+        out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
+    return out
+
+
+def attention_mask(q, count, key_length, context_length, window):
+    """Reuse immutable masks only inside the current model forward."""
+    from atom.utils.forward_context import get_forward_context
+    ctx = get_forward_context()
+    cache = getattr(ctx, '_mellum_attention_masks', None)
+    if cache is None:
+        cache = {}
+        ctx._mellum_attention_masks = cache
+    key = (count, key_length, context_length, window, q.dtype, q.device)
+    mask = cache.get(key)
+    if mask is None:
         qi = torch.arange(context_length-count,context_length,device=q.device)[:,None]
         ki = torch.arange(context_length-key_length,context_length,device=q.device)[None,:]
         allowed = ki <= qi
@@ -55,12 +84,8 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             allowed = allowed & (ki > qi-window)
         mask = torch.zeros((count,key_length),dtype=q.dtype,device=q.device)
         mask.masked_fill_(~allowed,torch.finfo(q.dtype).min)
-        scores = scores + mask[None,None,:,:]
-        probabilities = softmax_bf16(scores)
-        del scores
-        result = torch.matmul(probabilities,value)
-        out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
-    return out
+        cache[key] = mask
+    return mask
 
 
 def softmax_bf16(scores):
