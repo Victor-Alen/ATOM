@@ -14,6 +14,7 @@ fi
 
 exec python3 -m atom.entrypoints.openai_server \
   --model /data/models/Mellum2.1-12B-A2.5B-Thinking \
+  --port "${MELLUM_ENGINE_PORT:-6000}" \
   --level 0 \
   --enforce-eager \
   --kv_cache_dtype bf16 \
