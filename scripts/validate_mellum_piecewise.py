@@ -28,9 +28,11 @@ with torch.inference_mode():
             eps = None if kind == "linear" else 1e-6
             ref = torch.cat(
                 [
-                    torch.nn.functional.linear(x[a:b], weight)
-                    if eps is None
-                    else p.norm_tensor(x[a:b], weight, eps)
+                    (
+                        torch.nn.functional.linear(x[a:b], weight)
+                        if eps is None
+                        else p.norm_tensor(x[a:b], weight, eps)
+                    )
                     for a, b in parts
                 ]
             )
