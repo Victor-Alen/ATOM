@@ -57,8 +57,18 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
         mask = torch.zeros((count,key_length),dtype=q.dtype,device=q.device)
         mask.masked_fill_(~allowed,torch.finfo(q.dtype).min)
         scores = scores + mask[None,None,:,:]
-        probabilities = F.softmax(scores,dim=-1,dtype=torch.float32).to(q.dtype)
+        probabilities = softmax_bf16(scores)
         del scores
         result = torch.matmul(probabilities,value)
         out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
     return out
+
+
+def softmax_bf16(scores):
+    # Preserve QK and PV GEMM extents. Only partition independent softmax rows.
+    if scores.numel() <= (1 << 28):
+        return F.softmax(scores,dim=-1,dtype=torch.float32).to(scores.dtype)
+    output=torch.empty_like(scores)
+    for start in range(0,scores.shape[1],4):
+        output[:,start:start+4]=F.softmax(scores[:,start:start+4],dim=-1,dtype=torch.float32).to(scores.dtype)
+    return output
