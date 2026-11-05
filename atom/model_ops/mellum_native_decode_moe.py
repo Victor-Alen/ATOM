@@ -38,8 +38,16 @@ def experts(x, w13, w2, ids, weights):
         stage1_ids, _, stage1_experts, stage1_valid, _ = moe_sorting(
             ids.int(), weights.float(), 64, 2304, x.dtype, stage1_block_m)
     meta.stage1(x,w13,w2,stage1_ids,stage1_experts,stage1_valid,gated,8,block_m=stage1_block_m,a1_scale=None,w1_scale=None,sorted_weights=None,**stage1_options)
-    token=si&0xffffff;slot=(si>>24)&255
-    flat=torch.where((token<b)&(slot<8),token*8+slot,b*8)
-    per_slot=torch.zeros((b*8,2304),device=x.device,dtype=x.dtype)
-    meta.stage2(gated.view(b*8,1,896),w13,w2,flat,se,nv,per_slot,1,block_m=stage2_block_m,w2_scale=None,a2_scale=None,sorted_weights=sw,**stage2_options)
+    if os.getenv('ATOM_MELLUM_DECODE_SLOT_OUTPUT') == '1':
+        if stage2_tile != 'm32n64k64v1' or os.getenv('CK_MELLUM_STAGE2_SLOT_OUTPUT') != '1':
+            raise RuntimeError('Native slot output requires validated M32 stage2 and its private CK binary')
+        # Each selected expert writes a distinct BF16 (token, slot) row.
+        # CK decodes the existing sorted ids and uses Set instead of atomic add.
+        per_slot=torch.empty((b*8,2304),device=x.device,dtype=x.dtype)
+        meta.stage2(gated,w13,w2,si,se,nv,per_slot,8,block_m=stage2_block_m,w2_scale=None,a2_scale=None,sorted_weights=sw,**stage2_options)
+    else:
+        token=si&0xffffff;slot=(si>>24)&255
+        flat=torch.where((token<b)&(slot<8),token*8+slot,b*8)
+        per_slot=torch.zeros((b*8,2304),device=x.device,dtype=x.dtype)
+        meta.stage2(gated.view(b*8,1,896),w13,w2,flat,se,nv,per_slot,1,block_m=stage2_block_m,w2_scale=None,a2_scale=None,sorted_weights=sw,**stage2_options)
     return per_slot.view(b,8,2304).sum(1)
