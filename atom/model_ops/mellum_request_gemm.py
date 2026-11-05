@@ -43,9 +43,10 @@ def cpu_metadata(metadata, *, with_lengths=False):
 
 def ranges(x):
     ctx = get_forward_context()
+    # Speculative verification has K+1 rows per request. Decode arithmetic
+    # must retain unit-row semantics for every token, including graph padding.
     if (__import__("os").environ.get("ATOM_MELLUM_DECODE_UNIT_ROWS") == "1"
-            and not ctx.context.is_prefill
-            and ctx.context.batch_size == x.shape[0]):
+            and not ctx.context.is_prefill):
         return [(i, i + 1) for i in range(x.shape[0])]
     meta = ctx.attn_metadata
     if isinstance(meta, dict):
