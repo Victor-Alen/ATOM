@@ -56,10 +56,17 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
         value = value.transpose(0,1).unsqueeze(0)
         key = key[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         value = value[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
-        scores = torch.matmul(query,key.transpose(2,3)) * scale
-        mask = attention_mask(q, count, key_length, context_length, window)
-        scores = scores + mask[None,None,:,:]
-        probabilities = softmax_bf16(scores)
+        scores = torch.matmul(query,key.transpose(2,3))
+        if (__import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT') == 'hybrid'
+                and count == context_length and 512 <= key_length <= 16384):
+            from atom.model_ops.mellum_prefill_softmax_hybrid import softmax as fused_softmax
+            probabilities = fused_softmax(scores, count, context_length, window, scale)
+        else:
+            scores = scores * scale
+            mask = attention_mask(q, count, key_length, context_length, window)
+            scores = scores + mask[None,None,:,:]
+            probabilities = softmax_bf16(scores)
         del scores
         result = torch.matmul(probabilities,value)
         out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
