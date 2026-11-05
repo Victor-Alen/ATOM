@@ -1,3 +1,5 @@
+> 本分支的原生融合 prefill 消融未通过C200精度门槛，不是交付默认。[查看实验结果](EXPERIMENT_STATUS.md)。
+
 <div align="center" id="logo">
 <img src="docs/assets/atom_logo.png" alt="logo" width="400" margin="10px"></img>
 
