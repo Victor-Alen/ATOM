@@ -931,6 +931,8 @@ class Scheduler:
         return (decode_batch, scheduled_seqs)
 
     def preempt(self, seq: Sequence):
+        if self.reserve_decode_kv:
+            raise RuntimeError("Decode KV reservation invariant violated; refusing unsafe recomputation")
         seq.status = SequenceStatus.WAITING
         # Strip placeholder + rejected draft tokens added by postprocess.
         # Real token count = seq.num_tokens - mtp_k - num_rejected
