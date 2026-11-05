@@ -42,7 +42,12 @@ def cpu_metadata(metadata, *, with_lengths=False):
 
 
 def ranges(x):
-    meta = get_forward_context().attn_metadata
+    ctx = get_forward_context()
+    if (__import__("os").environ.get("ATOM_MELLUM_DECODE_UNIT_ROWS") == "1"
+            and not ctx.context.is_prefill
+            and ctx.context.batch_size == x.shape[0]):
+        return [(i, i + 1) for i in range(x.shape[0])]
+    meta = ctx.attn_metadata
     if isinstance(meta, dict):
         if not meta:
             return [(0, x.shape[0])]
@@ -74,6 +79,12 @@ def linear(x, weight, bias=None):
 
 
 def rmsnorm(x, weight, eps):
+    if (__import__('os').environ.get('ATOM_MELLUM_FUSED_DECODE_NORM') == '1'
+            and not get_forward_context().context.is_prefill and x.ndim == 2
+            and x.shape[-1] == 2304
+            and all(stop - start == 1 for start, stop in ranges(x))):
+        from atom.model_ops.mellum_decode_norm import rmsnorm as fused_decode_norm
+        return fused_decode_norm(x, weight, eps)
     if (
         __import__("os").environ.get("ATOM_MELLUM_BATCH_DECODE_QKNORM", "0") == "1"
         and not get_forward_context().context.is_prefill

@@ -1,0 +1,100 @@
+diff --git a/aiter/ops/triton/gluon/pa_decode_gluon.py b/aiter/ops/triton/gluon/pa_decode_gluon.py
+index 1fbc72370..556053554 100644
+--- a/aiter/ops/triton/gluon/pa_decode_gluon.py
++++ b/aiter/ops/triton/gluon/pa_decode_gluon.py
+@@ -2344,8 +2344,10 @@ def paged_attention_decode_sliding_window(
+     ONE_SHOT: gl.constexpr = False,
+     HF_BF16_MODE: gl.constexpr = 0,
+     HF_HEAD_SPLITS: gl.constexpr = 1,
++    HF_PV_PRUNE: gl.constexpr = False,
+     HF_LDS_WINDOW: gl.constexpr = False,
+     HF_CACHE_STAGE: gl.constexpr = 0,
++    HF_QK_SHARDS: gl.constexpr = False,
+     hf_cache_ptr=None,
+     HF_CACHE_N = 0,
+     hf_qk_ptr=None,
+@@ -2713,6 +2715,18 @@ def paged_attention_decode_sliding_window(
+         sequence_partition_end_idx = (
+             gl.cdiv(sequence_end_idx, CONTEXT_PARTITION_SIZE) + block_split_idx
+         )
++    if HF_QK_SHARDS and HF_CACHE_STAGE == 1:
++        gl.static_assert(HF_BF16_MODE == 10 and SLIDING_WINDOW <= 0 and ONE_SHOT)
++        gl.static_assert(KV_BLOCK_SIZE <= CONTEXT_PARTITION_SIZE)
++        # QK tiles have independent output positions: shard whole tiles without
++        # changing any dot-product accumulation or BF16 materialization.
++        hf_tiles = gl.cdiv(context_length, CONTEXT_PARTITION_SIZE)
++        sequence_partition_start_idx = hf_tiles * split_idx // gl.num_programs(2)
++        sequence_partition_end_idx = hf_tiles * (split_idx + 1) // gl.num_programs(2)
++        sequence_start_idx = sequence_partition_start_idx * CONTEXT_PARTITION_SIZE
++        sequence_end_idx = gl.minimum(context_length, sequence_partition_end_idx * CONTEXT_PARTITION_SIZE)
++        if sequence_partition_start_idx >= sequence_partition_end_idx:
++            return
+     block_indices = gl.arange(0, MAX_NUM_KV_BLOCKS_PER_COMPUTE, layout=block_id_layout)
+     max_num_kv_blocks = gl.cdiv(context_length, KV_COMPUTE_BLOCK_SIZE)
+     kv_block_start_idx = sequence_partition_start_idx * MAX_NUM_KV_BLOCKS_PER_COMPUTE
+@@ -3022,6 +3036,8 @@ def paged_attention_decode_sliding_window(
+                 hf_d = gl.arange(0, HEAD_SIZE_POW2, layout=gl.SliceLayout(1, hf_load_layout))
+                 hf_t = gl.arange(0, CONTEXT_PARTITION_SIZE, layout=gl.SliceLayout(0, hf_load_layout))
+                 hf_base = hf_first_token + (sequence_partition_idx - sequence_partition_start_idx) * CONTEXT_PARTITION_SIZE
++                if HF_QK_SHARDS and HF_CACHE_STAGE == 1:
++                    hf_base = sequence_partition_idx * CONTEXT_PARTITION_SIZE
+                 hf_pos = hf_base + hf_t
+                 hf_blocks = gl.load(block_tables_ptr + sequence_idx * stride_block_table_seq + hf_pos // KV_BLOCK_SIZE, hf_pos < context_length, other=0).to(gl.int64)
+                 hf_key_offsets = hf_blocks[None,:] * stride_key_block + kv_head_idx * stride_key_head + (hf_d[:,None] // KV_16B_ELEMENT_COUNT) * stride_key_head_split + (hf_pos[None,:] % KV_BLOCK_SIZE) * stride_key_block_elem + hf_d[:,None] % KV_16B_ELEMENT_COUNT
+@@ -3367,12 +3383,20 @@ def paged_attention_decode_sliding_window(
+                 attention_accumulator = gl.amd.cdna3.mfma(gl.convert_layout(hf_tail_first,hf_tail_lhs_layout),hf_tail_values,attention_accumulator)
+                 hf_pv_second = gl.amd.cdna3.mfma(gl.convert_layout(hf_tail_second,hf_tail_lhs_layout),hf_tail_values,hf_pv_second)
+             elif HF_BF16_MODE >= 6 and hf_pass == HF_PV_PASS:
+-                hf_first_probs = gl.where((qk_column_offsets - hf_first_token)[None, :] < hf_pv_split, attention_probs, 0.0).to(COMPUTE_TYPE)
+-                hf_second_probs = gl.where((qk_column_offsets - hf_first_token)[None, :] >= hf_pv_split, attention_probs, 0.0).to(COMPUTE_TYPE)
+-                hf_first_converted = gl.convert_layout(hf_first_probs, pv_lhs_operand_layout)
+-                hf_second_converted = gl.convert_layout(hf_second_probs, pv_lhs_operand_layout)
+-                attention_accumulator = gl.amd.cdna3.mfma(hf_first_converted, values_converted, attention_accumulator)
+-                hf_pv_second = gl.amd.cdna3.mfma(hf_second_converted, values_converted, hf_pv_second)
++                # A complete tile belongs to one GSU partition. Avoid executing
++                # the other MFMA with a zero probability operand; retain both
++                # original accumulators, reduction order, and boundary path.
++                if HF_PV_PRUNE and hf_base - hf_first_token + CONTEXT_PARTITION_SIZE <= hf_pv_split:
++                    attention_accumulator = gl.amd.cdna3.mfma(probs_converted, values_converted, attention_accumulator)
++                elif HF_PV_PRUNE and hf_base - hf_first_token >= hf_pv_split:
++                    hf_pv_second = gl.amd.cdna3.mfma(probs_converted, values_converted, hf_pv_second)
++                else:
++                    hf_first_probs = gl.where((qk_column_offsets - hf_first_token)[None, :] < hf_pv_split, attention_probs, 0.0).to(COMPUTE_TYPE)
++                    hf_second_probs = gl.where((qk_column_offsets - hf_first_token)[None, :] >= hf_pv_split, attention_probs, 0.0).to(COMPUTE_TYPE)
++                    hf_first_converted = gl.convert_layout(hf_first_probs, pv_lhs_operand_layout)
++                    hf_second_converted = gl.convert_layout(hf_second_probs, pv_lhs_operand_layout)
++                    attention_accumulator = gl.amd.cdna3.mfma(hf_first_converted, values_converted, attention_accumulator)
++                    hf_pv_second = gl.amd.cdna3.mfma(hf_second_converted, values_converted, hf_pv_second)
+             elif HF_BF16_MODE >= 4 and hf_pass == HF_PV_PASS:
+                 attention_accumulator = gl.amd.cdna3.mfma(
+                     probs_converted, values_converted, attention_accumulator
+@@ -4756,6 +4780,9 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+                 raise ValueError("GMEM pipeline requires BF16 Mellum single-query mode10 with unsplit heads")
+             workspace_capacity = block_tables_ptr.shape[1] * KV_BLOCK_SIZE
+             workspace_scores, workspace_probs = _mellum_gmem_workspace(query_ptr.device.index, num_sequences, 32, workspace_capacity)
++        hf_qk_shards = int(__import__('os').environ.get('AITER_MELLUM_HF_QK_SHARDS', '1')) if hf_gmem else 1
++        if not 1 <= hf_qk_shards <= 32:
++            raise ValueError('HF QK shards must be in 1..32')
+         def launch(stage, stage_grid):
+             debug_kwargs = dict(_MELLUM_ATTN_DEBUG or {})
+             if stage == 1:
+@@ -4822,8 +4849,10 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+                 ONE_SHOT=ONE_SHOT,
+                 **({"HF_BF16_MODE": hf_bf16_mode,
+                     "HF_HEAD_SPLITS": hf_head_splits,
++                    "HF_PV_PRUNE": __import__("os").environ.get("AITER_MELLUM_HF_PV_PRUNE") == "1",
+                     "HF_LDS_WINDOW": hf_lds_window,
+                     "HF_CACHE_STAGE": stage,
++                    "HF_QK_SHARDS": hf_qk_shards > 1,
+                     "hf_cache_ptr": workspace_scores if stage == 1 else (workspace_probs if stage == 2 else None),
+                     "HF_CACHE_N": workspace_capacity,
+                     "hf_qk_profile_ptr": _mellum_qk_profile_tensor(__import__("os").environ.get("AITER_MELLUM_QK_PROFILE", ""), query_ptr.device.index),
+@@ -4835,7 +4864,7 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+                 enable_fp_fusion=(hf_bf16_mode == 0),
+             )
+         if hf_gmem:
+-            launch(1, grid)
++            launch(1, (grid[0], grid[1], grid[2] * hf_qk_shards))
+             _mellum_gmem_softmax[(num_sequences, 32)](workspace_scores, workspace_probs, context_lengths_ptr, workspace_capacity, num_warps=8, enable_fp_fusion=False)
+             launch(2, grid)
+         else:

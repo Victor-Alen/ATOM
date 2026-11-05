@@ -577,6 +577,23 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase):
         apply_router_weight_on_input: bool = False,
         activation: ActivationType = ActivationType.Silu,
     ) -> torch.Tensor:
+        # This backend computes the accepted HF-order routing internally.
+        # Preserve earlier diagnostic branches and custom routing side effects.
+        if (
+            os.getenv("ATOM_MELLUM_SKIP_UNUSED_ROUTE") == "1"
+            and getattr(layer, "model_type", None) == "mellum"
+            and os.getenv("ATOM_MELLUM_HF_GEMM_MOE") == "1"
+            and custom_routing_function is None
+            and not use_grouped_topk
+            and scoring_func == "softmax"
+            and e_score_correction_bias is None
+            and not any(os.getenv(name) for name in (
+                "ATOM_MOE_SCALE", "ATOM_MOE_TRIPLE", "ATOM_MOE_HF_ORDER",
+                "ATOM_MOE_SEPARATE", "ATOM_TRITON_MOE_EXPERTS",
+            ))
+        ):
+            from atom.model_ops.mellum_hf_gemm_moe import apply
+            return apply(layer, x, router_logits)
         topk_weights, topk_ids = FusedMoE.select_experts(
             hidden_states=x,
             router_logits=router_logits,

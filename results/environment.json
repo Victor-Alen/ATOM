@@ -1,0 +1,24 @@
+{
+  "python": "3.12.3",
+  "packages": {
+    "torch": "2.10.0+rocm7.2.4.lw.git3d3aa833",
+    "transformers": "5.2.0",
+    "triton": "3.6.0",
+    "aiter": "not installed in server venv",
+    "evalscope": "not installed in server venv"
+  },
+  "baseline_sha256": "14674cbbc641709358e197bd5ad71c3cac8f41ed3932b3091266f5636b0dd6c8",
+  "model": "/data/models/Mellum2.1-12B-A2.5B-Thinking",
+  "num_gpus": 1,
+  "mtp": false,
+  "gpu_mapping": {
+    "ROCR_VISIBLE_DEVICES": "0,1",
+    "HIP_VISIBLE_DEVICES": "1",
+    "physical_pci": "0000:22:00.0"
+  },
+  "model_files": {
+    "config.json": "f43d018246094dee6dca455b3072766b6acbefd1ac8e7fe664df34710606a541",
+    "model.safetensors.index.json": "a6ad930e5bb35ea92d5b734c4df4649bfcfdcd899f64b0a83efe40fe0ab9b60e",
+    "tokenizer_config.json": "e2950960d2a3040a1938e6357c8c3628d531133c464286a7869b2e0504fcc59e"
+  }
+}

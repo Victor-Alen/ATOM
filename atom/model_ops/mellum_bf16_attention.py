@@ -13,6 +13,17 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
     from atom.model_ops.mellum_request_gemm import cpu_metadata
     offsets, lengths = cpu_metadata(metadata, with_lengths=True)
     assert len(offsets) == len(lengths) + 1 and offsets[-1] == q.shape[0]
+    if (__import__('os').environ.get('ATOM_MELLUM_PAGED_DECODE') == '1'
+            and window == 1024
+            and all(stop - start == 1 for start, stop in zip(offsets, offsets[1:]))
+            and all(length >= 512 for length in lengths)):
+        from atom.model_ops.mellum_paged_decode import attention as paged_decode
+        return paged_decode(q, kc, vc, metadata.block_tables, metadata.context_lens, scale, cache_format, host_lengths=lengths)
+    if (__import__('os').environ.get('ATOM_MELLUM_BATCH_ATTENTION') == '1'
+            and all(stop - start == 1 for start, stop in zip(offsets, offsets[1:]))
+            and all(length > 1 for length in lengths)):
+        from atom.model_ops.mellum_batch_decode_attention import attention as batched
+        return batched(q, kc, vc, metadata, lengths, scale, window, cache_format)
     heads, kvheads, dim = q.shape[1], k.shape[1], q.shape[2]
     assert heads % kvheads == 0
     repeat = heads // kvheads
@@ -51,16 +62,39 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             keep=min(context_length,window-1+count)
             key,value=key[-keep:],value[-keep:]
         key_length=key.shape[0]
+        scores = None
+        if (count == context_length and window == 1024 and 2048 <= key_length <= (16384 if __import__('os').environ.get('ATOM_MELLUM_PREFILL_LONG_QK') == '1' else 4096)
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SPARSE_QK') == '1'
+                and __import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT') == 'hybrid'):
+            # Sparse scores leave masked positions unwritten. Only the verified
+            # masked-load softmax below may consume this allocation.
+            from atom.model_ops.mellum_prefill_sparse_qk import try_qk
+            scores = try_qk(q[start:stop], key)
         query = q[start:stop].transpose(0,1).unsqueeze(0)
         key = key.transpose(0,1).unsqueeze(0)
         value = value.transpose(0,1).unsqueeze(0)
-        key = key[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
+        if scores is None:
+            key = key[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         value = value[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
-        scores = torch.matmul(query,key.transpose(2,3))
+        if scores is None:
+            scores = torch.matmul(query,key.transpose(2,3))
+        if (count == context_length and window == 1024
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SPARSE_WINDOW') == '1'):
+            from atom.model_ops.mellum_prefill_sparse_pv import try_window_attention
+            result = try_window_attention(scores, value, scale)
+            if result is not None:
+                out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
+                del scores
+                continue
         if (__import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
-                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT') == 'hybrid'
                 and count == context_length and 512 <= key_length <= 16384):
-            from atom.model_ops.mellum_prefill_softmax_hybrid import softmax as fused_softmax
+            variant = __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT', 'legacy')
+            if variant == 'hybrid':
+                from atom.model_ops.mellum_prefill_softmax_hybrid import softmax as fused_softmax
+            else:
+                assert variant == 'legacy', variant
+                from atom.model_ops.mellum_prefill_softmax import softmax as fused_softmax
             probabilities = fused_softmax(scores, count, context_length, window, scale)
         else:
             scores = scores * scale
@@ -68,7 +102,13 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             scores = scores + mask[None,None,:,:]
             probabilities = softmax_bf16(scores)
         del scores
-        result = torch.matmul(probabilities,value)
+        result = None
+        if (count == context_length and window == 1024
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SPARSE_PV') == '1'):
+            from atom.model_ops.mellum_prefill_sparse_pv import try_pv
+            result = try_pv(probabilities, value)
+        if result is None:
+            result = torch.matmul(probabilities,value)
         out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
     return out
 

@@ -1,0 +1,30 @@
+[
+  {
+    "name": "aiter",
+    "source": "/workspace/aiter-mellum-head-parallel",
+    "base": "e3940660b40f4764cdf09147af96a2a764f264be",
+    "head": "269546baff9c6350a9f93ea954c16404bd009fd5",
+    "bundle": "aiter.bundle"
+  },
+  {
+    "name": "ck",
+    "source": "/workspace/ck-mellum-hf-profile",
+    "base": "af7118e342580ecd3f71edce7b1d0ba465012ecf",
+    "head": "5082d415da55210da52bb482c4f204efd3733220",
+    "bundle": "ck.bundle"
+  },
+  {
+    "name": "aiter-mellum-native-norm",
+    "source": "/workspace/aiter-mellum-native-norm",
+    "base": "e3940660b40f4764cdf09147af96a2a764f264be",
+    "head": "31a878c64ef49b5dff21a67f1c9649dc494ba5da",
+    "bundle": "aiter-mellum-native-norm.bundle"
+  },
+  {
+    "name": "ck-mellum-native-decode",
+    "source": "/workspace/ck-mellum-native-decode",
+    "base": "af7118e342580ecd3f71edce7b1d0ba465012ecf",
+    "head": "705b8871b0ee4543cc1ad1850dad2420b3513313",
+    "bundle": "ck-mellum-native-decode.bundle"
+  }
+]

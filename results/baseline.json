@@ -1,0 +1,32 @@
+{
+  "started_at": "2026-10-26T20:07:50+0800",
+  "config": "1 GPU, eager, compile level 0, bf16 KV, MTP off, SWA on",
+  "num_gpus": 1,
+  "precision": "bf16",
+  "rate_per_gpu": 0.3,
+  "scenario_a": {
+    "count": 512,
+    "elapsed_s": 205.35100678994786,
+    "output_tokens_per_s": 638.282724048549,
+    "ttft_p99_s": 5.009712699975353,
+    "tpot_p99_s": 0.050144394062797304,
+    "tpot_p50_s": 0.03895133477065019,
+    "tokens_per_s_gpu": 638.282724048549
+  },
+  "scenario_c": {
+    "count": 200,
+    "elapsed_s": 671.7715815720148,
+    "output_tokens_per_s": 76.21638277729272,
+    "ttft_p99_s": 0.9935489579802379,
+    "tpot_p99_s": 0.04126502377250433,
+    "tpot_p50_s": 0.03629019312336858
+  },
+  "target_g_a": null,
+  "target_g_c": null,
+  "humaneval_pass1_bf16": null,
+  "humaneval_pass1_fp8": null,
+  "humaneval_passed_bf16": 3,
+  "humaneval_count_bf16": 164,
+  "humaneval_pass1_bf16_rejected": 0.018292682926829267,
+  "humaneval_note": "Rejected: raw /v1/completions without the chat template or thinking mode. Not comparable to the model card HumanEval+ 91.5."
+}

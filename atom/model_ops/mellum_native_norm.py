@@ -6,6 +6,8 @@ import torch
 from atom.model_ops.mellum_request_gemm import ranges
 from atom.utils.forward_context import get_forward_context
 
+_DECODE_OFFSETS = {}
+
 
 def rmsnorm(x, weight, eps, residual=None):
     shape = x.shape
@@ -13,7 +15,14 @@ def rmsnorm(x, weight, eps, residual=None):
     factor = flat.shape[0] // shape[0]
     parts = ranges(x)
     ctx = get_forward_context()
-    cache = getattr(ctx, "_mellum_native_norm_offsets", None)
+    # Graph inputs created during warmup must outlive the per-step context.
+    # Unit-row decode has immutable offsets for each batch/head shape.
+    if (__import__("os").environ.get("ATOM_MELLUM_STABLE_DECODE_OFFSETS") == "1"
+            and not ctx.context.is_prefill
+            and all(stop - start == 1 for start, stop in parts)):
+        cache = _DECODE_OFFSETS
+    else:
+        cache = getattr(ctx, "_mellum_native_norm_offsets", None)
     if cache is None:
         cache = {}
         ctx._mellum_native_norm_offsets = cache

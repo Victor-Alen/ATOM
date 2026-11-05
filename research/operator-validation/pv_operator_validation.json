@@ -1,0 +1,115 @@
+{
+  "complete": true,
+  "passed": true,
+  "cases": [
+    {
+      "n": 3073,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 3104,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 4095,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 4096,
+      "different": 0,
+      "max_abs": 0.0,
+      "reference_ms": 0.9204790145158768,
+      "candidate_ms": 0.6408997056192888
+    },
+    {
+      "n": 4097,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 7168,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 7169,
+      "different": 0,
+      "max_abs": 0.0,
+      "reference_ms": 2.704967156896051,
+      "candidate_ms": 1.547342918978797
+    },
+    {
+      "n": 10001,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 12580,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 15194,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 16383,
+      "different": 0,
+      "max_abs": 0.0
+    },
+    {
+      "n": 16384,
+      "different": 0,
+      "max_abs": 0.0,
+      "repeats": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "reference_ms": 12.19154179096222,
+      "candidate_ms": 2.646881199757987
+    }
+  ],
+  "elapsed_s": 5.3492560386657715
+}

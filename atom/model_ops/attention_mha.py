@@ -474,6 +474,9 @@ class PagedAttentionImpl(nn.Module):
             if self.sliding_window > 0:
                 max_context_partition_num = 1
                 context_partition_size = 128
+            if __import__("os").environ.get("ATOM_MELLUM_NATIVE_HF_ATTENTION") == "1":
+                max_context_partition_num = 1
+                context_partition_size = 128
 
             intermediate_shape = (
                 num_seqs,
@@ -501,6 +504,13 @@ class PagedAttentionImpl(nn.Module):
             compute_type = (
                 torch.bfloat16 if self.kv_cache_dtype == "bf16" else aiter.dtypes.fp8
             )
+            if (
+                __import__("os").environ.get("ATOM_MELLUM_NATIVE_HF_ATTENTION") == "1"
+                and getattr(self, "_cache_format", "NHD") == "SHUFFLE"
+                and v_cache.ndim == 4
+            ):
+                pack = 16 // v_cache.element_size()
+                v_cache = v_cache.view(num_blocks, num_kv_heads, block_size // pack, head_size, pack)
             torch.ops.aiter.pa_decode_gluon(
                 o,
                 q,
@@ -818,14 +828,47 @@ class PagedAttentionImpl(nn.Module):
         from atom.model_ops.mellum_bf16_attention import attention
         return attention(q,k,v,k_cache,v_cache,fwd_ctx.attn_metadata,self.scale,self.sliding_window,self._cache_format)
 
+    def attention_native_hf_shadow(self, q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx):
+        import os
+        from pathlib import Path
+        if self.sliding_window > 0:
+            return self.paged_attention_triton(q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx)
+        reference = self.attention_bf16_hf_order(q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx)
+        count = globals().get('_native_attention_shadow_dumps', 0)
+        if count >= 3:
+            return reference
+        native = self.paged_attention_triton(q,k,v,k_cache,v_cache,k_scale,v_scale,fwd_ctx)
+        mismatch = native != reference
+        if bool(mismatch.any()):
+            meta = fwd_ctx.attn_metadata
+            assert q.shape[0] == 1
+            length = int(meta.context_lens[0])
+            blocks = (length + k_cache.shape[3] - 1) // k_cache.shape[3]
+            used, inverse = torch.unique(meta.block_tables[0,:blocks].long(), sorted=True, return_inverse=True)
+            root = Path(os.environ['ATOM_MELLUM_NATIVE_ATTN_SHADOW'])
+            root.mkdir(parents=True, exist_ok=True)
+            record = dict(layer=self.layer_num,window=self.sliding_window,cache_format=self._cache_format,scale=self.scale,length=length,q=q.cpu(),k=k.cpu(),v=v.cpu(),kc=k_cache.index_select(0,used).cpu(),vc=v_cache.index_select(0,used).cpu(),table=inverse.reshape(1,-1).to(torch.int32).cpu(),native=native.cpu(),reference=reference.cpu(),mismatches=int(mismatch.sum()))
+            torch.save(record,root/f'attention_mismatch_{count}.pt')
+            print('NATIVE_ATTN_SHADOW',count,self.layer_num,length,record['mismatches'],flush=True)
+            globals()['_native_attention_shadow_dumps']=count+1
+        return reference
+
     def dispatch_backend(self, fwd_ctx: ForwardContext):
 
         ctx = fwd_ctx.context
 
         if (__import__('os').environ.get('ATOM_MELLUM_BF16_HF_ATTENTION')=='1'
+                and __import__('os').environ.get('ATOM_MELLUM_NATIVE_ATTN_PHASE', '')
+                    != ('prefill' if ctx.is_prefill else 'decode')
                 and self.head_dim==128 and self.kv_cache_dtype=='bf16'
                 and not self.use_flash_layout and self.sinks is None
                 and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
+            if (not ctx.is_prefill
+                    and __import__("os").environ.get("ATOM_MELLUM_NATIVE_HF_ATTENTION") == "1"
+                    and (__import__("os").environ.get("ATOM_MELLUM_NATIVE_HF_ATTN_SWA_ONLY") != "1" or self.sliding_window > 0)):
+                if __import__("os").environ.get("ATOM_MELLUM_NATIVE_ATTN_SHADOW"):
+                    return self.attention_native_hf_shadow
+                return self.paged_attention_triton
             return self.attention_bf16_hf_order
 
         if __import__("os").environ.get("ATOM_EAGER_ATTN") == "1":

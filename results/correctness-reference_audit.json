@@ -1,0 +1,17 @@
+{
+  "C200_reference_prompts_identical_to_fixed_dataset": true,
+  "C200_raw_response_tokens_identical_to_HF": true,
+  "HumanEval_exact_token_sequences": 164,
+  "HumanEval_count": 164,
+  "HumanEval_token_mismatch_tasks": [],
+  "reference_and_harness_sha256": {
+    "/workspace/correctness/hf_scenario_c_200_eager.jsonl": "2f54ae0833629c7757cd0e72cdb05e03cfdb2a9c6f6f04781b44b2862b341924",
+    "/data/datasets/scenario_c_prompts.jsonl": "38fc340a76fd48c025bf5806376bdabbc7762f6b5c48d4509bbb109af2cfe265",
+    "/data/datasets/HumanEval.jsonl": "1d49078ba3e2b196b9344535bef34a43021f038fad9561d6ee7c53450609a6a2",
+    "/workspace/logs/step0_five_gate_20261104/he_inputs.jsonl": "f0bd9569bbd3c35204181a147216e33807d8436c12d6dcf7b030458ba4c32a9a",
+    "/workspace/logs/step0_five_gate_20261104/he_hf.jsonl": "2df007400625b9efb4fd7c7bda726171aa76b39e07c3bf72eef2ccbfeee23792",
+    "/workspace/logs/step0_five_gate_20261104/five_gate_common.py": "accb987e154f58d94db2784d1f8647a0345e2cf10f2145e5c8a4d8546672387c",
+    "/workspace/logs/step0_operator_parallel_20261104/gates/fast_full_correctness_20261105T165619Z/he_worker.py": "6bf9528924b7adeb0dcf7c86ba6532e80c5c331119a6b1a044c0697339b69b73",
+    "/workspace/eval-tools/human-eval/human_eval/execution.py": "79901c6f5b59701c465b164aed290fa53abc35abc80a5378fc10f4dac1f9a84c"
+  }
+}

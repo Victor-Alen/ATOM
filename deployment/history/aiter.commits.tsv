@@ -1,0 +1,8 @@
+269546baff9c6350a9f93ea954c16404bd009fd5	2026-11-05T04:32:00+00:00	Codex	Add opt-in HF-order staged full decode attention with reusable GPU workspace
+1c1c8a3e425127deb87e322e983a1b96ae5dea0c	2026-11-05T03:53:26+00:00	Codex	Add opt-in Gluon head splitting and HF-order LDS sliding-window cache
+ab76bbc57a902e7e8dd36e745d7f73fb8a6fa719	2026-11-04T15:47:35+00:00	Codex	fix-HF-BF16-order-native-paged-decode
+31a878c64ef49b5dff21a67f1c9649dc494ba5da	2026-11-04T13:02:30+00:00	Codex	Fix fused HIP RMSNorm request-wise BF16 rounding and reduction order
+8f34513759f8a8efdb73bb609e53a3a2a773bf84	2026-11-03T11:18:14+00:00	Qoder	fix: optionally initialize Mellum RoPE inverse frequencies on CPU
+9d4907d8d48640887264559bc01f8703a360c705	2026-11-03T10:06:14+00:00	Qoder	fix: match HF BF16 RMSNorm residual and weight rounding
+8ddfc7510536d61f4e1863e9cf91c495be1f8c2c	2026-05-29T21:47:26+00:00	Peng Sun	ci(release): install flydsl from AMD mirror + fix install_triton.sh dpkg/pipefail
+6415d5862d7b6ee9fcb78453311e9c356d127d5b	2026-05-21T13:56:44+01:00	Alexios Lyrakis	mla: add fp8 qh32 seqlen=1 persistent kernel support on gfx950

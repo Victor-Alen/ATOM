@@ -1,0 +1,6 @@
+5082d415da55210da52bb482c4f204efd3733220	2026-11-03T15:37:31+00:00	Qoder	perf: apply CK K-order profile metadata only to prefill
+2a17cee0cf2d2f3c9d46de5fab265cf5aecd1ee7	2026-11-03T15:17:25+00:00	Qoder	fix: select BF16 stage1 K grouping per HF expert GEMM profile
+80f4da5708e343b0b2e27ca3ec1ad3d638f38a65	2026-11-03T14:55:09+00:00	Qoder	experiment: isolate BF16 stage1 HF K grouping in V3
+14e5a45589c8fbded83ac9fccce59fa317d240b3	2026-11-03T07:22:21+00:00	Qoder	fix: merge BF16 V3 up-projection chunks in FP64
+d6e03ebd9ef7dfbbf083885ad77c227584ccfdb4	2026-11-03T05:38:09+00:00	Qoder	Add opt-in BF16 down rounding before routed weight multiply
+78a912528164b54d470a916b437d52a302fb1171	2026-11-03T05:33:53+00:00	Qoder	Add opt-in Mellum BF16 stage1 rounding and diagnostic outputs

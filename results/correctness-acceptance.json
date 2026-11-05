@@ -1,0 +1,41 @@
+{
+  "label": "fast_full_correctness_20261105T165619Z",
+  "runtime_pid": 1641868,
+  "source_unchanged": true,
+  "C200": {
+    "name": "C200",
+    "port": 8000,
+    "requests": 200,
+    "concurrency": 8,
+    "tokens_per_request": 64,
+    "duration_s": 245.83895982103422,
+    "output_tokens": 12800,
+    "output_tokens_per_s": 52.06660494056003,
+    "matched_positions": 12800,
+    "total_positions": 12800,
+    "exact_requests": 200,
+    "complete": true,
+    "scope": "Nonstreaming HTTP wall throughput including prefill; no profiler; not A512x256 official performance"
+  },
+  "strict16k_exact": true,
+  "HumanEval": {
+    "backend": "atom",
+    "count": 164,
+    "passed": 148,
+    "pass_at_1": 0.9024390243902439,
+    "truncated": 3,
+    "protocol": "official chat template, enable_thinking=False, greedy, EOS stop, max_new_tokens2048; original HumanEval tests via pinned official checker; full-program extraction"
+  },
+  "HF_HumanEval": {
+    "backend": "hf",
+    "count": 164,
+    "passed": 148,
+    "pass_at_1": 0.9024390243902439,
+    "truncated": 3,
+    "protocol": "official chat template, enable_thinking=False, greedy, EOS stop, max_new_tokens2048; original HumanEval tests via pinned official checker; full-program extraction"
+  },
+  "HF_token_agreement": 1.0,
+  "HumanEval_gap_pp": 0.0,
+  "passed": true,
+  "scope": "Full correctness only, MTP off, one GPU. No new full performance claim."
+}

@@ -1,0 +1,882 @@
+From 6415d5862d7b6ee9fcb78453311e9c356d127d5b Mon Sep 17 00:00:00 2001
+From: Alexios Lyrakis <alex_gfd@hotmail.com>
+Date: Thu, 21 May 2026 13:56:44 +0100
+Subject: [PATCH 1/5] mla: add fp8 qh32 seqlen=1 persistent kernel support on
+ gfx950
+
+Add the mla_a8w8_qh32_qseqlen1_gqaratio32_ps kernel for gfx950 (MI350X).
+This covers the decode case with gqa_ratio=32, fp8 Q/KV, and seqlen_q=1.
+
+- asm_mla.cu: add seqlen=1 dispatch branch for gqa_ratio=32 fp8/fp8
+  (sub_Q=32); update error message to reflect supported seqlens 1/2/4
+- v1_2_device.cuh: add seqlen=1 to natively_supported conditions for
+  gfx950 nhead=32 fp8
+- mla.py: add gfx950/nhead=32/fp8/seqlen=1 to the native-path selector
+- mla_asm.csv: register new .co entry for qh32 seqlen=1 persistent kernel
+- mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co: compiled kernel binary
+- test_mla.py, test_mla_persistent.py: enable nhead=32 fp8 seqlen=1 test paths
+---
+ aiter/mla.py                                    |   7 +++++++
+ csrc/kernels/mla/metadata/v1_2_device.cuh       |   2 ++
+ csrc/py_itfs_cu/asm_mla.cu                      |   7 +++++--
+ .../mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co | Bin 0 -> 73488 bytes
+ hsa/gfx950/mla/mla_asm.csv                      |   1 +
+ op_tests/test_mla.py                            |   2 +-
+ op_tests/test_mla_persistent.py                 |   7 +++++++
+ 7 files changed, 23 insertions(+), 3 deletions(-)
+ create mode 100644 hsa/gfx950/mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co
+
+diff --git a/aiter/mla.py b/aiter/mla.py
+index 2b97c9bfa..926b4a517 100644
+--- a/aiter/mla.py
++++ b/aiter/mla.py
+@@ -395,6 +395,13 @@ def mla_decode_fwd(
+                 and kv_buffer.dtype == dtypes.fp8
+                 and max_seqlen_q == 1
+             )
++            or (
++                get_gfx() == "gfx950"
++                and nhead == 32
++                and q.dtype == dtypes.fp8
++                and kv_buffer.dtype == dtypes.fp8
++                and max_seqlen_q == 1
++            )
+             or (
+                 get_gfx() == "gfx950"
+                 and q.dtype == dtypes.bf16
+diff --git a/csrc/kernels/mla/metadata/v1_2_device.cuh b/csrc/kernels/mla/metadata/v1_2_device.cuh
+index e4cdde80e..1b70b704a 100644
+--- a/csrc/kernels/mla/metadata/v1_2_device.cuh
++++ b/csrc/kernels/mla/metadata/v1_2_device.cuh
+@@ -508,6 +508,8 @@ void get_mla_metadata_v1_2_device(const torch::Tensor& seqlens_qo_indptr, // [ba
+ 
+     const bool natively_supported =
+         (num_heads == 16) ||
++        ((arch_id == "gfx950") && (num_heads == 32) && q_is_fp8 && kv_is_fp8 &&
++         (max_seqlen_qo == 1)) ||
+         ((arch_id == "gfx950") && (num_heads == 32) && q_is_fp8 && kv_is_fp8 &&
+          (max_seqlen_qo == 2)) ||
+         ((arch_id == "gfx950") && (num_heads == 32) && q_is_fp8 && kv_is_fp8 &&
+diff --git a/csrc/py_itfs_cu/asm_mla.cu b/csrc/py_itfs_cu/asm_mla.cu
+index 8733f8971..ff2d9b845 100644
+--- a/csrc/py_itfs_cu/asm_mla.cu
++++ b/csrc/py_itfs_cu/asm_mla.cu
+@@ -328,9 +328,12 @@ void mla_decode_stage1_asm_fwd(
+             } else if((max_seqlen_q == 2) && persistent){
+                 config_max_seqlen_q = 2;
+                 sub_Q = 128;
++            } else if((max_seqlen_q == 1) && persistent){
++                config_max_seqlen_q = 1;
++                sub_Q = 32;
+             } else {
+-                AITER_CHECK(false, __func__, 
+-                    ": fp8/fp8 with gqa_ratio=32 only supports decode_qlen=2,4 in persistent mode");
++                AITER_CHECK(false, __func__,
++                    ": fp8/fp8 with gqa_ratio=32 only supports decode_qlen=1,2,4 in persistent mode");
+             }
+         }
+     } else if (gqa_ratio == 64){
+diff --git a/hsa/gfx950/mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co b/hsa/gfx950/mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co
+new file mode 100644
+index 0000000000000000000000000000000000000000..3ff1ad2fbe7f261535a4d86cd5a727ca5df2b1ad
+GIT binary patch
+literal 73488
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/hsa/gfx950/mla/mla_asm.csv b/hsa/gfx950/mla/mla_asm.csv
+index 6c2717592..99005f1cd 100644
+--- a/hsa/gfx950/mla/mla_asm.csv
++++ b/hsa/gfx950/mla/mla_asm.csv
+@@ -16,6 +16,7 @@ fp8,fp8,16,0,1,0,0,0,_ZN5aiter33mla_a8w8_qh16_qseqlen1_gqaratio16E,mla_a8w8_qh16
+ fp8,fp8,16,0,2,0,0,0,_ZN5aiter33mla_a8w8_qh16_qseqlen2_gqaratio16E,mla_a8w8_qh16_qseqlen2_gqaratio16.co
+ fp8,fp8,16,0,4,0,0,0,_ZN5aiter33mla_a8w8_qh64_qseqlen4_gqaratio16E,mla_a8w8_qh64_qseqlen4_gqaratio16.co
+ fp8,fp8,32,1,4,0,0,0,_ZN5aiter36mla_a8w8_qh32_qseqlen4_gqaratio32_psE,mla_a8w8_qh32_qseqlen4_gqaratio32_ps.co
++fp8,fp8,32,1,1,0,0,0,_ZN5aiter36mla_a8w8_qh32_qseqlen1_gqaratio32_psE,mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co
+ fp8,fp8,32,1,2,0,0,0,_ZN5aiter39mla_a8w8_qh32_qseqlen2_gqaratio32_v3_psE,mla_a8w8_qh32_qseqlen2_gqaratio32_v3_ps.co
+ fp8,fp8,32,1,2,0,0,1,_ZN5aiter43mla_a8w8_qh32_qseqlen2_gqaratio32_lse_v3_psE,mla_a8w8_qh32_qseqlen2_gqaratio32_lse_v3_ps.co
+ fp8,fp8,128,0,0,0,0,0,_ZN5aiter31mla_a8w8_qh128_m32x4_n16x2_msk1E,mla_a8w8_qh128_m32x4_n16x2_msk1.co
+diff --git a/op_tests/test_mla.py b/op_tests/test_mla.py
+index f53e62418..d05f55b09 100644
+--- a/op_tests/test_mla.py
++++ b/op_tests/test_mla.py
+@@ -570,7 +570,7 @@ def test_mla(
+         128,
+     ]:
+         err, us_asm_decode = test_absorb_decode_bf16()
+-    elif kvtype == dtypes.fp8 and nhead in [8, 16, 128]:
++    elif kvtype == dtypes.fp8 and nhead in [8, 16, 32, 128]:
+         err, us_asm_decode = test_absorb_decode_fp8()
+ 
+     ret["decode:err"] = err
+diff --git a/op_tests/test_mla_persistent.py b/op_tests/test_mla_persistent.py
+index c42449f3b..25799dee6 100644
+--- a/op_tests/test_mla_persistent.py
++++ b/op_tests/test_mla_persistent.py
+@@ -490,6 +490,13 @@ def torch_mla_extend_split_kv(
+             and is_fp8_kvc
+             and max_seqlen_q == 2
+         )
++        or (
++            get_gfx() == "gfx950"
++            and nheads == 32
++            and is_fp8_q
++            and is_fp8_kvc
++            and max_seqlen_q == 1
++        )
+         or (
+             get_gfx() == "gfx950"
+             and nheads == 8
+-- 
+2.43.0
+
+
+From 8ddfc7510536d61f4e1863e9cf91c495be1f8c2c Mon Sep 17 00:00:00 2001
+From: Peng Sun <pengsun@amd.com>
+Date: Fri, 29 May 2026 21:47:26 +0000
+Subject: [PATCH 2/5] ci(release): install flydsl from AMD mirror + fix
+ install_triton.sh dpkg/pipefail
+
+- workflow: replace flydsl-drop with install from rocm.frameworks-devreleases.amd.com whl-staging
+  (v0.1.15 setup.py:start_aot now imports aiter.aot.flydsl.gemm at build time)
+- install_triton.sh: guard dpkg | awk pipeline with || true to survive pipefail on
+  non-Debian / no-rocm-core containers (pytorch/manylinux2_28-builder)
+---
+ .github/scripts/install_triton.sh    |  2 +-
+ .github/workflows/aiter-release.yaml | 14 ++++++--------
+ 2 files changed, 7 insertions(+), 9 deletions(-)
+
+diff --git a/.github/scripts/install_triton.sh b/.github/scripts/install_triton.sh
+index 6e763e943..d7fb524ff 100755
+--- a/.github/scripts/install_triton.sh
++++ b/.github/scripts/install_triton.sh
+@@ -30,7 +30,7 @@ install_triton_from_wheelhouse() {
+ }
+ 
+ TRITON_INDEX_URL="https://pypi.amd.com/triton/release_/rocm-7.0.0/simple/"
+-ROCM_VERSION=$(dpkg -l rocm-core 2>/dev/null | awk '/^ii/{print $3}')
++ROCM_VERSION=$(dpkg -l rocm-core 2>/dev/null | awk '/^ii/{print $3}' || true)
+ if [[ -n "$ROCM_VERSION" ]]; then
+     ROCM_MAJOR_MINOR=$(echo "$ROCM_VERSION" | cut -d. -f1,2)
+     TRITON_INDEX_URL="https://pypi.amd.com/triton/release_/rocm-${ROCM_MAJOR_MINOR}.0/simple/"
+diff --git a/.github/workflows/aiter-release.yaml b/.github/workflows/aiter-release.yaml
+index 09a9b9cda..0469be2ac 100644
+--- a/.github/workflows/aiter-release.yaml
++++ b/.github/workflows/aiter-release.yaml
+@@ -349,14 +349,12 @@ jobs:
+               set -e
+               ${PYBIN}/pip install --upgrade --timeout=60 --retries=10 pip
+               ${PYBIN}/pip install --timeout=60 --retries=10 --index-url "${TORCH_INDEX}" "${TORCH_SPEC}"
+-              # flydsl publishes only manylinux_2_35 wheels which cannot install
+-              # on AlmaLinux 8 (glibc 2.28). FlyDSL AOT pre-compilation in
+-              # setup.py is wrapped in try/except and is skipped gracefully when
+-              # flydsl is missing, so we drop it here. The resulting wheel still
+-              # contains all CK-free + Triton kernels; only the optional
+-              # FlyDSL AOT cache is omitted (kernels JIT on first use).
+-              grep -v "^flydsl" requirements.txt > /tmp/requirements-no-flydsl.txt
+-              ${PYBIN}/pip install --timeout=60 --retries=10 -r /tmp/requirements-no-flydsl.txt
++              # flydsl 0.1.9.dev599+ ships manylinux_2_28 wheels via AMD mirror
++              # (see ROCm/FlyDSL#527 backport). Required at build time since
++              # v0.1.15 setup.py imports aiter.aot.flydsl.gemm during start_aot().
++              ${PYBIN}/pip install --timeout=60 --retries=10 \
++                --extra-index-url https://rocm.frameworks-devreleases.amd.com/whl-staging/gfx942-gfx950/ \
++                -r requirements.txt
+               ${PYBIN}/pip install --timeout=60 --retries=10 "setuptools_scm<10" ninja auditwheel patchelf
+             '
+ 
+-- 
+2.43.0
+
+
+From 9d4907d8d48640887264559bc01f8703a360c705 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 10:06:14 +0000
+Subject: [PATCH 3/5] fix: match HF BF16 RMSNorm residual and weight rounding
+
+---
+ csrc/kernels/rmsnorm_quant_kernels.cu | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/csrc/kernels/rmsnorm_quant_kernels.cu b/csrc/kernels/rmsnorm_quant_kernels.cu
+index dbc4c5c23..c8c0788d6 100644
+--- a/csrc/kernels/rmsnorm_quant_kernels.cu
++++ b/csrc/kernels/rmsnorm_quant_kernels.cu
+@@ -97,6 +97,12 @@ __global__ void add_rmsnorm_quant_kernel(
+                 for(int i = 0; i < thread_data_size; i++)
+                 {
+                     thread_data_float[i] = static_cast<float>(thread_data_i[i]) + static_cast<float>(thread_data_residual_in[i]);
++                    if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++                    {
++                        // HF materializes the residual sum in BF16 before RMS reduction.
++                        thread_data_float[i] = opus::bf16_to_fp32(
++                            opus::fp32_to_bf16<0>(thread_data_float[i]));
++                    }
+                 }
+ 
+                 if constexpr(use_prefetch)
+@@ -158,6 +164,13 @@ __global__ void add_rmsnorm_quant_kernel(
+ #endif
+             }
+             
++            if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++            {
++                // HF rounds the normalized value before multiplying the BF16 weight.
++                for(int i = 0; i < thread_data_size; ++i)
++                    thread_data_float[i] = opus::bf16_to_fp32(
++                        opus::fp32_to_bf16<0>(thread_data_float[i]));
++            }
+             float* thread_data_weight2 = reinterpret_cast<float*>(&thread_data_weight);
+             for(int i = 0; i < thread_data_size / 2; i++)
+             {
+@@ -196,6 +209,14 @@ __global__ void add_rmsnorm_quant_kernel(
+ #endif
+             }
+ 
++            if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++            {
++                // Explicit RNE keeps nonquantized BF16 independent of Opus defaults.
++                for(int i = 0; i < thread_data_size; ++i)
++                    thread_data_float[i] = opus::bf16_to_fp32(
++                        opus::fp32_to_bf16<0>(thread_data_float[i]));
++            }
++
+             if constexpr(FUSE_QUANT)
+             {
+                 float thread_max = 1e-10f;
+-- 
+2.43.0
+
+
+From 8f34513759f8a8efdb73bb609e53a3a2a773bf84 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 11:18:14 +0000
+Subject: [PATCH 4/5] fix: optionally initialize Mellum RoPE inverse
+ frequencies on CPU
+
+---
+ aiter/rotary_embedding.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/aiter/rotary_embedding.py b/aiter/rotary_embedding.py
+index 5aff6a9c1..f5dfcc79e 100644
+--- a/aiter/rotary_embedding.py
++++ b/aiter/rotary_embedding.py
+@@ -124,7 +124,8 @@ class RotaryEmbedding(nn.Module):
+         inv_freq = 1.0 / (
+             base
+             ** (
+-                torch.arange(0, self.rotary_dim, 2, dtype=dtypes.fp32) / self.rotary_dim
++                torch.arange(0, self.rotary_dim, 2, dtype=dtypes.fp32,
++                    device="cpu" if os.getenv("AITER_MELLUM_HF_ROPE_INV_FREQ")=="1" else None) / self.rotary_dim
+             )
+         )
+         return inv_freq
+@@ -134,7 +135,7 @@ class RotaryEmbedding(nn.Module):
+         inv_freq = self._compute_inv_freq(self.base)
+         t = torch.arange(self.max_position_embeddings, dtype=dtypes.fp32)
+ 
+-        freqs = torch.einsum("i,j -> ij", t, inv_freq)
++        freqs = torch.einsum("i,j -> ij", t, inv_freq.to(t.device))
+         cos = freqs.cos().unsqueeze(-2).unsqueeze(-2)
+         sin = freqs.sin().unsqueeze(-2).unsqueeze(-2)
+         return cos, sin
+-- 
+2.43.0
+
+
+From 31a878c64ef49b5dff21a67f1c9649dc494ba5da Mon Sep 17 00:00:00 2001
+From: Codex <codex@localhost>
+Date: Wed, 4 Nov 2026 13:02:30 +0000
+Subject: [PATCH 5/5] Fix fused HIP RMSNorm request-wise BF16 rounding and
+ reduction order
+
+---
+ aiter/ops/rmsnorm.py                    |   4 +
+ csrc/include/rmsnorm_quant.h            |   4 +-
+ csrc/include/rocm_ops.hpp               |   4 +-
+ csrc/kernels/rmsnorm_quant_kernels.cu   | 148 +++++++++++++++++++++++-
+ op_tests/test_rmsnorm_request_groups.py |  78 +++++++++++++
+ 5 files changed, 230 insertions(+), 8 deletions(-)
+ create mode 100644 op_tests/test_rmsnorm_request_groups.py
+
+diff --git a/aiter/ops/rmsnorm.py b/aiter/ops/rmsnorm.py
+index e52e448bf..170b92ecf 100644
+--- a/aiter/ops/rmsnorm.py
++++ b/aiter/ops/rmsnorm.py
+@@ -251,6 +251,8 @@ def add_rmsnorm(
+     residual_out: Tensor,
+     weight: Tensor,
+     epsilon: float,
++    hf_row_offsets: Optional[Tensor] = None,
++    hf_max_rows: int = 0,
+ ) -> None: ...
+ 
+ 
+@@ -272,4 +274,6 @@ def rmsnorm(
+     input: Tensor,
+     weight: Tensor,
+     epsilon: float,
++    hf_row_offsets: Optional[Tensor] = None,
++    hf_max_rows: int = 0,
+ ) -> None: ...
+diff --git a/csrc/include/rmsnorm_quant.h b/csrc/include/rmsnorm_quant.h
+index 68cf3ccf1..8e1849b23 100644
+--- a/csrc/include/rmsnorm_quant.h
++++ b/csrc/include/rmsnorm_quant.h
+@@ -21,7 +21,7 @@ void add_rmsnorm(torch::Tensor& out,
+                  torch::Tensor& residual_in,
+                  torch::Tensor& residual_out,
+                  torch::Tensor& weight,
+-                 double epsilon);
++                 double epsilon, std::optional<torch::Tensor> hf_row_offsets = std::nullopt, int64_t hf_max_rows = 0);
+ 
+ void rmsnorm_quant(torch::Tensor& out,
+                    torch::Tensor& input,
+@@ -31,6 +31,6 @@ void rmsnorm_quant(torch::Tensor& out,
+                    int group_size     = 0,
+                    bool shuffle_scale = false);
+ 
+-void rmsnorm(torch::Tensor& out, torch::Tensor& input, torch::Tensor& weight, double epsilon);
++void rmsnorm(torch::Tensor& out, torch::Tensor& input, torch::Tensor& weight, double epsilon, std::optional<torch::Tensor> hf_row_offsets = std::nullopt, int64_t hf_max_rows = 0);
+ 
+ } // namespace aiter
+diff --git a/csrc/include/rocm_ops.hpp b/csrc/include/rocm_ops.hpp
+index 9eb656caa..67bdca59d 100644
+--- a/csrc/include/rocm_ops.hpp
++++ b/csrc/include/rocm_ops.hpp
+@@ -1989,7 +1989,7 @@ namespace py = pybind11;
+           py::arg("residual_in"),            \
+           py::arg("residual_out"),           \
+           py::arg("weight"),                 \
+-          py::arg("epsilon"));               \
++          py::arg("epsilon"), py::arg("hf_row_offsets") = py::none(), py::arg("hf_max_rows") = 0);               \
+     m.def("rmsnorm_quant",                   \
+           &aiter::rmsnorm_quant,             \
+           py::arg("out"),                    \
+@@ -2004,7 +2004,7 @@ namespace py = pybind11;
+           py::arg("out"),                    \
+           py::arg("input"),                  \
+           py::arg("weight"),                 \
+-          py::arg("epsilon"));
++          py::arg("epsilon"), py::arg("hf_row_offsets") = py::none(), py::arg("hf_max_rows") = 0);
+ 
+ #define GATED_RMSNORM_QUANT_PYBIND                             \
+     m.def("gated_rmsnorm_fp8_group_quant",                     \
+diff --git a/csrc/kernels/rmsnorm_quant_kernels.cu b/csrc/kernels/rmsnorm_quant_kernels.cu
+index c8c0788d6..f47f31f3f 100644
+--- a/csrc/kernels/rmsnorm_quant_kernels.cu
++++ b/csrc/kernels/rmsnorm_quant_kernels.cu
+@@ -12,7 +12,15 @@
+ 
+ namespace aiter {
+ 
+-template <typename DTYPE_I, typename DTYPE_O, int BlockSize, int thread_data_size, bool ADD_RESIDUAL=true, bool FUSE_QUANT=true, bool interleave = false, int num_row = 1>
++__device__ __forceinline__ float hf_add(float a, float b) {
++    float out; asm volatile("v_add_f32 %0, %1, %2" : "=v"(out) : "v"(a), "v"(b)); return out;
++}
++__device__ __forceinline__ float hf_mul(float a, float b) {
++    float out; asm volatile("v_mul_f32 %0, %1, %2" : "=v"(out) : "v"(a), "v"(b)); return out;
++}
++
++
++template <typename DTYPE_I, typename DTYPE_O, int BlockSize, int thread_data_size, bool ADD_RESIDUAL=true, bool FUSE_QUANT=true, bool interleave = false, int num_row = 1, bool HF_ORDER = false>
+ __global__ void add_rmsnorm_quant_kernel(
+     DTYPE_O* out,
+     DTYPE_I* residual_out,
+@@ -28,8 +36,84 @@ __global__ void add_rmsnorm_quant_kernel(
+     int residual_out_stride,
+     int out_stride,
+     int group_size,
+-    bool shuffle_scale=false)
++    bool shuffle_scale=false, const int32_t* hf_row_offsets=nullptr)
+     {
++        if constexpr(HF_ORDER)
++        {
++            // Match ATen Reduce.cuh per-request layout while batching requests.
++            const int begin = hf_row_offsets[blockIdx.y];
++            const int rows = hf_row_offsets[blockIdx.y + 1] - begin;
++            int width = 32;
++            if(n == 2304)
++                width = rows >= 8 ? 64 : rows >= 4 ? 128 : rows >= 2 ? 256 : 512;
++            const int rows_per_block = 512 / width;
++            const int row_base = blockIdx.x * rows_per_block;
++            if(row_base >= rows) return;
++            const int lane = threadIdx.x % width;
++            const int local_row = row_base + threadIdx.x / width;
++            const int64_t row = begin + local_row;
++            const bool valid_row = local_row < rows;
++            float acc[4] = {0.f, 0.f, 0.f, 0.f};
++            for(int col = lane * 4; col < n; col += width * 4)
++            {
++                #pragma unroll
++                for(int j = 0; j < 4; ++j)
++                {
++                    float x = valid_row ? static_cast<float>(input[row * input_stride + col + j]) : 0.f;
++                    if constexpr(ADD_RESIDUAL)
++                    {
++                        float r = valid_row ? static_cast<float>(residual_in[row * residual_in_stride + col + j]) : 0.f;
++                        x = opus::bf16_to_fp32(opus::fp32_to_bf16<0>(hf_add(x, r)));
++                    }
++                    acc[j] = hf_add(acc[j], hf_mul(x, x));
++                }
++            }
++            float total = hf_add(hf_add(hf_add(acc[0], acc[1]), acc[2]), acc[3]);
++            __shared__ float partial[512];
++            partial[threadIdx.x] = total;
++            __syncthreads();
++            for(int offset = width / 2; offset >= 64; offset /= 2)
++            {
++                if(lane < offset)
++                    partial[threadIdx.x] = hf_add(partial[threadIdx.x], partial[threadIdx.x + offset]);
++                __syncthreads();
++            }
++            total = partial[threadIdx.x];
++            const int warp_width = width < 64 ? width : 64;
++            for(int offset = 1; offset < warp_width; offset *= 2)
++                total = hf_add(total, __shfl_down(total, offset, warp_width));
++            if(lane == 0)
++            {
++                const float mean = hf_mul(total, static_cast<float>(1.0 / static_cast<double>(n)));
++                const float variance = hf_add(mean, static_cast<float>(epsilon));
++                partial[threadIdx.x] = static_cast<float>(rsqrt(static_cast<double>(variance)));
++            }
++            __syncthreads();
++            const float inverse = partial[threadIdx.x - lane];
++            if(valid_row)
++            {
++                for(int col = lane * 4; col < n; col += width * 4)
++                {
++                    #pragma unroll
++                    for(int j = 0; j < 4; ++j)
++                    {
++                        float x = static_cast<float>(input[row * input_stride + col + j]);
++                        if constexpr(ADD_RESIDUAL)
++                        {
++                            const float r = static_cast<float>(residual_in[row * residual_in_stride + col + j]);
++                            auto summed = opus::fp32_to_bf16<0>(hf_add(x, r));
++                            x = opus::bf16_to_fp32(summed);
++                            residual_out[row * residual_out_stride + col + j] = summed;
++                        }
++                        const float normalized = opus::bf16_to_fp32(opus::fp32_to_bf16<0>(hf_mul(x, inverse)));
++                        out[row * out_stride + col + j] = opus::fp32_to_bf16<0>(
++                            hf_mul(normalized, static_cast<float>(weight[col + j])));
++                    }
++                }
++            }
++            return;
++        }
++
+         static constexpr int32_t load_chunk_bytes = sizeof(DTYPE_I) * thread_data_size % 16 == 0 ? 16 : 8;
+         static_assert(thread_data_size * sizeof(DTYPE_I) % load_chunk_bytes == 0, "thread_data_size * sizeof(DTYPE_I) must be a multiple of load_chunk_bytes");
+         static constexpr int32_t load_vec_size = load_chunk_bytes / sizeof(DTYPE_I);
+@@ -508,9 +592,37 @@ __global__ void add_rmsnorm_quant_kernel(
+         torch::Tensor& residual_in,
+         torch::Tensor& residual_out,
+         torch::Tensor& weight,
+-        double epsilon
++        double epsilon,
++        std::optional<torch::Tensor> hf_row_offsets,
++        int64_t hf_max_rows
+     )
+     {
++
++        if(hf_row_offsets.has_value())
++        {
++            const int n = input.size(1);
++            const int m = input.size(0);
++            const auto& offsets = hf_row_offsets.value();
++            TORCH_CHECK(input.scalar_type() == torch::kBFloat16 && out.scalar_type() == torch::kBFloat16,
++                        "HF-order RMSNorm requires BF16 input and output");
++            TORCH_CHECK(n == 128 || n == 2304, "HF-order RMSNorm supports N128/N2304");
++            TORCH_CHECK(input.stride(1) == 1 && out.stride(1) == 1 && weight.is_contiguous(), "Invalid inner stride");
++            TORCH_CHECK(offsets.is_cuda() && offsets.scalar_type() == torch::kInt32 && offsets.is_contiguous()
++                        && offsets.dim() == 1 && offsets.numel() >= 2 && offsets.device() == input.device(), "Invalid request offsets");
++            TORCH_CHECK(hf_max_rows > 0 && hf_max_rows <= m, "Invalid request maximum rows");
++            const at::hip::OptionalHIPGuardMasqueradingAsCUDA device_guard(device_of(input));
++            const hipStream_t stream = at::hip::getCurrentHIPStream();
++            const int rows_per_block = n == 128 ? 16 : 8;
++            const int blocks = (hf_max_rows + rows_per_block - 1) / rows_per_block;
++            const dim3 grid(n == 2304 ? std::max(2, blocks) : blocks, offsets.numel() - 1);
++            add_rmsnorm_quant_kernel<opus::bf16_t, opus::bf16_t, 512, 16, true, false, false, 1, true>
++                <<<grid, 512, 0, stream>>>(reinterpret_cast<opus::bf16_t*>(out.data_ptr()), reinterpret_cast<opus::bf16_t*>(residual_out.data_ptr()), nullptr,
++                    reinterpret_cast<opus::bf16_t*>(input.data_ptr()), reinterpret_cast<opus::bf16_t*>(residual_in.data_ptr()),
++                    reinterpret_cast<opus::bf16_t*>(weight.data_ptr()), epsilon, m, n,
++                    input.stride(0), residual_in.stride(0), residual_out.stride(0), out.stride(0), 0, false,
++                    offsets.data_ptr<int32_t>());
++            return;
++        }
+         torch::Tensor scale = torch::empty({0}, torch::TensorOptions().dtype(torch::kFloat32).device(input.device()));
+ 
+         int n = input.size(1);
+@@ -561,9 +673,37 @@ __global__ void add_rmsnorm_quant_kernel(
+         torch::Tensor& out,
+         torch::Tensor& input,
+         torch::Tensor& weight,
+-        double epsilon
++        double epsilon,
++        std::optional<torch::Tensor> hf_row_offsets,
++        int64_t hf_max_rows
+     )
+     {
++
++        if(hf_row_offsets.has_value())
++        {
++            const int n = input.size(1);
++            const int m = input.size(0);
++            const auto& offsets = hf_row_offsets.value();
++            TORCH_CHECK(input.scalar_type() == torch::kBFloat16 && out.scalar_type() == torch::kBFloat16,
++                        "HF-order RMSNorm requires BF16 input and output");
++            TORCH_CHECK(n == 128 || n == 2304, "HF-order RMSNorm supports N128/N2304");
++            TORCH_CHECK(input.stride(1) == 1 && out.stride(1) == 1 && weight.is_contiguous(), "Invalid inner stride");
++            TORCH_CHECK(offsets.is_cuda() && offsets.scalar_type() == torch::kInt32 && offsets.is_contiguous()
++                        && offsets.dim() == 1 && offsets.numel() >= 2 && offsets.device() == input.device(), "Invalid request offsets");
++            TORCH_CHECK(hf_max_rows > 0 && hf_max_rows <= m, "Invalid request maximum rows");
++            const at::hip::OptionalHIPGuardMasqueradingAsCUDA device_guard(device_of(input));
++            const hipStream_t stream = at::hip::getCurrentHIPStream();
++            const int rows_per_block = n == 128 ? 16 : 8;
++            const int blocks = (hf_max_rows + rows_per_block - 1) / rows_per_block;
++            const dim3 grid(n == 2304 ? std::max(2, blocks) : blocks, offsets.numel() - 1);
++            add_rmsnorm_quant_kernel<opus::bf16_t, opus::bf16_t, 512, 16, false, false, false, 1, true>
++                <<<grid, 512, 0, stream>>>(reinterpret_cast<opus::bf16_t*>(out.data_ptr()), nullptr, nullptr,
++                    reinterpret_cast<opus::bf16_t*>(input.data_ptr()), nullptr,
++                    reinterpret_cast<opus::bf16_t*>(weight.data_ptr()), epsilon, m, n,
++                    input.stride(0), 0, 0, out.stride(0), 0, false,
++                    offsets.data_ptr<int32_t>());
++            return;
++        }
+         torch::Tensor scale = torch::empty({0}, torch::TensorOptions().dtype(torch::kFloat32).device(input.device()));
+         torch::Tensor residual_in = torch::empty({0}, torch::TensorOptions().dtype(input.dtype()).device(input.device()));
+         torch::Tensor residual_out = torch::empty({0}, torch::TensorOptions().dtype(input.dtype()).device(input.device()));
+diff --git a/op_tests/test_rmsnorm_request_groups.py b/op_tests/test_rmsnorm_request_groups.py
+new file mode 100644
+index 000000000..402847b5f
+--- /dev/null
++++ b/op_tests/test_rmsnorm_request_groups.py
+@@ -0,0 +1,78 @@
++"""Exact BF16 regression for request-grouped original HIP RMSNorm.
++
++Run with the target AITER checkout on PYTHONPATH and an isolated AITER_JIT_DIR.
++"""
++
++import itertools
++import unittest
++
++import aiter
++import torch
++
++
++@unittest.skipUnless(torch.cuda.is_available(), "requires a ROCm GPU")
++class TestRequestGroupedRMSNorm(unittest.TestCase):
++    @torch.inference_mode()
++    def test_reference_rounding_and_request_shapes(self):
++        torch.manual_seed(20261104)
++        group_sets = [[n] for n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 990, 1024, 16384)]
++        group_sets += [[1] * 32, [1, 2, 3, 4, 7, 8, 32, 990]]
++        for width in (128, 2304):
++            for groups in group_sets:
++                for add in (False, True):
++                    with self.subTest(width=width, groups=groups, residual=add):
++                        rows = sum(groups)
++                        offsets = [0]
++                        for size in groups:
++                            offsets.append(offsets[-1] + size)
++                        gpu_offsets = torch.tensor(
++                            offsets, device="cuda", dtype=torch.int32
++                        )
++                        # Noncompact strides catch kernels assuming contiguous rows.
++                        x = torch.randn(
++                            rows, width + 16, device="cuda", dtype=torch.bfloat16
++                        )[:, :width]
++                        residual = torch.randn(
++                            rows, width + 8, device="cuda", dtype=torch.bfloat16
++                        )[:, :width]
++                        weight = torch.randn(width, device="cuda", dtype=torch.bfloat16)
++                        summed = x + residual if add else x
++                        expected = []
++                        for start, stop in itertools.pairwise(offsets):
++                            value = summed[start:stop].float()
++                            variance = value.square().mean(-1, keepdim=True)
++                            normalized = (value * torch.rsqrt(variance + 1e-6)).to(
++                                torch.bfloat16
++                            )
++                            expected.append(weight * normalized)
++                        expected = torch.cat(expected)
++                        # Poison outputs: missing tail writes must never pass via reused memory.
++                        output = torch.full(
++                            (rows, width),
++                            float("nan"),
++                            device="cuda",
++                            dtype=torch.bfloat16,
++                        )
++                        residual_output = torch.full_like(output, float("nan"))
++                        kwargs = {
++                            "hf_row_offsets": gpu_offsets,
++                            "hf_max_rows": max(groups),
++                        }
++                        if add:
++                            aiter.add_rmsnorm(
++                                output,
++                                x,
++                                residual,
++                                residual_output,
++                                weight,
++                                1e-6,
++                                **kwargs
++                            )
++                            self.assertTrue(torch.equal(residual_output, summed))
++                        else:
++                            aiter.rmsnorm(output, x, weight, 1e-6, **kwargs)
++                        self.assertTrue(torch.equal(output, expected))
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=2)
+-- 
+2.43.0
+
