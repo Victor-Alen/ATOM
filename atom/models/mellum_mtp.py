@@ -145,6 +145,7 @@ class _MellumMTPProjection(nn.Module):
 
 class MellumMTP(nn.Module):
     packed_modules_mapping = dict(MellumForCausalLM.packed_modules_mapping)
+    supports_selected_tail = True
 
     def __init__(self, atom_config: Config, prefix: str = ''):
         super().__init__()
@@ -249,7 +250,7 @@ class MellumMTP(nn.Module):
         self._shared = True
 
     def forward(self, input_ids, positions, hidden_states, intermediate_tensors=None,
-                inputs_embeds=None, spec_step_idx: int = 0):
+                inputs_embeds=None, spec_step_idx: int = 0, last_token_indices=None):
         if not self._shared:
             raise RuntimeError('MTP weights must load and shared modules must bind before forward')
         if spec_step_idx != 0 or intermediate_tensors is not None:
@@ -271,9 +272,40 @@ class MellumMTP(nn.Module):
                                            self.mtp.fc.bias)
         else:
             x = self.mtp.fc(projected_input)
-        x, residual = self.model.layers[str(self.model.mtp_start_layer_idx)](
-            positions=positions, hidden_states=x, residual=None,
-        )
+        layer = self.model.layers[str(self.model.mtp_start_layer_idx)]
+        tail_mode = os.environ.get('ATOM_MELLUM_DRAFT_TAIL_MLP', '0')
+        forward_context = get_forward_context()
+        if (last_token_indices is not None and
+                (tail_mode == '2' or (tail_mode == '1' and forward_context.context.is_prefill))):
+            # This is the final and only draft layer. Attention still processes
+            # every position and writes all required KV entries. The proposer
+            # consumes only the selected last-valid row of each request, so
+            # other positions need no post-attention MLP or output norm.
+            if os.environ.get('ATOM_MELLUM_DECODE_UNIT_ROWS') != '1':
+                raise ValueError('Selected draft tails require unit-row decode arithmetic')
+            residual = x.index_select(0, last_token_indices)
+            attended = layer.self_attn(positions=positions,
+                                      hidden_states=layer.input_layernorm(x))
+            selected = attended.index_select(0, last_token_indices)
+            original_context = forward_context.context
+            selected_context = copy.copy(original_context)
+            selected_context.is_prefill = False
+            selected_context.batch_size = last_token_indices.numel()
+            selected_context.graph_bs = last_token_indices.numel()
+            selected_context.positions = positions.index_select(0, last_token_indices)
+            # No attention runs under this temporary context. It only selects
+            # unit-row norm/router/MoE kernels for the selected draft positions.
+            forward_context.context = selected_context
+            try:
+                selected, residual = layer.post_attention_layernorm(selected, residual)
+                selected = layer.mlp(selected)
+                selected = self.mtp.norm(selected + residual)
+            finally:
+                forward_context.context = original_context
+            result = torch.zeros_like(x)
+            result.index_copy_(0, last_token_indices, selected)
+            return result
+        x, residual = layer(positions=positions, hidden_states=x, residual=None)
         # Mellum decoder retains its last residual addition as a separate tensor.
         return self.mtp.norm(x + residual)
 

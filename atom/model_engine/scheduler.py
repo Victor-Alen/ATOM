@@ -426,6 +426,11 @@ class Scheduler:
         self.running: deque[Sequence] = deque()
         self.config = config
         self.reserve_decode_kv = os.getenv("ATOM_RESERVE_DECODE_KV", "0") == "1"
+        # Separate diagnostic runs only: emit exact per-request acceptance
+        # counters and scheduler timing, including the final partial interval.
+        self.request_diagnostics_path = os.getenv("ATOM_MTP_REQUEST_DIAGNOSTICS_PATH")
+        self.request_diagnostics = {}
+
         if self.reserve_decode_kv and (config.enable_prefix_caching or
                                       getattr(config, "kv_transfer_config", None)):
             raise ValueError("Decode KV reservation currently requires local KV and prefix caching disabled")
@@ -793,6 +798,11 @@ class Scheduler:
                 f"{num_new_tokens=}, {budget_remaining=}"
             )
 
+            if self.request_diagnostics_path:
+                self.request_diagnostics.setdefault(seq.id, {
+                    "first_prefill_schedule_time": time.time(),
+                    "draft_tokens": 0, "accepted_draft_tokens": 0, "verified_steps": 0,
+                })
             self.block_manager.allocate(seq, num_cached_blocks)
 
             if self.kv_connector is not None:
@@ -1071,6 +1081,11 @@ class Scheduler:
                     and (num_new_token + num_rejected) > 1
                 ):
                     self.spec_stats.update(num_new_token)
+                    if self.request_diagnostics_path:
+                        record = self.request_diagnostics[seq.id]
+                        record["draft_tokens"] += self.mtp_k
+                        record["accepted_draft_tokens"] += num_new_token - 1
+                        record["verified_steps"] += 1
                 seq.num_rejected = num_rejected
                 seq.num_bonus_tokens = num_bonus
                 for i, el in enumerate(token_ids):
@@ -1229,6 +1244,20 @@ class Scheduler:
                     #     f"{seq.id=}, added {num}, total tokens now: {seq.num_tokens}"
                     # )
         for seq in finished_seqs:
+            if self.request_diagnostics_path:
+                import hashlib
+                import json
+                record = self.request_diagnostics.pop(seq.id, {})
+                record.update(request_id=seq.id, prompt_tokens=seq.num_prompt_tokens,
+                              output_tokens=seq.num_completion_tokens,
+                              arrive_time=seq.arrive_time,
+                              first_token_time=seq.first_token_time,
+                              finish_time=time.time(),
+                              prompt_token_sha256=hashlib.sha256(
+                                  np.asarray(seq.prompt_token_ids, dtype=np.int32).tobytes()
+                              ).hexdigest())
+                with open(self.request_diagnostics_path, "a") as handle:
+                    handle.write(json.dumps(record) + "\n")
             logger.debug("Freeing blocks for finished seq %s", seq.id)
             if seq.is_partial_prefill:
                 seq.is_partial_prefill = False

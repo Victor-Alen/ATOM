@@ -413,10 +413,14 @@ class EagleProposer:
             with record_function(f"draft[{i}/{self.mtp_k} bs={bs}]"):
                 # Re-sync DP token
                 self._refresh_dp_metadata(forward_context, input_ids.shape[0])
+                draft_kwargs = {}
+                if getattr(self.model, 'supports_selected_tail', False):
+                    draft_kwargs['last_token_indices'] = last_token_indices
                 ret_hidden_states = self.model(
                     input_ids=input_ids,
                     positions=positions,
                     hidden_states=hidden_states,
+                    **draft_kwargs,
                 )
 
                 sample_hidden_states = (
