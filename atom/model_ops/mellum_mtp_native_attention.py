@@ -92,28 +92,10 @@ def attention(layer, q, k, v, kc, vc, k_scale, v_scale, fwd_ctx):
     max_logits = torch.empty_like(exp_sums)
     temporary = torch.empty((*shape, q.shape[-1]), device=q.device, dtype=q.dtype)
     out = torch.empty_like(q)
-    # The existing AITER head-split knob also affects full attention, whose
-    # GMEM path requires unsplit heads. Scope this experiment to window layers
-    # while leaving full attention untouched. Only single-worker TP/DP=1 is
-    # supported here; restore the process option immediately after dispatch.
-    window_splits = os.environ.get('ATOM_MELLUM_MTP_WINDOW_HEAD_SPLITS', '1')
-    if window_splits not in ('1', '2'):
-        raise ValueError('MTP window head splits must be 1 or 2')
-    old_splits = os.environ.get('AITER_MELLUM_HF_HEAD_SPLITS')
-    change = layer.sliding_window > 0 and window_splits != '1'
-    if change:
-        os.environ['AITER_MELLUM_HF_HEAD_SPLITS'] = window_splits
-    try:
-        torch.ops.aiter.pa_decode_gluon(
-            out, q, kc, vc, context_lens, tables, layer.scale, 1, 1, 128,
-            torch.bfloat16, None, None, None, exp_sums=exp_sums,
-            max_logits=max_logits, temporary_output=temporary, alibi_slopes=None,
-            sinks=None, sliding_window=layer.sliding_window, ps=True,
-        )
-    finally:
-        if change:
-            if old_splits is None:
-                os.environ.pop('AITER_MELLUM_HF_HEAD_SPLITS', None)
-            else:
-                os.environ['AITER_MELLUM_HF_HEAD_SPLITS'] = old_splits
+    torch.ops.aiter.pa_decode_gluon(
+        out, q, kc, vc, context_lens, tables, layer.scale, 1, 1, 128,
+        torch.bfloat16, None, None, None, exp_sums=exp_sums,
+        max_logits=max_logits, temporary_output=temporary, alibi_slopes=None,
+        sinks=None, sliding_window=layer.sliding_window, ps=True,
+    )
     return out
