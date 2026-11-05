@@ -12,8 +12,20 @@ from triton.experimental import gluon
 from triton.experimental.gluon import language as gl
 
 @gluon.jit
-def _qk(Q,K,S,N,QS0,QS1,KS0,KS1,W:gl.constexpr,MI:gl.constexpr,KW:gl.constexpr,SPLIT:gl.constexpr,ROW_TILE:gl.constexpr,DEPTH:gl.constexpr,ORDER:gl.constexpr,BM:gl.constexpr,BN:gl.constexpr):
-    if ORDER == 0:
+def _qk(Q,K,S,N,QS0,QS1,KS0,KS1,W:gl.constexpr,MI:gl.constexpr,KW:gl.constexpr,SPLIT:gl.constexpr,ROW_TILE:gl.constexpr,DEPTH:gl.constexpr,ORDER:gl.constexpr,BM:gl.constexpr,BN:gl.constexpr,TRI:gl.constexpr):
+    if TRI:
+        head=gl.program_id(0)
+        item=gl.program_id(1)
+        pair=item // (BN//BM)
+        qsub=item % (BN//BM)
+        group=((gl.sqrt(pair.to(gl.float32)*8.0+1.0)-1.0)*0.5).to(gl.int32)
+        base=group*(group+1)//2
+        group=group+(base+group+1<=pair).to(gl.int32)
+        base=group*(group+1)//2
+        group=group-(base>pair).to(gl.int32)
+        kb=pair-group*(group+1)//2
+        qb=group*(BN//BM)+qsub
+    elif ORDER == 0:
         qb=gl.program_id(0);kb=gl.program_id(1);head=gl.program_id(2)
     elif ORDER == 1:
         head=gl.program_id(0);kb=gl.program_id(1);qb=gl.program_id(2)
@@ -52,14 +64,18 @@ def _qk(Q,K,S,N,QS0,QS1,KS0,KS1,W:gl.constexpr,MI:gl.constexpr,KW:gl.constexpr,S
         live=(rows[:,None]<qend)&(cols[None,:]<N)&(cols[None,:]<=rows[:,None])&(cols[None,:]>rows[:,None]-W)
         gl.store(S+(head.to(gl.int64)*N+rows[:,None])*N+cols[None,:],score.to(gl.bfloat16),live)
 
-def qk(q,k,mi=16,kw=4,split=False,row_tile=160,bn=128,order=1,depth=32,bm=64):
+def qk(q,k,mi=16,kw=4,split=False,row_tile=160,bn=128,order=1,depth=32,bm=64,triangular=True):
     n=q.shape[0];assert q.shape==(n,32,128) and k.shape==(n,4,128)
     assert q.dtype==k.dtype==torch.bfloat16 and q.stride(-1)==k.stride(-1)==1
     out=torch.empty((1,32,n,n),device=q.device,dtype=q.dtype)
     qtiles=tr.cdiv(n,row_tile)*tr.cdiv(row_tile,bm)
     ktiles=tr.cdiv(n,bn)
     grid=[(qtiles,ktiles,32),(32,ktiles,qtiles),(ktiles,32,qtiles)][order]
-    _qk[grid](q,k,out,n,q.stride(0),q.stride(1),k.stride(0),k.stride(1),n,mi,kw,split,row_tile,depth,order,bm,bn,num_warps=4,enable_fp_fusion=False)
+    triangular=bool(triangular and row_tile%bm==0 and bn%bm==0)
+    if triangular:
+        groups=tr.cdiv(n,bn)
+        grid=(32,groups*(groups+1)//2*(bn//bm))
+    _qk[grid](q,k,out,n,q.stride(0),q.stride(1),k.stride(0),k.stride(1),n,mi,kw,split,row_tile,depth,order,bm,bn,triangular,num_warps=4,enable_fp_fusion=False)
     return out
 
 
