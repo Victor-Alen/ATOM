@@ -77,7 +77,8 @@
     "ATOM_MELLUM_PREFILL_LONG_QK": "1",
     "ATOM_MELLUM_PREFILL_SPARSE_WINDOW": "1",
     "ATOM_MELLUM_PREFILL_SPARSE_PV": "1",
-    "ATOM_MELLUM_PREFILL_PV_CONFIG": "${RUNTIME}/runtime/startup_delivery/native_sparse_pv_config.json"
+    "ATOM_MELLUM_PREFILL_PV_CONFIG": "${RUNTIME}/runtime/startup_delivery/native_sparse_pv_config.json",
+    "ATOM_MELLUM_PREFILL_LANE_CACHE": "1"
   },
   "cmd": [
     "python3",
@@ -130,7 +131,7 @@
     "atom/model_ops/sampler.py": "27a4c90a000e8e527b6c054c53d66928df97ceddbe7bfc7614809857aef34db0",
     "atom/model_ops/mellum_native_prefill_hybrid_routes.py": "2e184da83181ef38de25abaabf6b4891d2886376e93051f6f0fdea92d3b99885",
     "atom/model_ops/mellum_batch_decode_attention.py": "7fabe895bc5427929d67aaa62e1bfa3574c5f14683657b58d638d74eee882af3",
-    "atom/model_ops/mellum_prefill_softmax_hybrid.py": "8761ab30eab6b19defcec0b2950dbbfd04e8307a66e57b5e9678e16774890d80",
+    "atom/model_ops/mellum_prefill_softmax_hybrid.py": "6d8c074a169a833dce8eeb93928aaa7596572b2952ecdb6e9a0471dbd153f6a8",
     "atom/model_ops/mellum_ordered_moe.py": "e17c2945f739c88e3471bced836db33fbc516ff77c128cc6b24702160bfc8040",
     "atom/model_ops/mellum_native_prefill_stage1_fused.py": "a5d56e77d821c2a61ea65f49f2ffa932b10495b591fb78c5a6d46bf5849eb740",
     "atom/model_ops/mellum_prefill_streams.py": "f8c77cf9295e189640cb410e0019c5eccacdfbc41e74f14544b33eb7ad615054",
@@ -360,11 +361,12 @@
     "atom/entrypoints/openai/serving_chat.py": "eefd03701987fc64fe160895ca2382b271349abb46df751adcad6bb1c730b942",
     "atom/entrypoints/openai/reasoning.py": "d22734dc359e4f793f5eba81ebdb3ecee7951eb44d2c4862a6ad52ea8f6fcf4d",
     "atom/entrypoints/openai/__init__.py": "f6f90e287f9a9255945c19068656cb854b9b249f35b97eb1537c23a5c6533e01",
-    "atom/entrypoints/openai/api_server.py": "0772b3f554bfd897d8f07e51e08636271a730562b5b97a1706911df489c66e8e"
+    "atom/entrypoints/openai/api_server.py": "0772b3f554bfd897d8f07e51e08636271a730562b5b97a1706911df489c66e8e",
+    "atom/model_ops/mellum_prefill_softmax_lane_cache.py": "ae0b91cda1799a75026478c0dbab695bdfdc78e09bcd00ded7ae430574b9dfcd"
   },
   "cwd": "${REPO}",
   "evidence": {
-    "scope": "Portable sparse-window candidate. Operator and small gates passed; final full correctness/performance acceptance recorded separately. MTP disabled.",
+    "scope": "Isolated lane-cache softmax candidate; MTP off. Promotion requires full public correctness and performance.",
     "baseline": "/data/datasets/baseline.json"
   },
   "required_paths": [

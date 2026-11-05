@@ -4,6 +4,10 @@ from atom.model_ops.mellum_prefill_softmax_runtime import softmax as _cached
 
 def softmax(scores, query_count, context_length, window, scale):
     n = scores.shape[-1]
+    if __import__('os').environ.get('ATOM_MELLUM_PREFILL_LANE_CACHE') == '1':
+        from atom.model_ops.mellum_prefill_softmax_lane_cache import try_softmax
+        result=try_softmax(scores,query_count,context_length,window,scale)
+        if result is not None:return result
     if 2048 < n <= 4096 and window == 1024 and __import__('os').environ.get('ATOM_MELLUM_PREFILL_WINDOW_CACHE') == '1':
         from atom.model_ops.mellum_prefill_softmax_window_cache import softmax as cached_window
         return cached_window(scores, query_count, context_length, window, scale, rows=1)
