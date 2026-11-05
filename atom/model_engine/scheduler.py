@@ -18,6 +18,7 @@ This module provides:
 from __future__ import annotations
 
 import logging
+import os
 import time
 from collections import deque
 from typing import Optional
@@ -48,6 +49,10 @@ class SpecStats:
     def __init__(self, mtp_k: int, log_interval: int = 1000):
         self.mtp_k = mtp_k
         # Log every log_interval decode steps (in terms of draft tokens)
+        # Smaller intervals make isolated MTP smoke runs observable.
+        log_interval = int(os.environ.get("ATOM_SPEC_STATS_LOG_INTERVAL", log_interval))
+        if log_interval <= 0:
+            raise ValueError("ATOM_SPEC_STATS_LOG_INTERVAL must be positive")
         self._log_interval = log_interval * mtp_k
         self.total_draft_tokens: int = 0
         self.distribution: dict[int, int] = {k: 0 for k in range(mtp_k + 1)}
@@ -1139,8 +1144,19 @@ class Scheduler:
             # Drop accepted-draft tokens past the stop position (MTP only —
             # for non-spec the sampler emits exactly 1 token so this is a
             # no-op).
+            # A verification step can accept multiple tokens across max_tokens.
+            # Apply the earliest output boundary even if EOS occurs after it.
+            produced = num_tokens - seq.num_prompt_tokens
+            if produced >= seq.max_tokens:
+                last_allowed = num_new_token - 1 - (produced - seq.max_tokens)
+                if stop_at_idx is None or last_allowed < stop_at_idx:
+                    stop_at_idx = last_allowed
+                    leave_reason = "max_tokens"
             if stop_at_idx is not None and stop_at_idx < num_new_token - 1:
-                num_tokens -= (num_new_token - 1) - stop_at_idx
+                trim = (num_new_token - 1) - stop_at_idx
+                num_tokens -= trim
+                # Keep streamed and final non-streamed output in agreement.
+                new_tokens = new_tokens[:max(0, len(new_tokens) - trim)]
 
             # Prepare stream output
             if stream_output_queue is not None and new_tokens:
