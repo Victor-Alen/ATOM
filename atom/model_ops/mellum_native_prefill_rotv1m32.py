@@ -38,8 +38,11 @@ class Stage1(Parent):
    active=min(64,(m*8)//min_count)
    bounds.append((max_blocks,min(64*max_blocks,(m*8)//32+active)))
   self.bounds=list(self.bounds);self.bounds[0]=bounds
- def prepare(self,ids,weights):
+ def prepare(self,ids,weights,shared=None):
   assert ids.shape[0]<=16384 and ids.shape[1]==8
-  si,sw,se,nv,_=moe_sorting(ids,weights.float(),64,2304,torch.bfloat16,64)
-  counts=expert_counts(ids)
+  if shared is None:
+   si,sw,se,nv,_=moe_sorting(ids,weights.float(),64,2304,torch.bfloat16,64)
+   counts=expert_counts(ids)
+  else:
+   si,sw,nv,counts=shared
   return prepare_all(ids,si,sw,nv,self.flags,self.logical,self.logical_mi32,self.logical_lsu4,self.logical_wide,self.logical_wide32,self.bounds,counts,self.logical_group0)

@@ -38,11 +38,33 @@ def apply(layer, x, router_logits):
             _apply_gate=gate,
         )
         layer._mellum_hf_experts = cached
-    probabilities = F.softmax(router_logits, dtype=torch.float32, dim=-1)
-    weights, ids = probabilities.topk(layer.top_k, dim=-1)
-    if layer.renormalize:
-        weights = weights / weights.sum(-1, keepdim=True)
-    weights = weights.to(router_logits.dtype)
+    if (
+        __import__('os').environ.get('ATOM_MELLUM_NATIVE_HF_ROUTER') == '1'
+        and layer.top_k == 8 and layer.renormalize
+        and router_logits.shape[-1] == 64
+    ):
+        # Requires the isolated HF-order AITER router build: full FP32 softmax,
+        # padded-32 tie order, adjacent-tree top-8 sum, preserved denormals.
+        fused_bf16 = __import__('os').environ.get('ATOM_MELLUM_ROUTER_FUSED_BF16') == '1'
+        weights = torch.empty((router_logits.shape[0], 8), device=router_logits.device,
+                              dtype=router_logits.dtype if fused_bf16 else torch.float32)
+        ids = torch.empty_like(weights, dtype=torch.int32)
+        source_rows = torch.empty_like(ids)
+        if fused_bf16:
+            from aiter.jit.core import get_module
+            warps = int(__import__('os').environ.get('ATOM_MELLUM_ROUTER_WARPS', '8'))
+            get_module('module_moe_asm').mellum_topk_softmax_bf16(
+                weights, ids, source_rows, router_logits, warps)
+        else:
+            from aiter import topk_softmax
+            topk_softmax(weights, ids, source_rows, router_logits, True, 0, '')
+            weights = weights.to(router_logits.dtype)
+    else:
+        probabilities = F.softmax(router_logits, dtype=torch.float32, dim=-1)
+        weights, ids = probabilities.topk(layer.top_k, dim=-1)
+        if layer.renormalize:
+            weights = weights / weights.sum(-1, keepdim=True)
+        weights = weights.to(router_logits.dtype)
     is_prefill = get_forward_context().context.is_prefill
     if is_prefill and __import__('os').environ.get('ATOM_MELLUM_NATIVE_PREFILL_STAGE1') == '1':
         from atom.model_ops.mellum_native_prefill_moe import experts
@@ -50,6 +72,10 @@ def apply(layer, x, router_logits):
         parts = ranges(x)
         if len(parts) == 1:
             return experts(layer, cached, x, ids, weights)
+        streams = int(__import__('os').environ.get('ATOM_MELLUM_PREFILL_MOE_STREAMS', '0'))
+        if streams:
+            from atom.model_ops.mellum_prefill_streams import experts_parallel
+            return experts_parallel(layer, cached, x, ids, weights, parts, streams)
         return torch.cat([experts(layer, cached, x[a:b], ids[a:b], weights[a:b])
                           for a, b in parts], dim=0)
     if not is_prefill and __import__('os').environ.get('ATOM_MELLUM_NATIVE_DECODE_MOE') == '1':

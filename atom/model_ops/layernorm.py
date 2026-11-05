@@ -2,7 +2,6 @@ import torch as _torch
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2024-2025, Advanced Micro Devices, Inc. All rights reserved.
 
-import os
 from typing import Optional, Tuple
 
 import aiter
@@ -24,12 +23,8 @@ from atom.model_ops.utils import atom_parameter
 from atom.quant_spec import LayerQuantConfig
 from atom.utils.decorators import mark_trace
 from atom.utils import envs
-from atom.utils.forward_context import get_forward_context
 from torch import Tensor, nn
 from torch.overrides import handle_torch_function, has_torch_function_unary
-
-
-_DRAFT_NATIVE_NORM = os.environ.get("ATOM_MELLUM_DRAFT_NATIVE_NORM", "0") == "1"
 
 
 def silu(input: Tensor, inplace: bool = False) -> Tensor:
@@ -259,14 +254,16 @@ class RMSNorm(nn.Module):
         residual: torch.Tensor | None = None,
         x_scale: Optional[torch.Tensor] = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        draft_native_norm = _DRAFT_NATIVE_NORM and get_forward_context().context.is_draft
-        if (not draft_native_norm and os.environ.get("ATOM_MELLUM_NATIVE_HF_NORM") == "1"
+        if (__import__('os').environ.get('ATOM_MELLUM_NATIVE_HF_NORM') == '1'
                 and not self.use_fused_quant and self.tp_size == 1
+                and self.x_pad_to_multiple == 0 and x_scale is None
                 and x.dtype == self.weight.dtype == torch.bfloat16
-                and getattr(get_current_atom_config().hf_config, "model_type", None) == "mellum"):
-            from atom.model_ops.mellum_native_norm import rmsnorm
-            return rmsnorm(x, self.weight, self.eps, residual)
-        if (not draft_native_norm and __import__('os').environ.get('ATOM_MELLUM_EXACT_NORM')=='1'
+                and x.shape[-1] in (128, 2304)
+                and getattr(get_current_atom_config().hf_config, 'model_type', None) == 'mellum'):
+            from atom.model_ops.mellum_native_norm import rmsnorm as native_rmsnorm
+            return native_rmsnorm(x, self.weight, self.eps, residual)
+
+        if (__import__('os').environ.get('ATOM_MELLUM_EXACT_NORM')=='1'
                 and not self.use_fused_quant and self.tp_size==1
                 and x.dtype==self.weight.dtype==torch.bfloat16
                 and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):
@@ -281,7 +278,7 @@ class RMSNorm(nn.Module):
                 result=self.weight*normalized
             return result if residual is None else (result,summed)
 
-        if (not draft_native_norm and envs.ATOM_MELLUM_HF_NORM_PREFILL and x.ndim==2 and x.shape[0]>1 and x.shape[1]==2304
+        if (envs.ATOM_MELLUM_HF_NORM_PREFILL and x.ndim==2 and x.shape[0]>1 and x.shape[1]==2304
                 and x.dtype==self.weight.dtype==torch.bfloat16 and self.tp_size==1
                 and not self.use_fused_quant
                 and self.x_pad_to_multiple==0 and x_scale is None

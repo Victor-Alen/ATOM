@@ -1062,6 +1062,15 @@ class ModelRunner:
         dp_size = get_dp_group().world_size
         warmup_max_tokens = max_num_batched_tokens // dp_size
 
+        # Permit a larger aggregate warmup budget without inventing one
+        # unsupported long request. Only synthetic warmup sequences change;
+        # the service request limit and real scheduling are unchanged.
+        warmup_request_limit = int(__import__("os").environ.get("ATOM_MELLUM_WARMUP_REQUEST_LIMIT", "0"))
+        if warmup_request_limit:
+            if warmup_request_limit < 1:
+                raise ValueError("Warmup request limit must be positive")
+            max_model_len = min(max_model_len, warmup_request_limit)
+
         num_seqs = min(warmup_max_tokens // max_model_len, self.config.max_num_seqs)
 
         if num_seqs == 0:

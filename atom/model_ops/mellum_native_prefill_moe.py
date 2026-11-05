@@ -38,7 +38,20 @@ def experts(layer, reference, x, ids, weights):
         return torch.empty_like(x)
     assert m <= 16384, "Native prefill profile table currently covers 1..16384 rows per request"
     gated = torch.empty((m, 8, 896), device=x.device, dtype=x.dtype)
-    candidate.run(x, candidate.prepare(ids.int(), weights), gated)
+    shared = None
+    ids_int = ids.int()
+    if os.getenv("ATOM_MELLUM_SHARE_PREFILL_ROUTES") == "1":
+        if (os.getenv("ATOM_MELLUM_NATIVE_PREFILL_STAGE2") != "1"
+                or _ROUTE_VARIANT != "hybrid"
+                or _GROUP0_TILE != "m32n64k64v1"):
+            raise RuntimeError("Shared prefill routes require validated native stage1 and stage2")
+        from aiter.fused_moe import moe_sorting
+        from atom.model_ops.mellum_native_prefill_hybrid_core import expert_counts
+        si, sw, _, nv, _ = moe_sorting(ids_int, weights.float(), 64, 2304, x.dtype, 64)
+        shared = (si, sw, nv, expert_counts(ids_int))
+    plan = (candidate.prepare(ids_int, weights, shared) if shared is not None
+            else candidate.prepare(ids_int, weights))
+    candidate.run(x, plan, gated)
     if os.getenv("ATOM_MELLUM_NATIVE_PREFILL_STAGE2") == "1":
         from atom.model_ops.mellum_native_prefill_down import Stage2
         stage2 = getattr(layer, "_mellum_native_prefill_stage2", None)
@@ -48,7 +61,7 @@ def experts(layer, reference, x, ids, weights):
                             raw_w2=reference.down_proj)
             layer._mellum_native_prefill_stage2 = stage2
         weighted_slots = torch.empty((m * 8, 2304), device=x.device, dtype=x.dtype)
-        stage2.run(gated, stage2.prepare(ids.int(), weights), weighted_slots)
+        stage2.run(gated, stage2.prepare(ids_int, weights, shared), weighted_slots)
         return weighted_slots.view(m, 8, 2304).sum(dim=1)
     expert_ids = ids.reshape(-1)
     perm = torch.argsort(expert_ids)

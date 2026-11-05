@@ -9,12 +9,12 @@ from aiter.ops.shuffle import shuffle_weight
 from atom.model_ops.mellum_native_prefill_hybrid_core import expert_counts
 
 @triton.jit
-def _plan(Counts, Tiles, Depths, Mis, Masks, Info, Nv, P:tl.constexpr, K:tl.constexpr, KEEP_MI:tl.constexpr):
+def _plan(Counts, Tiles, Depths, Mis, Masks, Info, Nv, P:tl.constexpr, K:tl.constexpr, KEEP_MI:tl.constexpr, SP:tl.constexpr):
     e=tl.arange(0,64)
     n=tl.load(Counts+e)
     t=tl.load(Tiles+n);d=tl.load(Depths+n);mi=tl.load(Mis+n);mask=tl.load(Masks+n)
-    source=tl.cdiv(n,32)
-    src=(tl.cumsum(source)-source)*32
+    source=tl.cdiv(n,SP)
+    src=(tl.cumsum(source)-source)*SP
     keep=(d==32) if K==32 else (d>=64)
     if KEEP_MI:keep=keep&(mi==KEEP_MI)
     blocks=tl.where(keep,(n//t)*tl.cdiv(t,P)+tl.cdiv(n%t,P),0)
@@ -86,11 +86,15 @@ class Stage2:
             module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);sys.modules[qualified]=module
         self.native_mi32=sys.modules[qualified]
 
-    def prepare(self,ids,weights):
+    def prepare(self,ids,weights,shared=None):
         m=ids.shape[0]
         assert 0<m<=16384 and ids.shape[1]==8
-        si,sw,_,_,_=moe_sorting(ids,weights.float(),64,2304,torch.bfloat16,32)
-        counts=expert_counts(ids);plans=[]
+        if shared is None:
+            si,sw,_,_,_=moe_sorting(ids,weights.float(),64,2304,torch.bfloat16,32)
+            counts=expert_counts(ids);source_physical=32
+        else:
+            si,sw,source_nv,counts=shared;source_physical=64
+        plans=[]
         for g,(p,k,mi) in enumerate(((32,64,0),(64,32,16),(64,32,32))):
             max_blocks,capacity=self.bounds[g][m]
             if not capacity:
@@ -101,7 +105,7 @@ class Stage2:
             osi=torch.empty(capacity*p,dtype=torch.int32,device=ids.device)
             osw=torch.empty(capacity*p,dtype=torch.float32,device=ids.device)
             se=torch.empty(capacity,dtype=torch.int32,device=ids.device)
-            _plan[(1,)](counts,*self.tables,info,nv,p,k,mi)
+            _plan[(1,)](counts,*self.tables,info,nv,p,k,mi,source_physical)
             _pack[(64,triton.cdiv(max_blocks*p,256))](si,sw,info,osi,osw,se,nv,m,p,256)
             plans.append((osi,osw,se,nv))
         return plans

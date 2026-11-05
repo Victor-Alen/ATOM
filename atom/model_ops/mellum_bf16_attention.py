@@ -62,12 +62,23 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             keep=min(context_length,window-1+count)
             key,value=key[-keep:],value[-keep:]
         key_length=key.shape[0]
+        scores = None
+        if (count == context_length and window == 1024 and 2048 <= key_length <= 4096
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SPARSE_QK') == '1'
+                and __import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT') == 'hybrid'):
+            # Sparse scores leave masked positions unwritten. Only the verified
+            # masked-load softmax below may consume this allocation.
+            from atom.model_ops.mellum_prefill_sparse_qk import try_qk
+            scores = try_qk(q[start:stop], key)
         query = q[start:stop].transpose(0,1).unsqueeze(0)
         key = key.transpose(0,1).unsqueeze(0)
         value = value.transpose(0,1).unsqueeze(0)
-        key = key[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
+        if scores is None:
+            key = key[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         value = value[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
-        scores = torch.matmul(query,key.transpose(2,3))
+        if scores is None:
+            scores = torch.matmul(query,key.transpose(2,3))
         if (__import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
                 and count == context_length and 512 <= key_length <= 16384):
             variant = __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT', 'legacy')
