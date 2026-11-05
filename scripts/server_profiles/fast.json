@@ -78,7 +78,7 @@
     "ATOM_MELLUM_PREFILL_SPARSE_WINDOW": "1",
     "ATOM_MELLUM_PREFILL_SPARSE_PV": "1",
     "ATOM_MELLUM_PREFILL_PV_CONFIG": "${RUNTIME}/runtime/startup_delivery/native_sparse_pv_config.json",
-    "ATOM_MELLUM_NATIVE_ATTN_PHASE": "prefill_global"
+    "ATOM_MELLUM_NATIVE_ATTN_PHASE": "prefill_sliding"
   },
   "cmd": [
     "python3",
@@ -365,7 +365,7 @@
   },
   "cwd": "${REPO}",
   "evidence": {
-    "scope": "Isolated original AITER prefill on global layers; all other operators fixed. MTP off. Validation pending.",
+    "scope": "Isolated original AITER prefill on sliding layers; all other operators fixed. MTP off. Validation pending.",
     "baseline": "/data/datasets/baseline.json"
   },
   "required_paths": [
