@@ -261,8 +261,9 @@ class MellumMTP(nn.Module):
         projected_input = torch.cat((self.mtp.pre_fc_norm_embedding(inputs_embeds),
                                      self.mtp.pre_fc_norm_hidden(hidden_states)), dim=-1)
         from atom.utils.forward_context import get_forward_context
-        if (os.environ.get('ATOM_MELLUM_DRAFT_BATCHED_FC') == '1'
-                and not get_forward_context().context.is_prefill):
+        draft_fc_mode = os.environ.get('ATOM_MELLUM_DRAFT_BATCHED_FC', '0')
+        if (draft_fc_mode == '2'
+                or (draft_fc_mode == '1' and not get_forward_context().context.is_prefill)):
             # This projection belongs only to the draft head. Its 2304x4608
             # weight has no native target GEMM solution; batching avoids one
             # GEMM per token row. Target verification arithmetic is unchanged.
