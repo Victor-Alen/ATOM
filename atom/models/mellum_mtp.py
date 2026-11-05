@@ -283,6 +283,7 @@ class MellumMTP(nn.Module):
             # other positions need no post-attention MLP or output norm.
             if os.environ.get('ATOM_MELLUM_DECODE_UNIT_ROWS') != '1':
                 raise ValueError('Selected draft tails require unit-row decode arithmetic')
+            last_token_indices = last_token_indices.to(dtype=torch.long)
             residual = x.index_select(0, last_token_indices)
             attended = layer.self_attn(positions=positions,
                                       hidden_states=layer.input_layernorm(x))
