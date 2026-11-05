@@ -38,6 +38,8 @@ tar -xzf results/late-control-evidence-20261106.tar.gz -C results/evidence/late-
 
 ## 从头复测
 
+实际交付提交 `1825440c` 已从 `/workspace/ATOM-csig-final` 无参数执行启动脚本，真实流式/非流式生成以及C4、原严格16K、新增3条16K串行/并发复查通过。254个模型源码文件与完整测试核心 `0453ef43` 一致，运行命令和环境一致。结果见 [启动复核](../docs/csig/evidence/final-release-startup.json)，原始日志、输出与验证脚本在 `final-release-startup-evidence-20261106.tar.gz`，逐成员哈希见同名manifest。归档SHA256为 `8c92179618978eeefe38fb92d9c4a70ee7936bfae6bc1ca51fda63918aaabcf2`。本次是交付复核，不是另一次全量性能测量。
+
 ```bash
 bash scripts/start_server.sh
 /opt/venv/bin/python3 scripts/validate_public.py

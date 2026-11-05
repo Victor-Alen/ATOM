@@ -1,0 +1,816 @@
+{
+  "source_commit": "1825440c8b59a5d568c5d01c16a68fcd5097768c",
+  "measured_core": "0453ef43012b589e647a2d88e831f29ae880b665",
+  "repo": "/workspace/ATOM-csig-final",
+  "pid": 1876906,
+  "run_dir": "/workspace/logs/mellum-start-server/20261105T230639Z-fast-8000-1876903",
+  "atom_files_checked": 254,
+  "all_model_source_bytes_match": true,
+  "runtime_environment_matches": true,
+  "server_command_matches": true,
+  "mtp": false,
+  "optimization_points": [
+    1,
+    1,
+    1
+  ],
+  "smoke_token_ids_match_measured_core": true,
+  "stream_done": true,
+  "stream_text_matches_nonstream": true,
+  "correctness": {
+    "passed": true,
+    "scope": "SCREENING",
+    "C": {
+      "requests": 4,
+      "matched": 256,
+      "total": 256,
+      "exact_requests": 4,
+      "complete": true,
+      "agreement": 1.0
+    },
+    "strict16k_exact": true,
+    "HumanEval": null,
+    "MTP": false,
+    "num_gpus": 1
+  },
+  "additional_long_context": {
+    "passed": true,
+    "unique_prompts": 3,
+    "requests": 6,
+    "total_tokens": 384,
+    "matched_tokens": 384,
+    "all_exact": true,
+    "phases": [
+      "sequential",
+      "concurrency3"
+    ],
+    "reference_sha256": "78cb6dde3c53b7fefa4b7ec93db79a8a47620c84da736eb6c18d984cc1a08baa"
+  },
+  "other_services_observed": [
+    {
+      "pid": 1878128,
+      "cwd": "/workspace/ATOM-mtp-combined1106",
+      "command": [
+        "/opt/venv/bin/python3",
+        "-m",
+        "atom.entrypoints.openai_server",
+        "--model",
+        "/workspace/mtp-coordination/checkpoint",
+        "--port",
+        "18021",
+        "--level",
+        "0",
+        "--kv_cache_dtype",
+        "bf16",
+        "--max-model-len",
+        "32768",
+        "--gpu-memory-utilization",
+        "0.45",
+        "--host",
+        "127.0.0.1",
+        "--server-port",
+        "8021",
+        "--no-enable_prefix_caching",
+        "--no-enable_chunked_prefill",
+        "--max-num-seqs",
+        "32",
+        "--cudagraph-capture-sizes",
+        "[1,2,4,8,16,32]",
+        "--max-num-batched-tokens",
+        "32768"
+      ],
+      "hip_device": "0"
+    }
+  ],
+  "owned_process_ids": [
+    1876906,
+    1877446,
+    1877447,
+    1877617,
+    1878058,
+    1878131,
+    1878133,
+    1878135,
+    1878137,
+    1878139,
+    1878141,
+    1878143,
+    1878145,
+    1878147,
+    1878149,
+    1878151,
+    1878153,
+    1878155,
+    1878157,
+    1878159,
+    1878161,
+    1878163,
+    1878165,
+    1878167,
+    1878169,
+    1878171,
+    1878173,
+    1878175,
+    1878177,
+    1878179,
+    1878181,
+    1878183,
+    1878185,
+    1878187,
+    1878189,
+    1878191,
+    1878193
+  ],
+  "gpu_process_map": [
+    {
+      "pid": 1876906,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1877446,
+      "drm": []
+    },
+    {
+      "pid": 1877447,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "56 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "56 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1877617,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "440 KiB",
+          "drm-memory-gtt": "8224 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "165015768 KiB",
+          "drm-memory-gtt": "8248 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878058,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878131,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878133,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878135,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878137,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878139,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878141,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878143,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878145,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878147,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878149,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878151,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878153,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878155,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878157,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878159,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878161,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878163,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878165,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878167,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878169,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878171,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878173,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878175,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878177,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878179,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878181,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878183,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878185,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878187,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878189,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878191,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    },
+    {
+      "pid": 1878193,
+      "drm": [
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:30:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        },
+        {
+          "drm-driver": "amdgpu",
+          "drm-pdev": "0000:22:00.0",
+          "drm-memory-vram": "48 KiB",
+          "drm-memory-gtt": "6180 KiB",
+          "drm-memory-cpu": "0 KiB"
+        }
+      ]
+    }
+  ],
+  "gpu_mapping_method": "/proc/PID/fdinfo DRM PCI and VRAM records. rocm-smi could not resolve current service PIDs; no successful KFD PID mapping is claimed.",
+  "scope": "Final delivered checkout startup and correctness screening, tied by model hashes and identical runtime settings to the separately completed full benchmark. Another GPU has an independent service; this is not a whole-host-idle measurement."
+}

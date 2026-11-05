@@ -424,7 +424,7 @@ added_lines	deleted_lines	path
 72	0	scripts/scen_ref_run.py
 70	0	scripts/scenario_table.py
 32	0	scripts/score_a_fresh.py
-387	0	scripts/server_profiles/fast.json
+394	0	scripts/server_profiles/fast.json
 33	0	scripts/shuf_check.py
 32	0	scripts/shuffle_check.py
 16	0	scripts/start_mellum.sh
@@ -462,6 +462,7 @@ added_lines	deleted_lines	path
 31	0	scripts/two_prompts.py
 12	0	scripts/unbundle_hf_qk_asm.py
 29	0	scripts/v_check.py
+38	0	scripts/validate_additional_long_context.py
 24	0	scripts/validate_ck_profile_fixed.py
 16	0	scripts/validate_ck_profile_service.py
 152	0	scripts/validate_mellum_piecewise.py

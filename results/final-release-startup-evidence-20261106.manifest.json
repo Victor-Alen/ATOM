@@ -1,0 +1,129 @@
+{
+  "archive": "final-release-startup-evidence-20261106.tar.gz",
+  "bytes": 19548,
+  "sha256": "8c92179618978eeefe38fb92d9c4a70ee7936bfae6bc1ca51fda63918aaabcf2",
+  "source_commit": "1825440c8b59a5d568c5d01c16a68fcd5097768c",
+  "measured_core": "0453ef43012b589e647a2d88e831f29ae880b665",
+  "members": [
+    {
+      "path": "verification/DONE",
+      "bytes": 130,
+      "sha256": "c8b2d69918311cd789ea5f40ea91d2f3f2d50bf2947462b0ec4923b3c7b8ebdd"
+    },
+    {
+      "path": "verification/additional_long_context/protocol.json",
+      "bytes": 3853,
+      "sha256": "94659725a955294d56a809de69fbeecaf9ae015937a8a8a05999cc7c592c211b"
+    },
+    {
+      "path": "verification/additional_long_context/responses.jsonl",
+      "bytes": 8102,
+      "sha256": "48474f964429c616230d5f5869c5f4fa2bea13e7a17a47eac4656fa1136e2d9a"
+    },
+    {
+      "path": "verification/additional_long_context/summary.json",
+      "bytes": 275,
+      "sha256": "b6af04dc6cc85cb5a2ca4a0edd3483af98ead8d6bc91c2eed14c5801c3e00d40"
+    },
+    {
+      "path": "verification/additional_long_context.log",
+      "bytes": 276,
+      "sha256": "73ac28f6f7887ae67c4c7811344275b9cd3c502fa87d23a8b462241059502a7b"
+    },
+    {
+      "path": "verification/correctness/C.responses.jsonl",
+      "bytes": 4734,
+      "sha256": "677e37da38998ac4669bf186c9232e4decb138dc33dcc94d671b5d92e7141636"
+    },
+    {
+      "path": "verification/correctness/C.summary.json",
+      "bytes": 116,
+      "sha256": "47dc5bdf9c87db801e78217058d108fcea7386603d14fc86fce9afdbc1a271ec"
+    },
+    {
+      "path": "verification/correctness/acceptance.json",
+      "bytes": 264,
+      "sha256": "6e27609bbba232bcd3a84a116d6b73e90a8978bf15ea6c4ced83a05f105b2b4c"
+    },
+    {
+      "path": "verification/correctness/protocol.json",
+      "bytes": 1334,
+      "sha256": "7ce13707ad27c257f706be957d7e1db2d5cdac9f6f7052c3b8b7b7615c549287"
+    },
+    {
+      "path": "verification/correctness/strict_16k.json",
+      "bytes": 1527,
+      "sha256": "b1d1365beb076a961fb4a18488d54d9887e837282f1a539e2fa0f3e0d9fb22dd"
+    },
+    {
+      "path": "verification/gpu-process-map.json",
+      "bytes": 15713,
+      "sha256": "9473945257cec4fc18a37ec0905256b0139ee46715adb2a92c98b4866ec73d2f"
+    },
+    {
+      "path": "verification/manifest.json",
+      "bytes": 5694,
+      "sha256": "3423b77c617b3222108ea33c7b9dbc4e7cded984ce542cd880017056c13b521e"
+    },
+    {
+      "path": "verification/screen.log",
+      "bytes": 265,
+      "sha256": "c1059d2ab63a9551193bee939c5c3308bd8adf9fc9ef66e8bc1e7303b41741ef"
+    },
+    {
+      "path": "verification/smoke.json",
+      "bytes": 866,
+      "sha256": "ba51aef067ae7c2f58718446b4bda02376758da15409a58d1d9f613a7ec1583f"
+    },
+    {
+      "path": "verification/verification.json",
+      "bytes": 20124,
+      "sha256": "2b3d2b807a3eccf4aa0401310dba7e9f7f1317d90d492ae0a380fc6440c03bf5"
+    },
+    {
+      "path": "startup/manifest.json",
+      "bytes": 5694,
+      "sha256": "3423b77c617b3222108ea33c7b9dbc4e7cded984ce542cd880017056c13b521e"
+    },
+    {
+      "path": "startup/smoke.json",
+      "bytes": 866,
+      "sha256": "ba51aef067ae7c2f58718446b4bda02376758da15409a58d1d9f613a7ec1583f"
+    },
+    {
+      "path": "startup/READY",
+      "bytes": 49,
+      "sha256": "35b33e29e5c1ab4acb07cf3c7ff7a50b6f0edbc8c4b397134676da8b28f75f9b"
+    },
+    {
+      "path": "startup/server.log",
+      "bytes": 14032,
+      "sha256": "49872e47d249b9120c48b96a0dcfb12d96c08143b338c3397623f1b0fc932727"
+    },
+    {
+      "path": "verify_final_release_start.py",
+      "bytes": 5637,
+      "sha256": "e76f679e5653ca8d8ac0ca411bf172ed10d4e66757fc1e1eb79203018e4a8cc7"
+    },
+    {
+      "path": "deploy_final_release.py",
+      "bytes": 1483,
+      "sha256": "be068bd068a08dd1731dca5ab0a8f62f496bdd3d1ee42360eedb427ef66b38e1"
+    },
+    {
+      "path": "final-release-start.log",
+      "bytes": 39471,
+      "sha256": "c1fb1d1a90ab431667acb5b6652393fcd7593bac58086c8059b0dd32c554707f"
+    },
+    {
+      "path": "final-release-startup.json",
+      "bytes": 20124,
+      "sha256": "2b3d2b807a3eccf4aa0401310dba7e9f7f1317d90d492ae0a380fc6440c03bf5"
+    },
+    {
+      "path": "FINAL_RELEASE_DEPLOY_DONE",
+      "bytes": 41,
+      "sha256": "deeacb751c98aa2321a5ff252320f35e999d98521f3904b6f908d07c0cffd7d1"
+    }
+  ]
+}
