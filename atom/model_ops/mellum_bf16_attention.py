@@ -63,7 +63,7 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             key,value=key[-keep:],value[-keep:]
         key_length=key.shape[0]
         scores = None
-        if (count == context_length and window == 1024 and 2048 <= key_length <= 4096
+        if (count == context_length and window == 1024 and 2048 <= key_length <= (16384 if __import__('os').environ.get('ATOM_MELLUM_PREFILL_LONG_QK') == '1' else 4096)
                 and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SPARSE_QK') == '1'
                 and __import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
                 and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT') == 'hybrid'):
@@ -79,6 +79,14 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
         value = value[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         if scores is None:
             scores = torch.matmul(query,key.transpose(2,3))
+        if (count == context_length and window == 1024
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SPARSE_WINDOW') == '1'):
+            from atom.model_ops.mellum_prefill_sparse_pv import try_window_attention
+            result = try_window_attention(scores, value, scale)
+            if result is not None:
+                out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
+                del scores
+                continue
         if (__import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
                 and count == context_length and 512 <= key_length <= 16384):
             variant = __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT', 'legacy')
@@ -94,7 +102,13 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             scores = scores + mask[None,None,:,:]
             probabilities = softmax_bf16(scores)
         del scores
-        result = torch.matmul(probabilities,value)
+        result = None
+        if (count == context_length and window == 1024
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SPARSE_PV') == '1'):
+            from atom.model_ops.mellum_prefill_sparse_pv import try_pv
+            result = try_pv(probabilities, value)
+        if result is None:
+            result = torch.matmul(probabilities,value)
         out[start:stop] = result.transpose(1,2).reshape(count,heads,dim)
     return out
 
