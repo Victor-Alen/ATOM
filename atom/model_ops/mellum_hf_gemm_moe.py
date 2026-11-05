@@ -44,9 +44,27 @@ def apply(layer, x, router_logits):
         weights = weights / weights.sum(-1, keepdim=True)
     weights = weights.to(router_logits.dtype)
     is_prefill = get_forward_context().context.is_prefill
+    if is_prefill and __import__('os').environ.get('ATOM_MELLUM_NATIVE_PREFILL_STAGE1') == '1':
+        from atom.model_ops.mellum_native_prefill_moe import experts
+        from atom.model_ops.mellum_request_gemm import ranges
+        parts = ranges(x)
+        if len(parts) == 1:
+            return experts(layer, cached, x, ids, weights)
+        return torch.cat([experts(layer, cached, x[a:b], ids[a:b], weights[a:b])
+                          for a, b in parts], dim=0)
     if not is_prefill and __import__('os').environ.get('ATOM_MELLUM_NATIVE_DECODE_MOE') == '1':
         from atom.model_ops.mellum_native_decode_moe import experts
         return experts(x, layer.w13_weight, layer.w2_weight, ids, weights)
+    mode = __import__('os').environ.get('ATOM_MELLUM_INDEXED_DECODE_MOE', '')
+    if not is_prefill and mode in ('indexed', 'grouped'):
+        if mode == 'grouped':
+            from atom.model_ops.mellum_grouped_decode import experts
+        else:
+            from atom.model_ops.mellum_indexed_bmm import experts
+        if x.shape[0] <= 64:
+            return experts(cached, x, ids, weights)
+        return torch.cat([experts(cached, x[a:a+64], ids[a:a+64], weights[a:a+64])
+                          for a in range(0, x.shape[0], 64)], dim=0)
     # Native HF generate changes experts implementation after prefill.
     function = grouped_mm_experts_forward if is_prefill else batched_mm_experts_forward
     # Decode contains independent matrix-vector products. Batch their

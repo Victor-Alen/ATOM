@@ -13,6 +13,17 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
     from atom.model_ops.mellum_request_gemm import cpu_metadata
     offsets, lengths = cpu_metadata(metadata, with_lengths=True)
     assert len(offsets) == len(lengths) + 1 and offsets[-1] == q.shape[0]
+    if (__import__('os').environ.get('ATOM_MELLUM_PAGED_DECODE') == '1'
+            and window == 1024
+            and all(stop - start == 1 for start, stop in zip(offsets, offsets[1:]))
+            and all(length >= 512 for length in lengths)):
+        from atom.model_ops.mellum_paged_decode import attention as paged_decode
+        return paged_decode(q, kc, vc, metadata.block_tables, metadata.context_lens, scale, cache_format, host_lengths=lengths)
+    if (__import__('os').environ.get('ATOM_MELLUM_BATCH_ATTENTION') == '1'
+            and all(stop - start == 1 for start, stop in zip(offsets, offsets[1:]))
+            and all(length > 1 for length in lengths)):
+        from atom.model_ops.mellum_batch_decode_attention import attention as batched
+        return batched(q, kc, vc, metadata, lengths, scale, window, cache_format)
     heads, kvheads, dim = q.shape[1], k.shape[1], q.shape[2]
     assert heads % kvheads == 0
     repeat = heads // kvheads
@@ -58,9 +69,13 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
         value = value[:,:,None,:,:].expand(1,kvheads,repeat,key_length,dim).reshape(1,heads,key_length,dim)
         scores = torch.matmul(query,key.transpose(2,3))
         if (__import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
-                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT') == 'hybrid'
                 and count == context_length and 512 <= key_length <= 16384):
-            from atom.model_ops.mellum_prefill_softmax_hybrid import softmax as fused_softmax
+            variant = __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT', 'legacy')
+            if variant == 'hybrid':
+                from atom.model_ops.mellum_prefill_softmax_hybrid import softmax as fused_softmax
+            else:
+                assert variant == 'legacy', variant
+                from atom.model_ops.mellum_prefill_softmax import softmax as fused_softmax
             probabilities = fused_softmax(scores, count, context_length, window, scale)
         else:
             scores = scores * scale
