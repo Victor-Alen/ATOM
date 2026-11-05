@@ -425,6 +425,10 @@ class Scheduler:
         self.waiting: deque[Sequence] = deque()
         self.running: deque[Sequence] = deque()
         self.config = config
+        self.reserve_decode_kv = os.getenv("ATOM_RESERVE_DECODE_KV", "0") == "1"
+        if self.reserve_decode_kv and (config.enable_prefix_caching or
+                                      getattr(config, "kv_transfer_config", None)):
+            raise ValueError("Decode KV reservation currently requires local KV and prefix caching disabled")
 
         # Admit-rejected seqs (those `_unschedulable_reason` flags). Drained
         # by `take_rejected` each EngineCore step; routed through the same
@@ -502,6 +506,10 @@ class Scheduler:
             num_new_tokens = seq.num_tokens - seq.num_cached_tokens
             if num_new_tokens > self.max_num_batched_tokens:
                 continue
+            if self.reserve_decode_kv:
+                from atom.model_engine.kv_reservation import can_admit
+                if not can_admit(seq, self.running, self.block_manager, self.mtp_k):
+                    return False
             if self.block_manager.can_allocate(seq) < 0:
                 return False  # KV-pressured: definitely cannot prefill
             return True
@@ -580,6 +588,11 @@ class Scheduler:
             )
         bm = self.block_manager
         total_blocks = len(bm.blocks)
+        if self.reserve_decode_kv:
+            from atom.model_engine.kv_reservation import required_blocks
+            needed = required_blocks(seq, bm.block_size, self.mtp_k)
+            if needed > total_blocks:
+                return f"prompt plus output reservation needs {needed} KV blocks > pool {total_blocks}"
         if seq.num_blocks > total_blocks:
             return (
                 f"needs {seq.num_blocks} KV blocks for {num_tokens} input tokens "
@@ -753,6 +766,11 @@ class Scheduler:
             # excludes the last block from cache hits (prefill must forward
             # at least one block to produce logits), so num_new_tokens ≥ 1
             # is guaranteed.
+            if self.reserve_decode_kv:
+                from atom.model_engine.kv_reservation import can_admit
+                if not can_admit(seq, self.running, self.block_manager, self.mtp_k):
+                    self.waiting.appendleft(seq)
+                    break
             num_cached_blocks = self.block_manager.can_allocate(seq)
             if num_cached_blocks < 0:
                 self.waiting.appendleft(seq)
