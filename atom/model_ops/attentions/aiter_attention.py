@@ -345,7 +345,7 @@ class AiterAttentionMetadataBuilder:
         # Standard MHA path.
         block_bytes = (
             2
-            * hf_config.num_hidden_layers
+            * runner._get_total_num_layers()
             * runner.block_size
             * num_kv_heads
             * hf_config.head_dim
@@ -353,7 +353,7 @@ class AiterAttentionMetadataBuilder:
         )
         block_bytes += (
             2
-            * hf_config.num_hidden_layers
+            * runner._get_total_num_layers()
             * num_kv_heads
             * runner.physical_block_size
             * 4  # float32 kv_scale
@@ -388,7 +388,7 @@ class AiterAttentionMetadataBuilder:
         return {
             "kv_cache": torch.zeros(
                 2,
-                hf_config.num_hidden_layers,
+                runner._get_total_num_layers(),
                 runner.num_physical_kvcache_blocks,
                 runner.physical_block_size,
                 num_kv_heads,
@@ -398,7 +398,7 @@ class AiterAttentionMetadataBuilder:
             ),
             "kv_scale": torch.zeros(
                 2,
-                hf_config.num_hidden_layers,
+                runner._get_total_num_layers(),
                 runner.num_physical_kvcache_blocks,
                 num_kv_heads,
                 runner.physical_block_size,
@@ -820,12 +820,14 @@ class AiterAttentionMetadataBuilder:
 
     def build_for_cudagraph_capture(self, bs: int) -> AttentionMetaData:
         var = self.model_runner.forward_vars
+        # Speculative verification captures K+1 query tokens per request.
+        num_tokens = bs * var["max_qlen"]
         if self.block_size == 1024:
             ctx_pa_ps = self.set_aiter_persistent_worker_buffers(bs)
         else:
             ctx_pa_ps = {}
         attn_metadata = AttentionMetaData(
-            slot_mapping=var["slot_mapping"].gpu[:bs],
+            slot_mapping=var["slot_mapping"].gpu[:num_tokens],
             context_lens=var["context_lens"].gpu[:bs],
             block_tables=var["block_tables"].gpu[:bs],
             max_seqlen_q=var["max_qlen"],
@@ -836,7 +838,7 @@ class AiterAttentionMetadataBuilder:
             **ctx_pa_ps,
         )
 
-        positions = var["positions"].copy_to_gpu(bs)
+        positions = var["positions"].copy_to_gpu(num_tokens)
         context = Context(
             positions=positions, is_prefill=False, batch_size=bs, graph_bs=bs
         )

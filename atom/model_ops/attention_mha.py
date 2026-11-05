@@ -853,9 +853,19 @@ class PagedAttentionImpl(nn.Module):
             globals()['_native_attention_shadow_dumps']=count+1
         return reference
 
+    def attention_mtp_native(self, q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx):
+        from atom.model_ops.mellum_mtp_native_attention import attention
+        return attention(self, q, k, v, k_cache, v_cache, k_scale, v_scale, fwd_ctx)
+
     def dispatch_backend(self, fwd_ctx: ForwardContext):
 
         ctx = fwd_ctx.context
+
+        if (not ctx.is_prefill
+                and __import__('os').environ.get('ATOM_MELLUM_MTP_NATIVE_ATTN') == '2'
+                and self.head_dim == 128 and self.kv_cache_dtype == 'bf16'
+                and getattr(get_current_atom_config().hf_config, 'model_type', None) == 'mellum'):
+            return self.attention_mtp_native
 
         if (__import__('os').environ.get('ATOM_MELLUM_BF16_HF_ATTENTION')=='1'
                 and __import__('os').environ.get('ATOM_MELLUM_NATIVE_ATTN_PHASE', '')

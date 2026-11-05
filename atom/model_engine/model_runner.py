@@ -1,3 +1,4 @@
+from atom.model_engine.mtp_phase_timing import phase as mtp_phase
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2024-2025, Advanced Micro Devices, Inc. All rights reserved.
 
@@ -1784,6 +1785,7 @@ class ModelRunner:
 
         return temperatures, top_ks, top_ps, all_greedy, needs_independent_noise
 
+    @mtp_phase("prepare")
     def prepare_model(self, batch: ScheduledBatch):
         total_tokens_num = batch.total_tokens_num
         assert total_tokens_num > 0
@@ -1802,6 +1804,7 @@ class ModelRunner:
             needs_independent_noise,
         )
 
+    @mtp_phase("target_forward_logits")
     def run_model(
         self,
         input_ids: torch.Tensor,
@@ -1904,6 +1907,7 @@ class ModelRunner:
 
         return logits, hidden_states
 
+    @mtp_phase("sampling_kv_and_draft")
     def postprocess(
         self,
         batch: ScheduledBatch,
@@ -2060,6 +2064,7 @@ class ModelRunner:
             finished_sending=done_sending, finished_recving=done_recving
         )
 
+    @mtp_phase("draft_prepare_forward_export")
     def propose_draft_token_ids(
         self,
         batch: ScheduledBatch,
@@ -2138,6 +2143,10 @@ class ModelRunner:
         self.graph_logits: dict[tuple[int, int], torch.Tensor] = dict()
         self.graph_aux_hidden: dict[tuple[int, int], list[torch.Tensor]] = dict()
         self.graph_pool = None
+        # Custom kernels cache device metadata (for example RMSNorm row
+        # offsets) in ForwardContext during eager warmup. Graphs retain raw
+        # pointers, not Python tensor owners: keep every context alive.
+        self.graph_forward_contexts = {}
         is_tbo = self.config.enable_tbo and isinstance(self.model, UBatchWrapper)
         # TBO graphs don't capture compute_logits, so disable logits_in_graph.
         self.logits_in_graph = self.world_size == 1 and not is_tbo
@@ -2233,7 +2242,11 @@ class ModelRunner:
                             if self.use_mrope
                             else positions[:num_tokens]
                         )
-                        with torch.cuda.graph(graph, self.graph_pool, stream=gc.stream):
+                        with torch.cuda.graph(
+                            graph,
+                            None if os.environ.get("ATOM_MTP_PRIVATE_GRAPH_POOLS") == "1" else self.graph_pool,
+                            stream=gc.stream,
+                        ):
                             model_output = self.model(
                                 input_ids[:num_tokens],
                                 model_positions,
@@ -2251,6 +2264,7 @@ class ModelRunner:
                 if self.graph_pool is None:
                     self.graph_pool = graph.pool()
                 self.graphs[(bs, max_q_len)] = graph
+                self.graph_forward_contexts[(bs, max_q_len)] = get_forward_context()
                 if self.logits_in_graph and ubatch_slices is None:
                     self.graph_logits[(bs, max_q_len)] = graph_logits
                 if graph_aux is not None:

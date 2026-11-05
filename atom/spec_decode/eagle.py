@@ -22,6 +22,7 @@ logger = logging.getLogger("atom")
 
 
 support_eagle_model_arch_dict = {
+    "MellumMTPModel": "atom.models.mellum_mtp.MellumMTP",
     "DeepSeekMTPModel": "atom.models.deepseek_mtp.DeepSeekMTP",
     "DeepseekV4MTPModel": "atom.models.deepseek_v4_mtp.DeepseekV4MTP",
     "Qwen3NextMTPModel": "atom.models.qwen3_next_mtp.Qwen3NextMTP",
@@ -254,6 +255,11 @@ class EagleProposer:
             )
             return
 
+        # Model-specific header checks must inspect the exact directory passed
+        # to load_model below. Mellum uses a combined target+MTP checkpoint.
+        if hasattr(self.model, "preflight_checkpoint"):
+            self.model.preflight_checkpoint(self.config.model)
+
         # MTP: load from the target model checkpoint and share embeddings/lm_head.
         loaded = load_model(
             self.model,
@@ -346,6 +352,21 @@ class EagleProposer:
         context = forward_context.context
         attn_metadata = forward_context.attn_metadata
         bs = context.batch_size
+        # Target graph metadata includes padding; eager drafting only consumes
+        # the actual scheduled tokens. Keep target capture views untouched.
+        if (not context.is_prefill
+                and attn_metadata.slot_mapping.numel() > target_token_ids.numel()):
+            attn_metadata = copy.copy(attn_metadata)
+            attn_metadata.slot_mapping = attn_metadata.slot_mapping[:target_token_ids.numel()]
+            for field in ("context_lens", "block_tables", "kv_last_page_lens"):
+                value = getattr(attn_metadata, field, None)
+                if value is not None:
+                    setattr(attn_metadata, field, value[:bs])
+            for field in ("cu_seqlens_q", "cu_seqlens_k", "kv_indptr", "sparse_kv_indptr"):
+                value = getattr(attn_metadata, field, None)
+                if value is not None:
+                    setattr(attn_metadata, field, value[:bs + 1])
+            forward_context.attn_metadata = attn_metadata
         context.is_draft = True
 
         assert self.runner is not None

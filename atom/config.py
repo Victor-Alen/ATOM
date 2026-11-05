@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2024-2025, Advanced Micro Devices, Inc. All rights reserved.
 
+import copy
 import enum
 import fnmatch
 import hashlib
@@ -808,6 +809,7 @@ class SpeculativeConfig:
 
     # model_type → mtp_model_type mapping
     _MTP_TYPE_MAP: ClassVar[dict[str, str]] = {
+        "mellum": "mellum_mtp",
         "deepseek_v3": "deepseek_mtp",
         "deepseek_v32": "deepseek_mtp",
         "deepseek_v4": "deepseek_v4_mtp",
@@ -822,6 +824,7 @@ class SpeculativeConfig:
 
     # mtp_model_type → (n_predict_attr, architecture)
     _MTP_CONFIG: ClassVar[dict[str, tuple[str, str]]] = {
+        "mellum_mtp": ("num_nextn_predict_layers", "MellumMTPModel"),
         "deepseek_mtp": ("num_nextn_predict_layers", "DeepSeekMTPModel"),
         "deepseek_v4_mtp": ("num_nextn_predict_layers", "DeepseekV4MTPModel"),
         "qwen3_next_mtp": ("num_nextn_predict_layers", "Qwen3NextMTPModel"),
@@ -836,6 +839,17 @@ class SpeculativeConfig:
         # For multimodal models, extract text_config
         if hasattr(self.draft_model_hf_config, "text_config"):
             self.draft_model_hf_config = self.draft_model_hf_config.text_config
+        # Mellum overrides must never mutate a caller-supplied or cached target config.
+        if getattr(self.draft_model_hf_config, "model_type", None) in ("mellum", "mellum_mtp"):
+            self.draft_model_hf_config = copy.deepcopy(self.draft_model_hf_config)
+            if self.method != "mtp" or self.num_speculative_tokens != 1:
+                raise ValueError("Mellum MTP currently supports method=mtp and K=1 only")
+            if getattr(self.draft_model_hf_config, "num_nextn_predict_layers", 1) != 1:
+                raise ValueError("Mellum MTP requires exactly one predictor layer")
+            if any(os.environ.get(name) == "1" for name in (
+                "ATOM_REFERENCE_MODE", "ATOM_REFERENCE_RECOMPUTE", "ATOM_REFERENCE_OWN_CACHE"
+            )):
+                raise ValueError("Mellum MTP does not support reference/recompute cache modes")
         self.hf_config_override(self.draft_model_hf_config, self.model)
 
         if self.method == "eagle3":

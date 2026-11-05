@@ -179,14 +179,20 @@ class ParallelLMHead(VocabParallelEmbedding):
                 last_indices = attn_metadata.cu_seqlens_q[1:] - 1
                 x = x[last_indices].contiguous()
         native_logits = None
-        if (__import__('os').environ.get('ATOM_MELLUM_NATIVE_LM_HEAD') == '1'
-                and self.tp_size == 1 and x.shape[0] > 1):
+        draft_batched = (__import__('os').environ.get('ATOM_MELLUM_DRAFT_BATCHED_HEAD') == '1'
+                         and not is_plugin_mode() and get_forward_context().context.is_draft)
+        if (not draft_batched and __import__('os').environ.get('ATOM_MELLUM_NATIVE_LM_HEAD') == '1'
+                and self.tp_size == 1 and x.ndim == 2 and x.shape[0] > 1):
             from atom.model_ops.mellum_native_linear import try_linear
             native_logits = try_linear(x, self.weight, self.bias)
         if native_logits is not None:
             logits = native_logits
+        elif (__import__('os').environ.get('ATOM_MELLUM_DRAFT_BATCHED_HEAD') == '1'
+                and not is_plugin_mode() and get_forward_context().context.is_draft
+                and self.tp_size == 1):
+            # Proposal logits may use a batched GEMM; target verification is unchanged.
+            logits = F.linear(x, self.weight, self.bias)
         elif (__import__('os').environ.get('ATOM_MELLUM_REQUEST_GEMM')=='1'
-                and __import__('os').environ.get('ATOM_MELLUM_BATCH_LM_HEAD', '0') != '1'
                 and self.tp_size==1 and x.ndim==2 and x.shape[0]>1):
             logits=torch.cat([tgemm.mm(row,self.weight,self.bias) for row in x.split(1,dim=0)],dim=0)
         else:

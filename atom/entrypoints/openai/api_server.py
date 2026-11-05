@@ -274,16 +274,24 @@ def _prepare_multimodal_inputs(
     return inputs["input_ids"][0].tolist(), multimodal_data
 
 
+from atom.entrypoints.openai.stream_text import StreamTextDecoder
+
+
 def _send_stream_chunk_direct(
     request_output: RequestOutput,
     request_id: str,
     stream_queue: asyncio.Queue,
     loop: AbstractEventLoop,
+    text_decoder: Optional[StreamTextDecoder] = None,
 ) -> None:
     """Send stream chunk directly to the queue."""
     global tokenizer
 
-    new_text = tokenizer.decode(request_output.output_tokens, skip_special_tokens=True)
+    new_text = (
+        text_decoder.decode(request_output.output_tokens, finished=request_output.finished)
+        if text_decoder is not None
+        else tokenizer.decode(request_output.output_tokens, skip_special_tokens=True)
+    )
     started_at = _request_start_times.get(request_id)
     chunk_data = {
         "text": new_text,
@@ -303,6 +311,7 @@ def _send_stream_chunk_tagged(
     sibling_index: int,
     stream_queue: asyncio.Queue,
     loop: AbstractEventLoop,
+    text_decoder: Optional[StreamTextDecoder] = None,
 ) -> None:
     """Variant of :func:`_send_stream_chunk_direct` for fan-out siblings.
 
@@ -312,7 +321,11 @@ def _send_stream_chunk_tagged(
     """
     global tokenizer
 
-    new_text = tokenizer.decode(request_output.output_tokens, skip_special_tokens=True)
+    new_text = (
+        text_decoder.decode(request_output.output_tokens, finished=request_output.finished)
+        if text_decoder is not None
+        else tokenizer.decode(request_output.output_tokens, skip_special_tokens=True)
+    )
     chunk_data = {
         "text": new_text,
         "token_ids": request_output.output_tokens,
@@ -633,8 +646,10 @@ async def setup_streaming_request(
     _stream_loops[request_id] = stream_loop
     _request_start_times[request_id] = time.time()
 
+    text_decoder = StreamTextDecoder(tokenizer)
+
     def stream_callback(request_output: RequestOutput) -> None:
-        _send_stream_chunk_direct(request_output, request_id, stream_queue, stream_loop)
+        _send_stream_chunk_direct(request_output, request_id, stream_queue, stream_loop, text_decoder)
 
     executor_loop = asyncio.get_event_loop()
 
@@ -701,8 +716,10 @@ async def setup_streaming_request_fanout(
     _request_start_times[request_id] = time.time()
 
     def make_callback(idx: int):
+        text_decoder = StreamTextDecoder(tokenizer)
+
         def _cb(request_output: RequestOutput) -> None:
-            _send_stream_chunk_tagged(request_output, idx, shared_queue, stream_loop)
+            _send_stream_chunk_tagged(request_output, idx, shared_queue, stream_loop, text_decoder)
 
         return _cb
 
