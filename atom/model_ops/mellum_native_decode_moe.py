@@ -1,4 +1,4 @@
-﻿"""Native CK decode MoE preserving HF BF16 boundaries without weight gathering."""
+"""Native CK decode MoE preserving HF BF16 boundaries without weight gathering."""
 import os
 import torch
 from aiter import ActivationType, QuantType
@@ -17,7 +17,20 @@ def experts(x, w13, w2, ids, weights):
         raise RuntimeError('Unexpected native CK dispatch')
     si,sw,se,nv,_=moe_sorting(ids.int(),weights.float(),64,2304,x.dtype,meta.block_m)
     gated=torch.empty((b,8,896),device=x.device,dtype=x.dtype)
-    meta.stage1(x,w13,w2,si,se,nv,gated,8,block_m=meta.block_m,a1_scale=None,w1_scale=None,sorted_weights=None)
+    stage1_options = {}
+    stage1_ids, stage1_experts, stage1_valid = si, se, nv
+    stage1_block_m = meta.block_m
+    tile = os.getenv('ATOM_MELLUM_DECODE_STAGE1_TILE', '')
+    if tile:
+        # Explicit native CK template: fixed-input all-layer/batch checks required.
+        if tile != 'm32n64k64v1':
+            raise RuntimeError('Unvalidated Mellum native decode stage1 tile')
+        stage1_options['kernelName'] = 'moe_ck2stages_gemm1_256x32x64x64_1x4_TypeCast_v1_Nswizzle0_Quant0_MulRoutedWeight0_silu_B16_B16_B16'
+        stage1_block_m = 32
+        if stage1_block_m != meta.block_m:
+            stage1_ids, _, stage1_experts, stage1_valid, _ = moe_sorting(
+                ids.int(), weights.float(), 64, 2304, x.dtype, stage1_block_m)
+    meta.stage1(x,w13,w2,stage1_ids,stage1_experts,stage1_valid,gated,8,block_m=stage1_block_m,a1_scale=None,w1_scale=None,sorted_weights=None,**stage1_options)
     token=si&0xffffff;slot=(si>>24)&255
     flat=torch.where((token<b)&(slot<8),token*8+slot,b*8)
     per_slot=torch.zeros((b*8,2304),device=x.device,dtype=x.dtype)
