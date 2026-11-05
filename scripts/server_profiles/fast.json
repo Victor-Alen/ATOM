@@ -14,7 +14,7 @@
     "ATOM_MELLUM_MOE_COMBINE": "ordered",
     "ATOM_MELLUM_MOE_BF16_ROUTER_WEIGHTS": "1",
     "ATOM_MELLUM_HF_NORM_PREFILL": "1",
-    "ATOM_MELLUM_HF_ATTN_PREFILL_ROUNDING": "1",
+    "ATOM_MELLUM_HF_ATTN_PREFILL_ROUNDING": "0",
     "ATOM_MELLUM_HF_ATTN_ROUNDING": "1",
     "ATOM_MELLUM_SPLIT_QKV_PREFILL": "1",
     "AITER_MELLUM_HF_ROPE_INV_FREQ": "1",
@@ -77,7 +77,8 @@
     "ATOM_MELLUM_PREFILL_LONG_QK": "1",
     "ATOM_MELLUM_PREFILL_SPARSE_WINDOW": "1",
     "ATOM_MELLUM_PREFILL_SPARSE_PV": "1",
-    "ATOM_MELLUM_PREFILL_PV_CONFIG": "${RUNTIME}/runtime/startup_delivery/native_sparse_pv_config.json"
+    "ATOM_MELLUM_PREFILL_PV_CONFIG": "${RUNTIME}/runtime/startup_delivery/native_sparse_pv_config.json",
+    "ATOM_MELLUM_NATIVE_ATTN_PHASE": "prefill"
   },
   "cmd": [
     "python3",
@@ -364,7 +365,7 @@
   },
   "cwd": "${REPO}",
   "evidence": {
-    "scope": "Portable sparse-window candidate. Operator and small gates passed; final full correctness/performance acceptance recorded separately. MTP disabled.",
+    "scope": "Isolated original AITER fused prefill ablation. Decode, norm, linear, MoE, graph unchanged. MTP off. Not accepted until full checks.",
     "baseline": "/data/datasets/baseline.json"
   },
   "required_paths": [
