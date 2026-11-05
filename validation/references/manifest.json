@@ -1,0 +1,13 @@
+{
+  "scope": "Pinned historical HF reference outputs for the public protocol; never imported by production model/runtime",
+  "files": {
+    "he_hf.jsonl": "2df007400625b9efb4fd7c7bda726171aa76b39e07c3bf72eef2ccbfeee23792",
+    "he_inputs.jsonl": "f0bd9569bbd3c35204181a147216e33807d8436c12d6dcf7b030458ba4c32a9a",
+    "hf_scenario_c_200_eager.jsonl.gz": "5e92ff96d07964df4497b2178b2c611b57655ad91310a627845067182ea87bdb",
+    "strict_16k_hf.json": "028fcfb9fdfe4a07c5e39b97465cfa808150303bed8edab8f6417be1225f88cf"
+  },
+  "humaneval_dataset_sha256": "1d49078ba3e2b196b9344535bef34a43021f038fad9561d6ee7c53450609a6a2",
+  "hf_C_uncompressed_sha256": "2f54ae0833629c7757cd0e72cdb05e03cfdb2a9c6f6f04781b44b2862b341924",
+  "human_eval_commit": "b9453e8f1865df0a0057a1383767caa400acfbcf",
+  "human_eval_execution_sha256": "79901c6f5b59701c465b164aed290fa53abc35abc80a5378fc10f4dac1f9a84c"
+}

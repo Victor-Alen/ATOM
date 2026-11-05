@@ -51,12 +51,17 @@ bash scripts/start_server.sh --dry-run --ablation point12
 ## 验证与测量
 
 ```bash
+# 完整公开集正确性：C200、严格16k、HumanEval164
+/opt/venv/bin/python3 scripts/validate_public.py
+
 # 题目 A512 / B50 / C200；单卡；每场景 3 次
 bash scripts/benchmark.sh --repeat 3
 
 # 优化阶段的小规模筛选：A64 / B8 / C12
 bash scripts/benchmark.sh --screen --repeat 1
 ```
+
+正确性客户端将原始输出、逐 token 比较和 HumanEval 检查结果写到独立目录。`validation/references/` 保存固定哈希的历史 HF 参考，仅由验证客户端读取，服务和模型代码不导入这些答案。HumanEval 使用聊天模板、关闭思考、greedy、EOS 停止、最大输出2048 token，并使用固定官方 checker；协议与 256-token 性能测试分别记录。`scripts/validate_public.py --screen` 只测 C4 与严格16k，不能称为完整验收；`--verify-files-only` 只校验文件和比较器反例，不调用 GPU。
 
 A 使用并发 32、B 使用并发 1，C 使用开放环泊松到达率 0.30 请求/秒；均输出 256 token，`ignore_eos=true`、`temperature=0`、流式返回。C 的指标是 TPOT p99 / TTFT p99，不能拿 C 的吞吐代替。正确性检查与性能测量分开；HumanEval 的生成协议也不等同于 256-token 性能协议。
 
