@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+  <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">逐项开启，验证各点实际贡献</text>
+  <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">相同输入与协议；不相乘独立实验的加速比。</text>
+  <g id="ablation-table" data-pptx-native="table">
+    <metadata data-pptx-native="table">{"name":"累计消融：A64 B8 C12，各一轮","x":60,"y":190,"width":1160,"height":360,"column_widths":[250,80,220,220,390],"columns":["配置","卡数","A token/s/GPU ↑","B TPOT p50 ↓","C TPOT p99 / TTFT p99 ↓"],"rows":[["Step 0","1","64.53","47.47","289.82 / 21054.52"],["+ 点 1","1","104.10","45.82","243.99 / 15857.43"],["+ 点 1 + 2","1","444.91","42.59","85.50 / 2109.18"],["+ 点 1 + 2 + 3","1","727.97","9.21","38.39 / 2069.40"]],"style":{"font_family":"Microsoft YaHei","font_size":32,"header_font_size":24,"header_fill":"#10243C","header_text":"#B4C5DA","body_fill":"#071323","body_text":"#F6F9FF","border_color":"#294361","border_width":1,"padding":{"left":16,"right":16,"top":14,"bottom":14}}}</metadata>
+    <rect x="60" y="190" width="1160" height="72" fill="#10243C"/>
+    <rect x="60" y="478" width="1160" height="72" fill="#10243C"/>
+    <path d="M60 190H1220V550H60Z M60 262H1220 M60 334H1220 M60 406H1220 M60 478H1220 M310 190V550 M390 190V550 M610 190V550 M830 190V550" fill="none" stroke="#294361"/>
+    <text x="78" y="235" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">配置</text>
+    <text x="350" y="235" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">卡数</text>
+    <text x="500" y="235" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">A token/s/GPU ↑</text>
+    <text x="720" y="235" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">B TPOT p50 ↓</text>
+    <text x="1025" y="235" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">C TPOT p99 / TTFT p99 ↓</text>
+    <text x="78" y="309" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">Step 0</text>
+    <text x="350" y="309" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">1</text>
+    <text x="500" y="309" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">64.53</text>
+    <text x="720" y="309" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">47.47</text>
+    <text x="1025" y="309" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">289.82 / 21054.52</text>
+    <text x="78" y="381" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">+ 点 1</text>
+    <text x="350" y="381" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">1</text>
+    <text x="500" y="381" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">104.10</text>
+    <text x="720" y="381" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">45.82</text>
+    <text x="1025" y="381" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">243.99 / 15857.43</text>
+    <text x="78" y="453" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">+ 点 1 + 2</text>
+    <text x="350" y="453" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">1</text>
+    <text x="500" y="453" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">444.91</text>
+    <text x="720" y="453" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">42.59</text>
+    <text x="1025" y="453" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">85.50 / 2109.18</text>
+    <text x="78" y="525" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">+ 点 1 + 2 + 3</text>
+    <text x="350" y="525" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#64B5FF">1</text>
+    <text x="500" y="525" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#64B5FF">727.97</text>
+    <text x="720" y="525" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#64B5FF">9.21</text>
+    <text x="1025" y="525" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#64B5FF">38.39 / 2069.40</text>
+  </g>
+  <text x="60" y="595" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">受控小测：A64 / B8 / C12 × 1 轮；时延单位 ms；每组先校验 832 个 token。</text>
+  <text x="60" y="631" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">C 的小样本 p99 只用于筛选；最终候选另做 A512 / B50 / C200 三轮全量。</text>
+  <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">证据：cumulative_ablation_20261105T180217Z；四组均通过 832 / 832 token 检查。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">08 / 16</text>
+</svg>

@@ -1,0 +1,2 @@
+verify-charts: 04_真实时间线定位瓶颈.svg | type=stacked-bar | mode=decomposable-calc | scale=0-2.5 s from ticks | calc=ran x4 | svg=unchanged, max error <0.002 px
+verify-charts: 09_全量结果对照基线.svg | type=bullet | mode=decomposable-calc | scale=A 0-800, C TPOT 0-80, C TTFT 0-5000 from ticks | calc=ran x6, targets checked by formula | svg=unchanged, max error <0.002 px

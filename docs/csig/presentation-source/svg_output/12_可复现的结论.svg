@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="53" width="56" height="6" fill="#0052D9"/>
+  <text x="136" y="67" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">腾讯 CSIG 校招技术答辩</text>
+  <text x="60" y="218" font-family="Arial, Microsoft YaHei" font-size="88" font-weight="700" fill="#F6F9FF">能复现的收益，</text>
+  <text x="60" y="326" font-family="Arial, Microsoft YaHei" font-size="88" font-weight="700" fill="#64B5FF">才计入最终结论。</text>
+  <path d="M60 365H845C1015 365 1105 409 1220 349" fill="none" stroke="#0052D9" stroke-width="3"/>
+  <text x="60" y="437" font-family="Arial, Microsoft YaHei" font-size="32" fill="#7ED8D0">AI 辅助</text>
+  <text x="260" y="437" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">提出建议 → 寻找反例 → 实验确认与人工决策</text>
+  <text x="60" y="504" font-family="Arial, Microsoft YaHei" font-size="32" fill="#7ED8D0">工作日志</text>
+  <text x="260" y="504" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">记录卡点 → 解释转向 → 保留完整提交历史</text>
+  <line x1="60" y1="552" x2="1220" y2="552" stroke="#294361"/>
+  <text x="60" y="612" font-family="Arial, Microsoft YaHei" font-size="40" fill="#F6F9FF">进入 10 分钟问答</text>
+  <text x="645" y="612" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">备页：AI 使用 / D1–D7 / 精度 / 复现</text>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">随交付附：四页报告、AI 使用说明、WORKLOG.md、原始证据与逐页讲稿。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">12 / 16</text>
+</svg>

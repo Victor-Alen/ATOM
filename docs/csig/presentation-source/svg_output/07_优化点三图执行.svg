@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+  <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">点三：编译计算片段，复用解码图</text>
+  <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">动态元数据留在图外，稳定计算减少 CPU 重复提交。</text>
+  <g id="graph-execution-flow" data-chart-type="process_flow">
+    <rect x="60" y="225" width="250" height="164" rx="6" fill="#10243C" stroke="#294361"/>
+    <text x="84" y="264" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">01</text>
+    <text x="84" y="311" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">准备元数据</text>
+    <text x="84" y="354" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">序列长度与 KV 索引</text>
+    <path d="M 321 307 L 346 307 M 339 300 L 346 307 L 339 314" fill="none" stroke="#64B5FF" stroke-width="3"/>
+    <rect x="360" y="225" width="250" height="164" rx="6" fill="#10243C" stroke="#294361"/>
+    <text x="384" y="264" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">02</text>
+    <text x="384" y="311" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">编译稳定片段</text>
+    <text x="384" y="354" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">保留必要的数值边界</text>
+    <path d="M 621 307 L 646 307 M 639 300 L 646 307 L 639 314" fill="none" stroke="#64B5FF" stroke-width="3"/>
+    <rect x="660" y="225" width="250" height="164" rx="6" fill="#0052D9"/>
+    <text x="684" y="264" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#F6F9FF">03</text>
+    <text x="684" y="311" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">捕获并复用</text>
+    <text x="684" y="354" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">固定缓冲与批次覆盖</text>
+    <path d="M 921 307 L 946 307 M 939 300 L 946 307 L 939 314" fill="none" stroke="#64B5FF" stroke-width="3"/>
+    <rect x="960" y="225" width="260" height="164" rx="6" fill="#10243C" stroke="#294361"/>
+    <text x="984" y="264" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">04</text>
+    <text x="984" y="311" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">回放与输出</text>
+    <text x="984" y="354" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">完整模型校验 token</text>
+  </g>
+  <line x1="60" y1="441" x2="1220" y2="441" stroke="#294361"/>
+  <text x="60" y="492" font-family="Arial, Microsoft YaHei" font-size="32" font-weight="700" fill="#F6F9FF">计时边界明确</text>
+  <text x="60" y="540" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">冷启动与首次捕获单列；正式吞吐不启用 profiler。</text>
+  <text x="60" y="581" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">同进程完成精度验证后，固定负载重复三轮取中位数。</text>
+  <text x="820" y="490" font-family="Arial, Microsoft YaHei" font-size="24" fill="#7ED8D0">解码图批次</text>
+  <text x="820" y="538" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">1 / 2 / 4 / 8 / 16 / 32</text>
+  <text x="820" y="581" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">--compile-graph-opt 1</text>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">默认：片段编译 + ATOM 解码图；片段图单独关闭。开关关闭时使用 eager 对照。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">07 / 16</text>
+</svg>

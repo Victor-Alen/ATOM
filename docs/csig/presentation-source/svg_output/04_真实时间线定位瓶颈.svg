@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <g id="title">
+    <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+    <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">真实时间线定位剩余瓶颈</text>
+    <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">16k 长请求：矩阵乘与 softmax 仍占大头。</text>
+    <text x="60" y="201" font-family="Arial, Microsoft YaHei" font-size="24" fill="#8EA5C1">当前版本：16384 输入、8 个输出；GPU kernel 累计时间，非请求延迟。</text>
+  </g>
+  <g id="profile-composition" data-pptx-native="chart">
+    <metadata data-pptx-native="chart">{"name":"当前16k诊断窗口算子累计耗时","x":60,"y":246,"width":1160,"height":120,"type":"bar","grouping":"stacked","categories":["16k输入8输出"],"series":[{"name":"MoE","values":[0.469073911]},{"name":"GEMM","values":[0.672312667]},{"name":"Softmax","values":[0.556379287]},{"name":"其余","values":[0.404417129]}],"style":{"colors":["#0052D9","#7ED8D0","#64B5FF","#294361"],"chart_area_fill":"#071323","plot_area_fill":"#071323","text_color":"#F6F9FF","axis_color":"#8EA5C1","grid_color":"#18314F","font_size":24}}</metadata>
+    <g id="chartArea">
+      <path d="M60 246V366 M292 246V366 M524 246V366 M756 246V366 M988 246V366 M1220 246V366 M60 366H1220" fill="none" stroke="#18314F" stroke-width="1"/>
+      <!-- chart-plot-area: 60,246,1220,366 -->
+      <rect x="60" y="267" width="217.6503" height="76" fill="#0052D9"/>
+      <rect x="277.6503" y="267" width="311.9528" height="76" fill="#7ED8D0"/>
+      <rect x="589.6031" y="267" width="258.1600" height="76" fill="#64B5FF"/>
+      <rect x="847.7631" y="267" width="187.6495" height="76" fill="#294361"/>
+      <text x="78" y="313" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">MoE 0.47 s</text>
+      <text x="301" y="313" font-family="Arial, Microsoft YaHei" font-size="24" fill="#071323">GEMM 0.67 s</text>
+      <text x="610" y="313" font-family="Arial, Microsoft YaHei" font-size="24" fill="#071323">Softmax 0.56 s</text>
+      <text x="864" y="313" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">其余 0.40 s</text>
+      <text x="60" y="397" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#8EA5C1">0</text>
+      <text x="292" y="397" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#8EA5C1">0.5</text>
+      <text x="524" y="397" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#8EA5C1">1.0</text>
+      <text x="756" y="397" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#8EA5C1">1.5</text>
+      <text x="988" y="397" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#8EA5C1">2.0</text>
+      <text x="1220" y="397" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#8EA5C1">2.5 s</text>
+    </g>
+  </g>
+  <g id="interpretation">
+    <text x="60" y="475" font-family="Consolas, Microsoft YaHei" font-size="48" font-weight="700" fill="#64B5FF">5,699</text>
+    <text x="245" y="474" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">个 kernel 事件</text>
+    <text x="60" y="521" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">GEMM 32.0%；softmax 26.5%</text>
+    <text x="60" y="563" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">GEMM 含线性与注意力，不能全算作 Attention。</text>
+    <path d="M650 442V598" fill="none" stroke="#294361" stroke-width="1"/>
+    <text x="690" y="475" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">长预填充会延后解码</text>
+    <rect x="690" y="506" width="292" height="36" fill="#0052D9"/>
+    <rect x="998" y="506" width="64" height="36" fill="#7ED8D0"/>
+    <rect x="1078" y="506" width="64" height="36" fill="#7ED8D0"/>
+    <text x="690" y="579" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">预填充 / 解码排队示意；实测收益看开关消融。</text>
+  </g>
+  <g id="footer">
+    <path d="M60 649H1220" fill="none" stroke="#294361" stroke-width="1"/>
+    <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">torch profiler：delivery_profile_20261105T183352Z；按 kernel 名称归类；正式性能测试关闭 profiler。</text>
+    <text x="1220" y="677" text-anchor="end" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">04 / 16</text>
+  </g>
+</svg>

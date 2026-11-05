@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <g id="title">
+    <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+    <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">三种场景，三种评价指标</text>
+    <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">A 看每卡吞吐，C 看长请求造成的尾时延。</text>
+  </g>
+  <g id="scenario-table" data-pptx-native="table">
+    <metadata data-pptx-native="table">{"name":"场景与固定负载","x":60,"y":190,"width":1160,"height":326,"strict_grid":true,"column_widths":[180,230,330,420],"columns":["场景","请求数","负载设置","核心指标"],"rows":[["A · 吞吐","512","并发 32\n输入 512–4K","输出 token/s/GPU ↑"],["B · 单流","50","并发 1\n输入 1024","TPOT p50 ↓"],["C · 开放环","200","0.30 请求/秒\n输入 4–16K，泊松到达","TPOT p99 / TTFT p99 ↓"]],"style":{"font_family":"Microsoft YaHei","font_size":32,"header_font_size":24,"header_fill":"#10243C","header_text":"#B4C5DA","body_fill":"#071323","body_text":"#F6F9FF","border_color":"#294361","border_width":1,"padding":{"left":18,"right":18,"top":12,"bottom":12}}}</metadata>
+    <rect x="60" y="190" width="1160" height="56" fill="#10243C"/>
+    <path d="M60 190H1220V516H60Z M60 246H1220 M60 336H1220 M60 426H1220 M240 190V516 M470 190V516 M800 190V516" fill="none" stroke="#294361" stroke-width="1"/>
+    <text x="80" y="226" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">场景</text>
+    <text x="354" y="226" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">请求数</text>
+    <text x="490" y="226" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">负载设置</text>
+    <text x="820" y="226" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">核心指标</text>
+    <text x="80" y="302" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">A · 吞吐</text>
+    <text x="354" y="302" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">512</text>
+    <text x="490" y="286" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF"><tspan x="490" y="286">并发 32</tspan> <tspan x="490" y="321" font-size="24" fill="#B4C5DA">输入 512–4K</tspan></text>
+    <text x="820" y="302" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">输出 token/s/GPU ↑</text>
+    <text x="80" y="392" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">B · 单流</text>
+    <text x="354" y="392" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">50</text>
+    <text x="490" y="376" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF"><tspan x="490" y="376">并发 1</tspan> <tspan x="490" y="411" font-size="24" fill="#B4C5DA">输入 1024</tspan></text>
+    <text x="820" y="392" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">TPOT p50 ↓</text>
+    <text x="80" y="482" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">C · 开放环</text>
+    <text x="354" y="482" text-anchor="middle" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#F6F9FF">200</text>
+    <text x="490" y="466" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF"><tspan x="490" y="466">0.30 请求/秒</tspan> <tspan x="490" y="501" font-size="24" fill="#B4C5DA">输入 4–16K，泊松到达</tspan></text>
+    <text x="820" y="482" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">TPOT p99 / TTFT p99 ↓</text>
+  </g>
+  <g id="protocol-notes">
+    <text x="60" y="570" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">单卡 · 输出 256 token · 流式 · greedy · 忽略 EOS</text>
+    <text x="60" y="614" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">性能基线只取 baseline.json；B 未提供基线。公开测试与隐藏验收分开。</text>
+    <path d="M60 649H1220" fill="none" stroke="#294361" stroke-width="1"/>
+    <text x="60" y="678" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">来源：题目第 6 节；A 原始数据中 5 条略超 4K，保留原始 512 条并单列过滤补充结果。</text>
+    <text x="1220" y="678" text-anchor="end" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">02 / 16</text>
+  </g>
+</svg>

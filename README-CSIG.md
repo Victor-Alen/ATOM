@@ -2,6 +2,8 @@
 
 这是腾讯 CSIG 云一计算加速题目的交付入口。模型为 Mellum2.1-12B-A2.5B-Thinking，运行于题目冻结的 ROCm / PyTorch / AITER 环境和单张 MI308X。默认 **三个优化点开启，MTP 关闭**。本项目保留完整提交历史，不 squash。
 
+[四页报告、中文PPT、10分钟讲稿及AI说明](docs/csig/README.md) · [完整测试与原始证据](results/README.md) · [D1–D7工作日志](WORKLOG.md)
+
 ## 一条命令启动
 
 在题目给定的 Linux 容器内进入本仓库，执行：

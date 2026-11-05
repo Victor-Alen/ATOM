@@ -1,0 +1,1080 @@
+{
+  "repo": "/workspace/ATOM-operator-parallel",
+  "timezone": "Asia/Shanghai",
+  "days": {
+    "2026-11-05": [
+      {
+        "commit": "157bb3a891f4072f5bf09a7d17d7cbd7d17f8fca",
+        "time": "2026-11-05T15:31:11+08:00",
+        "subject": "Fuse encoded MoE slot addressing and unique output stores into native CK stage2"
+      },
+      {
+        "commit": "385d24d0ee9b7b198a7da22e45d7d48483687ddd",
+        "time": "2026-11-05T15:12:03+08:00",
+        "subject": "Use validated M32 CK decode stage2 tile and share routing metadata"
+      },
+      {
+        "commit": "e7c8855c75683fe67d2c7a215e86c1240cad0f1c",
+        "time": "2026-11-05T14:10:04+08:00",
+        "subject": "Fuse Mellum prefill scale mask and exact softmax with length dispatch"
+      },
+      {
+        "commit": "64f93c79c3b3beb9363cc36fb0e547a12d9ee564",
+        "time": "2026-11-05T13:25:52+08:00",
+        "subject": "Enable opt-in verified batched native hipBLASLt Mellum LM head"
+      },
+      {
+        "commit": "81ff66e6006702575ceced70424704fffeafb709",
+        "time": "2026-11-05T13:01:35+08:00",
+        "subject": "Add opt-in native CK M32 decode stage1 with separate routing metadata"
+      },
+      {
+        "commit": "0380541e2cb1fed788656a936871104a098a64a1",
+        "time": "2026-11-05T00:21:58+08:00",
+        "subject": "perf: restore native CK decode MoE without selected-weight copies"
+      }
+    ],
+    "2026-11-04": [
+      {
+        "commit": "ea87584285657ae2414f2fe295817f7131e14bd2",
+        "time": "2026-11-04T21:36:13+08:00",
+        "subject": "Batch Mellum decode projections with validated native hipBLASLt algorithms"
+      },
+      {
+        "commit": "629d2ffd71ebeb7a0c4bfcc50b683e9226896541",
+        "time": "2026-11-04T21:02:30+08:00",
+        "subject": "Route Mellum request-grouped normalization through native AITER HIP kernel"
+      },
+      {
+        "commit": "e0f32840a8298d812dbacf61daba80b4050ca9a2",
+        "time": "2026-11-04T17:20:45+08:00",
+        "subject": "style(mellum): apply repository Black formatting without AST changes"
+      },
+      {
+        "commit": "98e8255d1872eb87579dd389fa99fa38a425bfdb",
+        "time": "2026-11-04T17:19:48+08:00",
+        "subject": "perf(mellum): compile tensor pieces and graph request-shaped decode ops"
+      },
+      {
+        "commit": "d66818c1c2895def938f6922bbdc95b753693993",
+        "time": "2026-11-04T16:14:06+08:00",
+        "subject": "perf(mellum): bound decode expert batches and add explicit launcher"
+      },
+      {
+        "commit": "e3161755479a3453f2dda627a46d60901bc41b2a",
+        "time": "2026-11-04T16:12:14+08:00",
+        "subject": "perf(mellum): submit decode expert GEMVs across requests in one batch"
+      },
+      {
+        "commit": "082def02ff4421319081715a505c3c8225b648fe",
+        "time": "2026-11-04T15:45:40+08:00",
+        "subject": "tools(mellum): expose reproducible cached BF16 launch configuration"
+      },
+      {
+        "commit": "f9f1055142921ef0b87672629c6526abd28e9b7f",
+        "time": "2026-11-04T15:44:48+08:00",
+        "subject": "perf(mellum): read live sliding KV blocks and reuse forward masks"
+      },
+      {
+        "commit": "68b7389b3a5257598a20a79431f43f9ad672ad4b",
+        "time": "2026-11-04T15:35:32+08:00",
+        "subject": "perf(mellum): reuse CPU request metadata within each forward"
+      },
+      {
+        "commit": "3e7a4a50ed66215087da9bcc61df9647feb848c2",
+        "time": "2026-11-04T12:25:21+08:00",
+        "subject": "docs: verify full single-GPU BF16 Step 0 gates and correct prior scope"
+      },
+      {
+        "commit": "680591d58f968a944f9f84c1c319265641b0cdc8",
+        "time": "2026-11-04T10:25:50+08:00",
+        "subject": "docs: record full dual-GPU Mellum Step 0 correctness acceptance"
+      },
+      {
+        "commit": "a787ed595fd4a0c50b9c54aff2a98de3961c26b8",
+        "time": "2026-11-04T10:10:14+08:00",
+        "subject": "fix: bound HF-order attention softmax workspace by head chunks"
+      },
+      {
+        "commit": "43c5be1fe43076248bc76bb2cffda5fac37360d5",
+        "time": "2026-11-04T09:59:53+08:00",
+        "subject": "fix: preserve per-request RMSNorm reductions in Mellum batches"
+      },
+      {
+        "commit": "1c66fc326165b6b57ee3d748dea2d669c8f64b50",
+        "time": "2026-11-04T09:53:16+08:00",
+        "subject": "fix: preserve per-request GEMM shapes under Mellum batching"
+      },
+      {
+        "commit": "d05b171be5810b50fb0e5423740fe4dbe4b93fbf",
+        "time": "2026-11-04T08:42:08+08:00",
+        "subject": "test: freeze and run full A20 B20 C200 greedy acceptance"
+      },
+      {
+        "commit": "a4fd9a1abd2c2ead906545fe17a323e6e79fe4f1",
+        "time": "2026-11-04T08:39:57+08:00",
+        "subject": "feat: freeze explicit production HF-arithmetic launch configuration"
+      },
+      {
+        "commit": "e1a0de1dcb235c466de52a94b699a03b9f7d6a98",
+        "time": "2026-11-04T08:38:36+08:00",
+        "subject": "fix: match dynamic sliding-cache GEMM extent during decode"
+      },
+      {
+        "commit": "5f94ec83906bb42d2d57207bf9c50caebf847068",
+        "time": "2026-11-04T08:29:23+08:00",
+        "subject": "fix: align production RoPE and YaRN frequencies and BF16 arithmetic"
+      },
+      {
+        "commit": "a3b07aafe04281ed0dc8e509981ee1a1656cc236",
+        "time": "2026-11-04T01:31:02+08:00",
+        "subject": "feat: expose HF arithmetic norm and separate projection operators"
+      },
+      {
+        "commit": "7e615c98dc5fe188b261da34268113aebf5d6fdb",
+        "time": "2026-11-04T01:27:26+08:00",
+        "subject": "feat: add explicit native HF grouped and decode batched expert backend"
+      },
+      {
+        "commit": "ce3b372325930ff1fac56da809b95a505e416541",
+        "time": "2026-11-04T01:25:20+08:00",
+        "subject": "fix: decode production SHUFFLE value cache in HF-order attention"
+      },
+      {
+        "commit": "47e57356292fcf20f55bdf582fbdb07ded1e8d99",
+        "time": "2026-11-04T01:20:27+08:00",
+        "subject": "feat: add HF-order BF16 attention on production paged KV"
+      },
+      {
+        "commit": "28565c90205b7a2409b4646449185e1c0416fcd5",
+        "time": "2026-11-04T01:17:01+08:00",
+        "subject": "fix: apply HF-order prefill norm to arbitrary request lengths"
+      }
+    ],
+    "2026-11-03": [
+      {
+        "commit": "29fd48653eba9b557e6967e115d6527d321c8862",
+        "time": "2026-11-03T23:52:36+08:00",
+        "subject": "docs: verify deployed CK Up783 fix and fresh A10 C10 token64 results"
+      },
+      {
+        "commit": "9082ed20cb44256c9978b5ed62bf358f2c09f1d6",
+        "time": "2026-11-03T23:38:21+08:00",
+        "subject": "perf: skip decode K-order planning and seal production CK binary"
+      },
+      {
+        "commit": "b8402cadb6569d5f50b8cde3d25b2a45b0bab25f",
+        "time": "2026-11-03T23:20:08+08:00",
+        "subject": "fix: route production CK stage1 through HF GEMM K-order profiles"
+      },
+      {
+        "commit": "60a512360bf14953a3b28383c67964c2bab4b6ad",
+        "time": "2026-11-03T23:00:07+08:00",
+        "subject": "debug: trace first L0 CK GEMM divergence to K order and local split"
+      },
+      {
+        "commit": "68fc7f1a7bd6925c3c1195e14e76b41d9cee8ffc",
+        "time": "2026-11-03T22:06:26+08:00",
+        "subject": "fix: enable profiled norm with inactive TP1 allreduce and capture MoE replay weights"
+      },
+      {
+        "commit": "f76215724c758cb372bd29ca030e3ceb6ad0fc2c",
+        "time": "2026-11-03T22:00:07+08:00",
+        "subject": "fix: match HF prefill RMSNorm reduction and scalar rsqrt profile"
+      },
+      {
+        "commit": "2e04fba1a6d753b2024ce4e8e2503e5e75b608fb",
+        "time": "2026-11-03T21:42:10+08:00",
+        "subject": "fix: align profiled Mellum prefill QK stagger and softmax reduction order"
+      },
+      {
+        "commit": "8f0b8410d6e4ed7bb8c3af06e375e629b7e33aef",
+        "time": "2026-11-03T19:14:55+08:00",
+        "subject": "fix: align Mellum RoPE inverse-frequency initialization with HF"
+      },
+      {
+        "commit": "0f632c432fa84238846f764f67e3803d679eb6f3",
+        "time": "2026-11-03T19:07:11+08:00",
+        "subject": "fix: isolate first prefill QKV mismatch with separate production GEMMs"
+      },
+      {
+        "commit": "e247b1e7990dfdb39aa7d3cdd164671963494cec",
+        "time": "2026-11-03T18:58:44+08:00",
+        "subject": "fix: add opt-in HF-rounded BF16 sliding decode kernels"
+      },
+      {
+        "commit": "8f4ff51777d4fdffb1b7dbec3903a8fbb73b0fcc",
+        "time": "2026-11-03T18:24:04+08:00",
+        "subject": "debug: trace Mellum divergence and preserve BF16 norm kernel candidate"
+      },
+      {
+        "commit": "e7199d6669ef0780697bbcccda58d8ff45ee2dcc",
+        "time": "2026-11-03T17:29:31+08:00",
+        "subject": "results: latest CK up fix fails A10 and C10 generation gates"
+      },
+      {
+        "commit": "4e6855aeaec420e46ed7e299ff897bf754228b25",
+        "time": "2026-11-03T16:31:59+08:00",
+        "subject": "analysis: map L27 up residual coordinates and FP64-reference distribution"
+      },
+      {
+        "commit": "c85e8be3f29d797d26e791aeff53f9b72283c01e",
+        "time": "2026-11-03T15:31:05+08:00",
+        "subject": "fix: add generic CK V3 up FP64 block merge and validate L27"
+      },
+      {
+        "commit": "277aea373daa9deec9deeeda18bcdb6213c64fa0",
+        "time": "2026-11-03T15:07:56+08:00",
+        "subject": "debug: trace L27 CK accumulator and verify selected-element correction"
+      },
+      {
+        "commit": "04bcac9a05db4d36d7491d648e0804e6179eb912",
+        "time": "2026-11-03T14:16:26+08:00",
+        "subject": "fix: audit all Mellum MoE layers and add BF16 router-weight option"
+      },
+      {
+        "commit": "7fc94dd3dbdddb5c464a4487d2b6bf3b4c8a2891",
+        "time": "2026-11-03T13:48:22+08:00",
+        "subject": "fix: add opt-in CK HF rounding patches and record production regression"
+      },
+      {
+        "commit": "f55aa5e73380816c2acc4521348e90d595de5662",
+        "time": "2026-11-03T13:33:38+08:00",
+        "subject": "test: isolate CK stage1 GEMM SiLU and multiply rounding"
+      },
+      {
+        "commit": "f0ab45dce1ba24fb45016e1fa2045609aeedfd0b",
+        "time": "2026-11-03T11:35:26+08:00",
+        "subject": "docs: CORRECTION - the two MI308X are xGMI-linked (amd-smi + RCCL topo), not PCIe; my measured 50.5 GB/s already contradicted the PCIe label"
+      },
+      {
+        "commit": "7e468a7f738801c5cf47b7852c12c39bac614a93",
+        "time": "2026-11-03T11:20:52+08:00",
+        "subject": "docs: correct legacy HF-order MoE description"
+      },
+      {
+        "commit": "7935ab382adca18afa0669c5e8e4024cbe5e49bb",
+        "time": "2026-11-03T11:19:11+08:00",
+        "subject": "docs: record ordered CK production validation and residual"
+      },
+      {
+        "commit": "f0aed701cb1b95d2b811d1c95d11da14ffce5493",
+        "time": "2026-11-03T11:08:44+08:00",
+        "subject": "fix: use deterministic CK slot combine for Mellum MoE"
+      },
+      {
+        "commit": "07c11d401ed00b2cdc0ff5a2743ba2ff79e89fd9",
+        "time": "2026-11-03T10:34:23+08:00",
+        "subject": "docs: verify HF eager cached reference repeatability"
+      },
+      {
+        "commit": "384716f1aa2850db04add7cb6a6844c68f7c3600",
+        "time": "2026-11-03T10:13:56+08:00",
+        "subject": "bench: measure ordered Mellum MoE latency on decode and prefill"
+      },
+      {
+        "commit": "791170bbae3540d7bc15c020af86c55ecb907a82",
+        "time": "2026-11-03T10:02:20+08:00",
+        "subject": "test: isolate Mellum stage2 combine with ordered slot reduction"
+      },
+      {
+        "commit": "68cbfb53e76ec459ac0412f93113118a9f0cb5c0",
+        "time": "2026-11-03T09:44:21+08:00",
+        "subject": "docs: audit production Mellum MoE combine and fixed routing"
+      },
+      {
+        "commit": "b3dc6092c7c03c4b4874a79cd61c7478affe550a",
+        "time": "2026-11-03T09:27:48+08:00",
+        "subject": "Revert \"fix: use deterministic Mellum MoE for eager forwards\""
+      },
+      {
+        "commit": "3eee14a9eb98e8b0386d29dc6fec89a256ed1051",
+        "time": "2026-11-03T09:16:27+08:00",
+        "subject": "fix: use deterministic Mellum MoE for eager forwards"
+      },
+      {
+        "commit": "116b2dabd81f3e86f1c4a3997967218306ab3f8e",
+        "time": "2026-11-03T08:41:40+08:00",
+        "subject": "docs: detailed task specification for continuing Step 0"
+      },
+      {
+        "commit": "3d3319f3a794b6d05f6a5c94467bd9892c0c2ecc",
+        "time": "2026-11-03T07:56:19+08:00",
+        "subject": "docs: final verification - reference path 896/896 tokens exact across 14 prompts on the final tree"
+      },
+      {
+        "commit": "3598e9fc9be421b19aa96c67d763cfdaffe0042f",
+        "time": "2026-11-03T07:43:13+08:00",
+        "subject": "docs: state where the work lives and that nothing was pushed (no push authorisation)"
+      },
+      {
+        "commit": "bbe48a6a2e576a9bf7a5e595da933a6fb0527036",
+        "time": "2026-11-03T07:42:30+08:00",
+        "subject": "docs: brief records that the prescribed fix was implemented and measured ineffective"
+      },
+      {
+        "commit": "37b92542d854b74deae5928404fc41e2556aae4f",
+        "time": "2026-11-03T07:41:50+08:00",
+        "subject": "diag: the objective-prescribed fix (eager attention + HF MoE) measures 0.0625, worse than baseline"
+      },
+      {
+        "commit": "69ccb859d8c1f0af82265b0c49db61743e7b9f05",
+        "time": "2026-11-03T07:39:37+08:00",
+        "subject": "docs: debugging guide derived from this session - measurement traps, established per-stage deviations, margin rule, and the seven dead ends"
+      },
+      {
+        "commit": "3ad72c2e78bf3c1eebd551b0c0977a90568d7915",
+        "time": "2026-11-03T07:38:31+08:00",
+        "subject": "docs: keep the 08:00 brief in one language and in reading order"
+      },
+      {
+        "commit": "0d335bd579d78f5c0392ca3544dcd8475a521367",
+        "time": "2026-11-03T07:37:46+08:00",
+        "subject": "diag: three-port same-batch replay executed (8001 1.0000 / 8002 0.2188 / 8003 0.2031)"
+      },
+      {
+        "commit": "313b694be0f06f3c29afbde37f8fa1ff9f71da39",
+        "time": "2026-11-03T07:33:58+08:00",
+        "subject": "docs: 2-minute 08:00 brief with status, three-path table, proven facts and next steps"
+      },
+      {
+        "commit": "acf9284cac919b616538847748b6edc849233fdb",
+        "time": "2026-11-03T07:33:13+08:00",
+        "subject": "docs: handover - complete commit list for this session"
+      },
+      {
+        "commit": "6a825c9deb182149cd7ca46d4e097258d6747387",
+        "time": "2026-11-03T07:32:40+08:00",
+        "subject": "docs: drop the duplicated stale exclusion table from the report"
+      },
+      {
+        "commit": "82bf3b6bc1d11dfbd2d55c24fb0e280e07b22478",
+        "time": "2026-11-03T07:32:09+08:00",
+        "subject": "diag: MTP cannot be measured (no draft checkpoint); recorded with the exact failure"
+      },
+      {
+        "commit": "ac88800713c1bf477c9ce49b9c384d41a038f47e",
+        "time": "2026-11-03T07:28:27+08:00",
+        "subject": "diag: ordered MoE fixes run-to-run AND dual-GPU reproducibility (verified); session summary"
+      },
+      {
+        "commit": "534d2567cf355bd366e21e2001b2daf9c9a58384",
+        "time": "2026-11-03T07:26:07+08:00",
+        "subject": "diag: production also fails dual-GPU invariance (token 12 differs); same atomic root cause"
+      },
+      {
+        "commit": "665fd6e0c3d403a25d049c2f762d928f7e855b70",
+        "time": "2026-11-03T07:23:43+08:00",
+        "subject": "docs: handover - the determinism problem, its proven cause, its measured cost, and the right fix"
+      },
+      {
+        "commit": "53a348b87b8f95caa167ee5c697a8c2d1df70f9b",
+        "time": "2026-11-03T07:23:17+08:00",
+        "subject": "diag: determinism costs 2.75x throughput (26.3 -> 9.6 tok/s) with the reference MoE substitution"
+      },
+      {
+        "commit": "cc237c5b27fc81bf9a7a2294b128af5302ec051e",
+        "time": "2026-11-03T07:20:18+08:00",
+        "subject": "diag: VERIFIED - MoE atomics cause greedy nondeterminism; ordered accumulation makes output bit-identical"
+      },
+      {
+        "commit": "07a9c0ff8e9228c2df43986274afad726b60e654",
+        "time": "2026-11-03T07:17:32+08:00",
+        "subject": "diag: production is nondeterministic run-to-run; the A aggregate is a range, and atomics are why"
+      },
+      {
+        "commit": "aa09063513c92494da7bf17459bd33006e469fe9",
+        "time": "2026-11-03T07:15:57+08:00",
+        "subject": "docs: reference path re-verified at 1.0000 on the current tree; port-reuse trap caught"
+      },
+      {
+        "commit": "2868da751047897c90ecd5b04fa088d8ced0259a",
+        "time": "2026-11-03T07:12:16+08:00",
+        "subject": "docs: correct the kernel-attribution section and the remaining-work list in the report"
+      },
+      {
+        "commit": "ea2cdc9d7a3f336cd6297b40fff06dce5bafe672",
+        "time": "2026-11-03T07:11:14+08:00",
+        "subject": "docs: rewrite the report header with the final numbers and retract the wrong softmax attribution"
+      },
+      {
+        "commit": "bee55dcc6e2ddde6638ba71037ffe171e6c2ee83",
+        "time": "2026-11-03T07:10:30+08:00",
+        "subject": "docs: MoE fix gives +0.013 on C; four independent confirmations that no isolated fix closes the gap"
+      },
+      {
+        "commit": "aeba2645805d95d46ba76f2b927cd435c1db5dcc",
+        "time": "2026-11-03T07:02:13+08:00",
+        "subject": "docs: production C on 20 prompts = 0.7812; final three-path table"
+      },
+      {
+        "commit": "638eb850f7b91c6aebcb41c3d8d9dfcb4fd40577",
+        "time": "2026-11-03T06:53:55+08:00",
+        "subject": "docs: handover - final conclusion for the acceptance discussion"
+      },
+      {
+        "commit": "679c116e31aa98b9f9e47cec0ef476798343de33",
+        "time": "2026-11-03T06:53:19+08:00",
+        "subject": "diag(norm): ATOM RMSNorm accurate to a few ulps; no single bug - it is accumulated bf16 rounding"
+      },
+      {
+        "commit": "7386fcf40f8ea473541e0e2c12a4221fa77491be",
+        "time": "2026-11-03T06:51:20+08:00",
+        "subject": "chore: track the remaining dump patch"
+      },
+      {
+        "commit": "bada00c52adc54a7ae886c5aa78fd93c605f6905",
+        "time": "2026-11-03T06:51:02+08:00",
+        "subject": "docs: final regression check - default path byte-for-byte unchanged; end-of-session state"
+      },
+      {
+        "commit": "610d08c60ebcdac9fdc41d0cfc26a9fd468830ee",
+        "time": "2026-11-03T06:49:37+08:00",
+        "subject": "docs: handover addendum - what is excluded, what is confirmed, and the order of work"
+      },
+      {
+        "commit": "fb8684204b261b532c56200fd2cc3aded753ea94",
+        "time": "2026-11-03T06:49:11+08:00",
+        "subject": "diag(rope): production rope verified exact (half-split, theta 5e5); norm happens before the kernel"
+      },
+      {
+        "commit": "358405cac0055bacb4f8b38b051c294cb468d5d2",
+        "time": "2026-11-03T06:44:22+08:00",
+        "subject": "diag(rope): fused norm+rope uses the standard rotation; norm and qkv remain the candidates"
+      },
+      {
+        "commit": "4f223ef3c038fa94ccd7245e6925fa889a65a29c",
+        "time": "2026-11-03T06:42:28+08:00",
+        "subject": "diag(attn): eager attention matches the fused kernel in prefill and decode; attention is exonerated"
+      },
+      {
+        "commit": "2d37d8f04b877aaa9d6810fb3e2ae95f5fac9dd6",
+        "time": "2026-11-03T06:40:50+08:00",
+        "subject": "feat(attn): HF-order eager attention (gated); proves the fused attention kernel is accurate to 5e-4 and is not the 0.03 source"
+      },
+      {
+        "commit": "1dfee0b350512ff3f2da035d81c45d21a1a743c2",
+        "time": "2026-11-03T05:44:01+08:00",
+        "subject": "diag(mellum): the reference MoE recovers the 0.125-margin step; MoE determinism is the first fix to make"
+      },
+      {
+        "commit": "4f8f64193e0d043fdc8d18603fc40d6090e2bc93",
+        "time": "2026-11-03T05:42:35+08:00",
+        "subject": "diag(mellum): margin prediction confirmed - 0.125 margin flips, 2.0 margin holds"
+      },
+      {
+        "commit": "de790416c6ce6fe1bc901b311d5d22144756e030",
+        "time": "2026-11-03T05:41:09+08:00",
+        "subject": "docs: final handover with the margin/survival explanation and the measured three-path table"
+      },
+      {
+        "commit": "0b768ad566709b69b5b6fba0388a9319c9dfc304",
+        "time": "2026-11-03T05:40:41+08:00",
+        "subject": "docs: quantitative survival model explaining A 0.27 / B 1.0000 / C 0.77"
+      },
+      {
+        "commit": "82d105f70da3efce3ee0914e311fb44034dddd15",
+        "time": "2026-11-03T05:40:19+08:00",
+        "subject": "diag(mellum): A-0006 has an exact-tie step; 2/10 steps sit inside the kernel error band"
+      },
+      {
+        "commit": "f10023f2d5f0de8a7068deb0fa045d45b0607802",
+        "time": "2026-11-03T05:33:01+08:00",
+        "subject": "chore: add the remaining diagnostic scripts (tier-B compare, C checks, margins)"
+      },
+      {
+        "commit": "51fffe98dd48e10effa8626fc9e02457f2f4c11a",
+        "time": "2026-11-03T05:32:53+08:00",
+        "subject": "chore: commit the profiling scripts used this session; drop GPU core dumps"
+      },
+      {
+        "commit": "145d140c67e96ba1c460705422e8c6460189f3d8",
+        "time": "2026-11-03T05:31:27+08:00",
+        "subject": "docs: add the margin analysis to the Step 0 report"
+      },
+      {
+        "commit": "fde3368e1cf7adb05d23c463afc11cf1ee974aae",
+        "time": "2026-11-03T05:31:05+08:00",
+        "subject": "diag(mellum): HF decision margins explain the scenario dependence (B ~6 logits, A as low as 0.125)"
+      },
+      {
+        "commit": "bc4b47359431078ec97a5d1a5b36033ab8209e23",
+        "time": "2026-11-03T05:22:55+08:00",
+        "subject": "docs: production path passes scenario B at 1.0000; the gap is scenario-dependent"
+      },
+      {
+        "commit": "1129244dfa46b6e3840e394a65e787dc106412c3",
+        "time": "2026-11-03T05:21:26+08:00",
+        "subject": "docs: production measured on the current tree (A 0.2727, C 0.7708)"
+      },
+      {
+        "commit": "10616a6d4659133ea758fdc48dff7323830d0ed3",
+        "time": "2026-11-03T05:18:54+08:00",
+        "subject": "docs: verify the production path is unchanged by the diagnostic additions"
+      },
+      {
+        "commit": "a9ab4438cbdb784b1e29c6d1c924bcdc8a7fb938",
+        "time": "2026-11-03T05:16:45+08:00",
+        "subject": "docs: consolidated Step 0 report as of 2026-11-03 05:30"
+      },
+      {
+        "commit": "63c8810d82df5b0ff8dd00d092229fe9fe265c33",
+        "time": "2026-11-03T05:15:29+08:00",
+        "subject": "diag(mellum): reference math cannot use the engine paged KV cache (0.0156); recompute mode is required"
+      },
+      {
+        "commit": "f58b3c260f429a857b1b964f48d8e561a9a82f34",
+        "time": "2026-11-03T05:12:23+08:00",
+        "subject": "docs: reference-path operating constraints and the clean-state numbers"
+      },
+      {
+        "commit": "1ac4ee10a2ffb7e55131c482674e37526bd3eb1d",
+        "time": "2026-11-03T04:39:07+08:00",
+        "subject": "diag(mellum): reference path correct on C when measured cleanly; all C failures were corruption or a bad reference"
+      },
+      {
+        "commit": "b5a1a26754236989e37b5aee609b51ae2141c463",
+        "time": "2026-11-03T04:34:52+08:00",
+        "subject": "docs: consolidate state after stopping experiments; live-C measurement aborted by a server restart"
+      },
+      {
+        "commit": "2d575cba3a02c513a076b484c40a1afabf971e49",
+        "time": "2026-11-03T04:26:30+08:00",
+        "subject": "diag(mellum): concurrent clients corrupt the reference server; single-client rule recorded"
+      },
+      {
+        "commit": "6730698729da17ccf48eac5112cb6353df6e9438",
+        "time": "2026-11-03T04:03:50+08:00",
+        "subject": "docs: handover updated with the definitive three-path state and the two open C problems"
+      },
+      {
+        "commit": "8eb5ab51f4afaf281305426fb2248343a1155e19",
+        "time": "2026-11-03T04:02:54+08:00",
+        "subject": "diag(mellum): C-0001 reference is unreproducible; the 12.5k engine failure is separate and length-dependent"
+      },
+      {
+        "commit": "1fc7bd8edfc000e81d1aacde09d6d85ebcbde664",
+        "time": "2026-11-03T03:49:11+08:00",
+        "subject": "docs: definitive three-path state at 04:10; C-0001 fails in the reference path too"
+      },
+      {
+        "commit": "6144a32c7078a34c0686dc934fe7493535e0bd7b",
+        "time": "2026-11-03T03:39:50+08:00",
+        "subject": "diag(mellum): isolate the regression to ATTN_CHUNK; memory fraction is irrelevant"
+      },
+      {
+        "commit": "23816f105371c5c317fef24c40a9c44b6424dcab",
+        "time": "2026-11-03T03:35:14+08:00",
+        "subject": "diag(mellum): ATTN_CHUNK/0.35 memory setting breaks A; invalidate measurements that used it"
+      },
+      {
+        "commit": "ed35e60a2512b9679d1847a6022fac5cab44d38a",
+        "time": "2026-11-03T03:10:56+08:00",
+        "subject": "diag(mellum): production expert layout is shuffled cat(gate,up); gate weight is transposed; reference MoE alone gives no net gain"
+      },
+      {
+        "commit": "cf9d6d859a65a8415dd8260d7de0b673968d4a04",
+        "time": "2026-11-03T03:00:54+08:00",
+        "subject": "diag(mellum): production FusedMoE weight layout differs from the reference assumption; branch kept off"
+      },
+      {
+        "commit": "4bf3254cd9bb45ef9a0b055e337536a443aad6c8",
+        "time": "2026-11-03T02:28:24+08:00",
+        "subject": "diag(mellum): retract the permutation claim; production L0/L1 differ by small numerical amounts only"
+      },
+      {
+        "commit": "18d8fba8d543f96896ae1517848c985e40933848",
+        "time": "2026-11-03T02:15:35+08:00",
+        "subject": "feat(diag): ATOM_PROD_DUMP hooks; tier-B shows production L0 attention is permuted, not drifted"
+      },
+      {
+        "commit": "ce223e94a47b6f124148aacf2fc0d1f207e7bdd9",
+        "time": "2026-11-03T01:44:36+08:00",
+        "subject": "docs: three-tier validation system with path-3 profiling plan"
+      },
+      {
+        "commit": "b8fd35a7113f5d16946ca06a1be48c539cd4d803",
+        "time": "2026-11-03T01:42:28+08:00",
+        "subject": "feat(mellum): batched_mm decode branch + query chunking to avoid the 4-D softmax OOM"
+      },
+      {
+        "commit": "6500d2d524a8be29ddbccde74bae2c90da28ba93",
+        "time": "2026-11-03T01:10:45+08:00",
+        "subject": "docs: overnight plan for three-path unification"
+      },
+      {
+        "commit": "a373049ded2753c83c8477131b96d1323b63cb0f",
+        "time": "2026-11-03T01:08:24+08:00",
+        "subject": "fix(mellum): revert the harmful request-isolation change; A restored to 1.0000"
+      }
+    ],
+    "2026-11-02": [
+      {
+        "commit": "f7269565a3c00f8ce651de7a0642b2b30633e3c8",
+        "time": "2026-11-02T21:31:24+08:00",
+        "subject": "diag(mellum): default fast path A = 0.2292; reference path is not the deliverable"
+      },
+      {
+        "commit": "5965db6635a5987fa12afcefcd8205b0751d5759",
+        "time": "2026-11-02T20:15:41+08:00",
+        "subject": "docs: engineering handover for the Step 0 correctness work"
+      },
+      {
+        "commit": "b0fb60fbbb63861074df28851d3200a17d887e53",
+        "time": "2026-11-02T20:01:48+08:00",
+        "subject": "diag(mellum): teacher forcing invalid on the text prompt path; isolation fix kept"
+      },
+      {
+        "commit": "96aa545cb304517e71ea5116e57c79ce4528695d",
+        "time": "2026-11-02T19:44:28+08:00",
+        "subject": "fix(mellum): isolate reference-path state per request by classifying the token stream"
+      },
+      {
+        "commit": "797e20d7e9cd84b2ce705b90f124b0f4098b477b",
+        "time": "2026-11-02T19:04:22+08:00",
+        "subject": "diag(mellum): clean C run 7/8 exact; earlier C figures were stale-server measurements"
+      },
+      {
+        "commit": "83d9a08dba2c96748400eccdfef9c9b37fe72c28",
+        "time": "2026-11-02T18:39:16+08:00",
+        "subject": "diag(mellum): failing C prompt has normal chunk structure and valid KV; residual arithmetic difference"
+      },
+      {
+        "commit": "ab720ca6156f9ffb2c728dfebf3e02018582fdc1",
+        "time": "2026-11-02T18:14:59+08:00",
+        "subject": "diag(mellum): C long context bit-exact with both fixes; correct the 4TB arithmetic and the stale-server claim"
+      },
+      {
+        "commit": "78da84c35db820da6876e5ea6ddccb4a93db1ebb",
+        "time": "2026-11-02T17:07:00+08:00",
+        "subject": "fix(mellum): KV buffer no longer reallocated to zeros; 1200-token decode now matches HF"
+      },
+      {
+        "commit": "f6d295d232d5e3c9333a191b12d9bdc5d19b5868",
+        "time": "2026-11-02T15:18:33+08:00",
+        "subject": "fix(mellum): 4-D attention score matmul; scenario A becomes 20/20 exact vs HF"
+      },
+      {
+        "commit": "f1c43e980459d307900aa8b38606bd2878bf59ea",
+        "time": "2026-11-02T14:31:49+08:00",
+        "subject": "diag(mellum): root cause - attention scores use a 3-D batch where HF uses 4-D; softmax and q_norm are exact"
+      },
+      {
+        "commit": "654daf6d565f1cd05c346a1cfb6747060253b4aa",
+        "time": "2026-11-02T13:51:49+08:00",
+        "subject": "diag(mellum): q_norm exact, per-head attention output differs; scores/softmax/AV are the last three stages"
+      },
+      {
+        "commit": "56d80b7e55688cbaabc2f3f29c472bcf903c0804",
+        "time": "2026-11-02T13:41:22+08:00",
+        "subject": "diag(mellum): four-tensor L0 comparison; attention seeds a single-dim one-ulp difference"
+      },
+      {
+        "commit": "5a84679307fb69d61d5af1ade32af56792540249",
+        "time": "2026-11-02T12:48:11+08:00",
+        "subject": "diag(mellum): grouped_mm matches HF exactly; MOE_DET was wrong; _unshuffle is the last suspect"
+      },
+      {
+        "commit": "ac99522e55ff7daec3bd5fa3a25c9989e0c8b339",
+        "time": "2026-11-02T11:50:36+08:00",
+        "subject": "diag(mellum): expert routing bit-identical; one-ulp difference is inside the expert GEMM"
+      },
+      {
+        "commit": "cda6f9b488d700ab05c6a071683fc334f69aca63",
+        "time": "2026-11-02T11:22:59+08:00",
+        "subject": "diag(mellum): prefill exact at 845/866 positions; 21 positions differ by one ulp under layer 0"
+      },
+      {
+        "commit": "6d742fb21b74dc919997a3fdca4f8f45241d32e0",
+        "time": "2026-11-02T10:58:49+08:00",
+        "subject": "diag(mellum): divergence is inside L1 attention; per-op harness added (round 42)"
+      },
+      {
+        "commit": "9b9459b9f1a00e37b3bb163c4ab3b9d2f4e0cf76",
+        "time": "2026-11-02T10:27:12+08:00",
+        "subject": "diag(mellum): HF reproduces itself inside the engine env; engine differs from L1 by one ulp"
+      },
+      {
+        "commit": "c90149e574d3b6602474128a37e7e814bf8ab1b0",
+        "time": "2026-11-02T08:26:07+08:00",
+        "subject": "docs(mellum): 8am close-out - A 0.3836, B 1.0000, C 0.5816, Step 0 not passed"
+      },
+      {
+        "commit": "a08cd812e4694c7ab89d933984175536cab17639",
+        "time": "2026-11-02T01:30:39+08:00",
+        "subject": "docs(mellum): overnight runbook for Step 0 (state, blockers, next experiments)"
+      },
+      {
+        "commit": "8a5d74b7d9b61b72a074ad563f5b753e2653f4cd",
+        "time": "2026-11-02T01:29:23+08:00",
+        "subject": "diag(mellum): paired BLAS experiment fails; cross-process kernel choice is the remaining obstacle (round 40)"
+      }
+    ],
+    "2026-11-01": [
+      {
+        "commit": "cd0db9c17030702faa9c4380ba4caf35c455e69c",
+        "time": "2026-11-01T22:53:52+08:00",
+        "subject": "diag(mellum): TORCH_BLAS_PREFER_HIPBLASLT=0 makes the engine reproduce HF exactly"
+      },
+      {
+        "commit": "5aa5640fa70b1e25f59d5c5d601ac8a7d8166539",
+        "time": "2026-11-01T22:32:23+08:00",
+        "subject": "diag(mellum): pristine engine returns different answers for the same prompt (first request anomalous)"
+      },
+      {
+        "commit": "5b1d121aa8c5716a915de3d9a0326b2b0b8c4d5a",
+        "time": "2026-11-01T22:01:38+08:00",
+        "subject": "wip(mellum): prompt capture + trim, BLAS caveat, and honest Step-0 status (round 37)"
+      },
+      {
+        "commit": "49812ceda23c5ce40a70dd09097b87752f8cf939",
+        "time": "2026-11-01T20:05:46+08:00",
+        "subject": "diag(mellum): extra trailing deferred token contaminates back-to-back requests; earlier determinism claim retracted"
+      },
+      {
+        "commit": "35c5893559df26f08b842aa4979fbb742229c4e8",
+        "time": "2026-11-01T19:02:00+08:00",
+        "subject": "diag(mellum): layer-0 input, LN and q/k proven exact; delta is after q/k"
+      },
+      {
+        "commit": "b34d6549396e1e96a3788689ba19e6cd66c0f051",
+        "time": "2026-11-01T18:14:43+08:00",
+        "subject": "diag(mellum): embedding bit-identical, first divergence is L0 attention, and only in-engine"
+      },
+      {
+        "commit": "f02a6a20af3a35959dd174a8b8c41d6306f2c463",
+        "time": "2026-11-01T17:27:33+08:00",
+        "subject": "diag(mellum): per-step logits diff for A-0012 - same top5 order, values differ ~0.4, argmax flips on a 0.125 margin"
+      }
+    ],
+    "2026-10-31": [
+      {
+        "commit": "f4fb8c37f7cd35b36b7bc7a6290f169c7873bece",
+        "time": "2026-10-31T17:07:10+08:00",
+        "subject": "docs(mellum): per-step probe blocked by HSA faults on this node (round 32)"
+      },
+      {
+        "commit": "2cbaa754aea762fec8702670fb3fa2f734e3106d",
+        "time": "2026-10-31T16:54:55+08:00",
+        "subject": "test(mellum): full A/B/C through the exact path - A 0.3516, B 1.0000, C 0.5816 (round 31)"
+      },
+      {
+        "commit": "291503457c1b4efc01db3924cbf5373bcf4d6071",
+        "time": "2026-10-31T14:55:15+08:00",
+        "subject": "test(mellum): measure the exact path (5.4x at 1k, 37x at 7.9k) and document the incremental variant's remaining bug"
+      },
+      {
+        "commit": "79a9d44d10741119154516f72007f66d023ae9a6",
+        "time": "2026-10-31T12:45:59+08:00",
+        "subject": "docs(mellum): 12580-token case is a very-long-context attention limitation (round 29)"
+      },
+      {
+        "commit": "33741da7c8fdef866cf62bffed806d96e808ef4a",
+        "time": "2026-10-31T12:12:12+08:00",
+        "subject": "docs(mellum): C-0001 narrowed down; add row-blocked softmax and chunk logging (round 28)"
+      },
+      {
+        "commit": "78940c798be8fbcd1a47b19b6bdfce6dbd1af893",
+        "time": "2026-10-31T11:24:07+08:00",
+        "subject": "docs(mellum): two of three mismatches were stale reference data; C-0001 at 12580 tokens is the only open case (round 27)"
+      },
+      {
+        "commit": "e2d1f28c60579367d503ee2fac45b2d57f92e174",
+        "time": "2026-10-31T10:49:03+08:00",
+        "subject": "docs(mellum): record the working reference path and the three remaining mismatches (round 26)"
+      },
+      {
+        "commit": "7523f74becd4fd796ba4d2ee25038c04fb4fcf69",
+        "time": "2026-10-31T10:26:19+08:00",
+        "subject": "fix(mellum): chunk-safe token history (a chunk starting at position 0 begins a request)"
+      },
+      {
+        "commit": "d33417454cb2c7169814049504095fe7e9983cd1",
+        "time": "2026-10-31T09:29:19+08:00",
+        "subject": "feat(mellum): the engine reference path now reproduces HF greedy tokens exactly"
+      },
+      {
+        "commit": "22465952bdc5bd3d35f40106a3b1d207a2b1b8cd",
+        "time": "2026-10-31T09:01:38+08:00",
+        "subject": "docs(mellum): correct the round-18 claim and record the engine-side truth (round 25)"
+      },
+      {
+        "commit": "a6d2a6ae027934acb3e16df16aa646b5e6367a76",
+        "time": "2026-10-31T08:47:22+08:00",
+        "subject": "fix(mellum): KV write slots must not index the block table in recompute mode"
+      },
+      {
+        "commit": "eaf230cf6703d94701aa7a6ab3a5c467627a2b6f",
+        "time": "2026-10-31T06:25:36+08:00",
+        "subject": "docs(mellum): report section 10 - the full localization narrative and scenario recomputation"
+      },
+      {
+        "commit": "98be04d1edad7414e936550a974ed44c5ffdd752",
+        "time": "2026-10-31T05:50:50+08:00",
+        "subject": "test(mellum): recompute scenario overlap rates from raw outputs (0.3320 / 1.0000 / 0.4434 / 0.5039)"
+      },
+      {
+        "commit": "186983dbc3ebdf3cd4ce0e62e8d5818c2e928871",
+        "time": "2026-10-31T05:25:32+08:00",
+        "subject": "fix(mellum): refuse recompute mode with a multi-sequence batch instead of mixing histories"
+      },
+      {
+        "commit": "f4e1ea3b5e8b6b75278c517fcf9a9fc98e53624b",
+        "time": "2026-10-31T05:01:00+08:00",
+        "subject": "fix(mellum): keep the recompute history in one place instead of keying on the block table"
+      },
+      {
+        "commit": "920e3603210c655e1584d3175f4557fef788c4d1",
+        "time": "2026-10-31T04:49:03+08:00",
+        "subject": "refactor(mellum): extract seq_slots and unit-test the block-table fallback"
+      },
+      {
+        "commit": "9d65a4641acaf5321beca6a6a2fe64460bc928af",
+        "time": "2026-10-31T04:47:51+08:00",
+        "subject": "docs(mellum): measured engine startup thresholds (28.8 GiB) and the VllmBackend assertion diagnosis"
+      },
+      {
+        "commit": "3a2ca4552196d0933d3877c2670674183ec2747c",
+        "time": "2026-10-31T04:40:21+08:00",
+        "subject": "test(mellum): add the one-command Step 0 gate (server + short/full comparison)"
+      },
+      {
+        "commit": "11b0c06cf25fc87b224fea2a25cd537c4a903c05",
+        "time": "2026-10-31T04:39:24+08:00",
+        "subject": "docs(mellum): status scoreboard reflects the 7881 bit-exact result"
+      },
+      {
+        "commit": "6877d98d70f493af149497d25c7fb2a4b931e7e0",
+        "time": "2026-10-31T04:22:32+08:00",
+        "subject": "test(mellum): independent forward is bit-exact at 7881 tokens"
+      },
+      {
+        "commit": "28865e5e638ee7904d98fb42d585d2cbafa1e4c6",
+        "time": "2026-10-31T03:56:59+08:00",
+        "subject": "docs(mellum): add the Step 0 status scoreboard (verified vs pending)"
+      },
+      {
+        "commit": "c173fa9b9d8f9caa9134d8ad887bfe129bd8674e",
+        "time": "2026-10-31T03:45:07+08:00",
+        "subject": "docs(mellum): HF 7881 reference computed on A100 via split-phase harness (round 21)"
+      },
+      {
+        "commit": "3c0e566d978fe18a79c09a29519b07a76c2a1192",
+        "time": "2026-10-31T02:53:45+08:00",
+        "subject": "docs(mellum): add the reproducible exact-arithmetic verification chain to the report"
+      },
+      {
+        "commit": "d69f9569e4246db688350a96d5196369f272ef9a",
+        "time": "2026-10-31T02:43:42+08:00",
+        "subject": "docs(mellum): [801,0,0,0] was the block-table fallback, not arithmetic (round 20)"
+      },
+      {
+        "commit": "8be3cf71255f6f9e69dcca6c9ca3c1ae65910a1b",
+        "time": "2026-10-31T02:41:14+08:00",
+        "subject": "fix(mellum): reference path no longer depends on the engine block table in recompute mode"
+      },
+      {
+        "commit": "b57c6a307beeb16af13b89a2c82e009b708d8c56",
+        "time": "2026-10-31T01:20:44+08:00",
+        "subject": "test(mellum): exact arithmetic confirmed at 4096 and 6144 tokens (max|delta| 0.000000); 7881 is memory-bound only"
+      },
+      {
+        "commit": "b3757b4e9b0275cef2934a2501cf4bb43b6ef2ce",
+        "time": "2026-10-31T00:32:50+08:00",
+        "subject": "fix(mellum): trim reference-path peak memory (in-place mask, explicit frees, allocator fraction, optional probe chunking)"
+      }
+    ],
+    "2026-10-30": [
+      {
+        "commit": "70b9ad3f80cdd3f2059c31c404149f9b70a3401a",
+        "time": "2026-10-30T23:34:54+08:00",
+        "subject": "test(mellum): in-engine reference path verified - params bitwise identical, short-sequence token matches HF"
+      },
+      {
+        "commit": "cbcdc9f1c6d3115138b20961ead6949b6db1f23b",
+        "time": "2026-10-30T18:42:51+08:00",
+        "subject": "feat(mellum): exact-arithmetic reference path - HF reproduced bit-for-bit (max|delta| 0.000000)"
+      },
+      {
+        "commit": "75262f37bef0bb6f590e83ce53e6df4968a6d60b",
+        "time": "2026-10-30T13:50:43+08:00",
+        "subject": "docs(mellum): report section 8 - audit of the task's own links (vLLM explicitly documents the non-reproducibility)"
+      },
+      {
+        "commit": "43f7ed0a2bdb055231184724ecd0895a1e948e1b",
+        "time": "2026-10-30T12:36:34+08:00",
+        "subject": "docs(mellum): consolidated Step 0 determinism/correctness report"
+      },
+      {
+        "commit": "5dfe93f99c68752ad3bfe5cfc5d5dcdceca78382",
+        "time": "2026-10-30T12:22:01+08:00",
+        "subject": "test(mellum): per-layer HF-vs-ATOM drift profile; late-layer bf16 grid explains the ties"
+      },
+      {
+        "commit": "53159f302d1622f7573af5696881ef74df935fee",
+        "time": "2026-10-30T12:03:02+08:00",
+        "subject": "test(mellum): HF-order bf16 MoE + HF bf16 norm gains +8 points (42.42% -> 50.39% on 20 prompts)"
+      },
+      {
+        "commit": "80458e36caa6ef25e429e858117c82f3dc4b9f32",
+        "time": "2026-10-30T11:59:31+08:00",
+        "subject": "test(mellum): precision-ladder switches; bf16 logits argmax is a no-op (ATOM head is already bf16)"
+      },
+      {
+        "commit": "c84afb2463bcb09af2e220b5773b9f23a99e2f32",
+        "time": "2026-10-30T10:50:27+08:00",
+        "subject": "test(mellum): literal per-token gate on three scenarios - B 100%, C 44.34%, A 33.20%"
+      },
+      {
+        "commit": "fc0bc6d590b0db508e97051c91114e37981953aa",
+        "time": "2026-10-30T10:06:14+08:00",
+        "subject": "test(mellum): launch the 200-prompt teacher-forced gate (incremental, resumable)"
+      },
+      {
+        "commit": "b222d75ef5001647718b298e199a1972d83a34e9",
+        "time": "2026-10-30T09:52:29+08:00",
+        "subject": "test(mellum): Triton MoE path reaches 279/279 = 100.00% on decidable teacher-forced positions"
+      },
+      {
+        "commit": "50d6a5f44c5b7efc8df3b715afebc54abba86c6f",
+        "time": "2026-10-30T09:43:40+08:00",
+        "subject": "test(mellum): teacher-forced gate passes 278/279 = 99.64% on oracle-decidable positions"
+      },
+      {
+        "commit": "e11bb9402a34cd7cdf53dbde3a3d82ef4d8799cb",
+        "time": "2026-10-30T09:15:10+08:00",
+        "subject": "test(mellum): two deterministic MoE paths agree with each other only 24% of the time"
+      },
+      {
+        "commit": "6b33394cdb801be56971d00d83f7e0351304f8bd",
+        "time": "2026-10-30T08:58:46+08:00",
+        "subject": "fix(mellum): Triton MoE path must disable ATOM's swiglu_limit=7.0 clamp"
+      },
+      {
+        "commit": "0e71ad93c6900003d5b4fabf8668932853e9ca50",
+        "time": "2026-10-30T08:54:21+08:00",
+        "subject": "test(mellum): layer-2 Triton MoE failure is a magnitude effect on one row"
+      },
+      {
+        "commit": "1284065de92983813986e4ac8b9fdcb8a1af430b",
+        "time": "2026-10-30T08:40:27+08:00",
+        "subject": "test(mellum): Triton MoE fault localised to one prefill case at layer 2"
+      },
+      {
+        "commit": "3c1972cd7906e51d7063eb44b31acadc8651a6a1",
+        "time": "2026-10-30T08:25:40+08:00",
+        "subject": "test(mellum): three-way MoE comparison - Triton matches fp32 ref at L0/L1, breaks at L2"
+      }
+    ],
+    "2026-10-29": [
+      {
+        "commit": "5fdc06802e2ab08c5c6718997f095a27ebf7a82e",
+        "time": "2026-10-29T23:32:12+08:00",
+        "subject": "wip(mellum): Triton matmul_ogs MoE branch + greedy argmax guard (debug worktree only)"
+      },
+      {
+        "commit": "14f8014d8c8d09616ffab595d950f85e98e7cffc",
+        "time": "2026-10-29T23:24:02+08:00",
+        "subject": "test(mellum): Triton matmul_ogs MoE is deterministic but numerically wrong (8.1% vs HF)"
+      },
+      {
+        "commit": "c66eb6aa0d1c96b275dfa86ea7f0752199a81f95",
+        "time": "2026-10-29T21:45:52+08:00",
+        "subject": "docs(mellum): correct the Triton MoE follow-up note (ATOM_USE_TRITON_MOE is Mxfp4-only)"
+      },
+      {
+        "commit": "6c96b87ac9de708509ef75a29b6c748ff997e22b",
+        "time": "2026-10-29T21:39:05+08:00",
+        "subject": "test(mellum): bisect the forward per layer; aiter 2-stage CK MoE is the nondeterminism source"
+      },
+      {
+        "commit": "39358cc8a4b2dff26bc5221d7f732a4db0cd631d",
+        "time": "2026-10-29T20:08:35+08:00",
+        "subject": "test(mellum): exonerate the gluon KV-block reduction; divergence is already in prefill logits"
+      },
+      {
+        "commit": "dc720b33ef6ffd401961568bee19c47b35da6e76",
+        "time": "2026-10-29T14:43:17+08:00",
+        "subject": "test(mellum): all three surviving determinism suspects rejected at n=40"
+      },
+      {
+        "commit": "37e71a446f13a1dccc88d85214628c986daac751",
+        "time": "2026-10-29T13:12:52+08:00",
+        "subject": "test(mellum): establish the n=40 nondeterminism baseline and a verdict rule"
+      },
+      {
+        "commit": "c8211921de28f05c222df20e4b04fc0045b804c1",
+        "time": "2026-10-29T11:56:36+08:00",
+        "subject": "test(mellum): gating top-k 'fix' did not reproduce; protocol was too weak"
+      },
+      {
+        "commit": "21ce039c5cc704ed655c93ec32941950ecd60014",
+        "time": "2026-10-29T11:23:09+08:00",
+        "subject": "test(mellum): rule out partition combine and buffer init as determinism causes"
+      },
+      {
+        "commit": "05ee6fc002a3fe09da4afc53bc0302f2dfb0e4d1",
+        "time": "2026-10-29T10:57:32+08:00",
+        "subject": "test(mellum): window=16 ablation of the sliding-window fix is inconclusive"
+      },
+      {
+        "commit": "58416b66ddb59f4ca38b708d2f6d07d119bced2b",
+        "time": "2026-10-29T08:53:34+08:00",
+        "subject": "docs(mellum): record measured attention partition counts and the concurrency dependency"
+      },
+      {
+        "commit": "2b57a22d5e442d29cb27bc6a961e04995e01c869",
+        "time": "2026-10-29T08:51:33+08:00",
+        "subject": "test(mellum): port is bit-exact vs HF at short context; reject the coverage theory"
+      },
+      {
+        "commit": "8e1f1064a67b346488bf8a1af89763814159b882",
+        "time": "2026-10-29T08:44:10+08:00",
+        "subject": "test(mellum): prompt-length sweep kills the fixed-64-token-threshold reading"
+      },
+      {
+        "commit": "62177cc18637429c7291294878aa4a812e82268d",
+        "time": "2026-10-29T02:07:04+08:00",
+        "subject": "test(mellum): block-size sensitivity of the nondeterminism"
+      },
+      {
+        "commit": "9abbaac4e4365c2c5154c3faa66ee383b8038fb8",
+        "time": "2026-10-29T02:04:07+08:00",
+        "subject": "test(mellum): bisect the nondeterminism to the first unstable step"
+      },
+      {
+        "commit": "aa8b8d915ebb4bce8437224a86b939315b964dde",
+        "time": "2026-10-29T02:00:46+08:00",
+        "subject": "test(mellum): show the greedy output is not reproducible, correct the record"
+      },
+      {
+        "commit": "5e7e5783cc1dfb63fe52d95fe9f5bf44638f9e83",
+        "time": "2026-10-29T01:47:55+08:00",
+        "subject": "bench: record step0 scenario A/B/C numbers and the level-3 candidate"
+      },
+      {
+        "commit": "b74401a0f1d3528444fe6cc34961d43651a59d6d",
+        "time": "2026-10-29T01:22:12+08:00",
+        "subject": "test(mellum): probe how tight the HF reference greedy path actually is"
+      },
+      {
+        "commit": "5b72cc44ae3e97a518b684ad557aa161d8eacb84",
+        "time": "2026-10-29T01:16:15+08:00",
+        "subject": "fix(mellum): align prefill sliding-window boundary with decode and HF"
+      },
+      {
+        "commit": "08ec449bb0296cd08efb7296bc796216f81f9bb9",
+        "time": "2026-10-29T00:17:47+08:00",
+        "subject": "test: add native HF Mellum correctness comparison"
+      }
+    ],
+    "2026-10-28": [
+      {
+        "commit": "05a095b6ffb5ac768f6afe67a55679da7c86c71e",
+        "time": "2026-10-28T23:26:45+08:00",
+        "subject": "feat: add initial Mellum single-card integration"
+      }
+    ]
+  },
+  "scope": "Current branch ancestry only. This does not prove work absent on a date or include every parallel research branch."
+}

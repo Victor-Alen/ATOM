@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+  <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">备答｜精度门槛与证据边界</text>
+  <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">每项通过结论，都绑定配置、输入与生成协议。</text>
+  <g id="correctness-table" data-pptx-native="table">
+    <metadata data-pptx-native="table">{"name":"公开集正确性门槛","x":60,"y":190,"width":1160,"height":380,"column_widths":[200,340,300,320],"columns":["检查","题目要求","当前结果","范围说明"],"rows":[["C200","前 64 token 一致率 ≥90%","12800 / 12800","200 条均完全一致"],["严格 16k","长上下文单独统计","64 / 64","输入恰为 16384 token"],["HumanEval","BF16 差距 ≤2 个百分点","148/164；差距 0","同协议 HF 为 148/164"],["MTP","开启时 on/off 完全一致","默认关闭","不声明开启配置通过"],["双卡","声明双卡时重新验收","声明单卡","不外推到双卡配置"]],"style":{"font_family":"Microsoft YaHei","font_size":24,"header_font_size":24,"header_fill":"#10243C","header_text":"#B4C5DA","body_fill":"#071323","body_text":"#F6F9FF","border_color":"#294361","border_width":1,"padding":{"left":18,"right":18,"top":14,"bottom":14}}}</metadata>
+    <rect x="60" y="190" width="1160" height="60" fill="#10243C"/>
+    <path d="M60 190H1220V570H60Z M60 250H1220 M60 314H1220 M60 378H1220 M60 442H1220 M60 506H1220 M260 190V570 M600 190V570 M900 190V570" fill="none" stroke="#294361"/>
+    <text x="78" y="230" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">检查</text>
+    <text x="278" y="230" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">题目要求</text>
+    <text x="618" y="230" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">当前结果</text>
+    <text x="918" y="230" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">范围说明</text>
+    <text x="78" y="291" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">C200</text>
+    <text x="278" y="291" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">前 64 token 一致率 ≥90%</text>
+    <text x="618" y="291" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#7ED8D0">12800 / 12800</text>
+    <text x="918" y="291" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">200 条均完全一致</text>
+    <text x="78" y="355" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">严格 16k</text>
+    <text x="278" y="355" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">长上下文单独统计</text>
+    <text x="618" y="355" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#7ED8D0">64 / 64</text>
+    <text x="918" y="355" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">输入恰为 16384 token</text>
+    <text x="78" y="419" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">HumanEval</text>
+    <text x="278" y="419" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">BF16 差距 ≤2 个百分点</text>
+    <text x="618" y="419" font-family="Arial, Microsoft YaHei" font-size="24" fill="#7ED8D0">148/164；差距 0</text>
+    <text x="918" y="419" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">同协议 HF 为 148/164</text>
+    <text x="78" y="483" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">MTP</text>
+    <text x="278" y="483" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">开启时 on/off 完全一致</text>
+    <text x="618" y="483" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">默认关闭</text>
+    <text x="918" y="483" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">不声明开启配置通过</text>
+    <text x="78" y="547" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">双卡</text>
+    <text x="278" y="547" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">声明双卡时重新验收</text>
+    <text x="618" y="547" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">声明单卡</text>
+    <text x="918" y="547" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">不外推到双卡配置</text>
+  </g>
+  <text x="60" y="620" font-family="Arial, Microsoft YaHei" font-size="24" fill="#FFB56B">附近文件的 3/164 已被 baseline 标记为无效协议；没有把它当作 HumanEval 对照。</text>
+  <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">证据：fast_full_correctness_20261105T165619Z；同协议 HF 对照，生成参数见报告。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">15 / 16</text>
+</svg>

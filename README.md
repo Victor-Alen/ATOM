@@ -1,3 +1,5 @@
+本分支的 **Mellum / 腾讯 CSIG 面试交付**：从 [一条命令启动与三个优化开关](README-CSIG.md) 开始，查看 [四页报告、中文答辩PPT、讲稿与AI说明](docs/csig/README.md) 和 [完整公开集结果及原始证据](results/README.md)。默认单卡BF16、MTP关闭；A超过题目基线，C时延仍未达到，材料保留真实结果。
+
 <div align="center" id="logo">
 <img src="docs/assets/atom_logo.png" alt="logo" width="400" margin="10px"></img>
 

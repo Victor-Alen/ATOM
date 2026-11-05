@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+  <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">选择三点，也要解释放弃什么</text>
+  <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">收益、精度、复现成本，共同决定最终取舍。</text>
+  <g id="decision-comparison" data-chart-type="pros_cons_chart">
+    <rect x="60" y="195" width="540" height="58" fill="#0052D9"/>
+    <text x="82" y="234" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">纳入三个优化点</text>
+    <rect x="660" y="195" width="560" height="58" fill="#10243C"/>
+    <text x="682" y="234" font-family="Arial, Microsoft YaHei" font-size="32" fill="#B4C5DA">未纳入默认交付</text>
+    <line x1="630" y1="195" x2="630" y2="613" stroke="#294361"/>
+    <text x="60" y="306" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">MoE 专家计算</text>
+    <text x="60" y="346" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">工具时间线显示显著耗时；路由、专家核、</text>
+    <text x="60" y="380" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">有序归并构成自包含的计算优化。</text>
+    <text x="60" y="431" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">Attention 计算</text>
+    <text x="60" y="471" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">21 层滑窗存在可省计算；逐核验证</text>
+    <text x="60" y="505" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">QK、softmax、PV 的数值边界。</text>
+    <text x="60" y="556" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">编译与图执行</text>
+    <text x="60" y="596" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">面向重复解码的提交开销，提供 eager 对照。</text>
+    <text x="682" y="300" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">MTP：保留研究记录，默认关闭</text>
+    <text x="682" y="336" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">短提示收益不能代替完整负载与 on/off 验收。</text>
+    <text x="682" y="389" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">双卡：必须证明每卡受益</text>
+    <text x="682" y="425" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">总吞吐翻倍不足以证明归一化收益。</text>
+    <text x="682" y="478" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">量化：需要重新通过精度门槛</text>
+    <text x="682" y="514" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">缺少完整验收，不计入当前成果。</text>
+    <text x="682" y="567" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">缓存与调度：留作后续方向</text>
+    <text x="682" y="603" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">三点预算已满；形状改变后需重新对齐。</text>
+  </g>
+  <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">题目第 5 节：每点针对一个瓶颈、有独立开关；Step 0 适配与精度修复不重复计点。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">10 / 16</text>
+</svg>
