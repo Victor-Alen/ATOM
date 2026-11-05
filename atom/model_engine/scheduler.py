@@ -464,6 +464,13 @@ class Scheduler:
             CacheStats() if config.enable_prefix_caching else None
         )
         self.enable_chunked_prefill = config.enable_chunked_prefill
+        self.interleave_prefill = os.getenv("ATOM_MELLUM_PREFILL_INTERLEAVE", "0") == "1"
+        self._last_scheduled_prefill = False
+        if self.interleave_prefill and (
+            config.enable_chunked_prefill or getattr(config, "kv_transfer_config", None)
+            or config.parallel_config.data_parallel_size != 1
+        ):
+            raise ValueError("Prefill interleaving currently requires unchunked local single-DP execution")
         # Number of running seqs currently mid-prefill (per-seq state lives in
         # `Sequence.is_partial_prefill`). Maintained as a counter so Phase 1
         # of `schedule()` can skip the running-queue scan entirely on
@@ -676,6 +683,11 @@ class Scheduler:
 
         if not self.running and not self.waiting:
             return None
+        # A long prefill must not push another long prefill ahead of the
+        # just-produced first token under deferred output. Give active requests
+        # one decode turn between prefill batches; do not mix attention layouts.
+        if self.interleave_prefill and self._last_scheduled_prefill and self.running:
+            _delayer_allows_prefill = False
 
         # ---- Phase 1: resume partial prefills from running ----
         # Gated by `_delayer_allows_prefill` so cross-DP alignment still
@@ -844,6 +856,7 @@ class Scheduler:
                 f"req_ids: {tuple(scheduled_seqs.keys())}"
             )
             self.prev_prompt = True
+            self._last_scheduled_prefill = True
             # lip: TODO for prefill/decode mixed batch
 
             connector_meta_output = None
@@ -864,6 +877,7 @@ class Scheduler:
             )
 
         # --- Decode scheduling ---
+        self._last_scheduled_prefill = False
         num_seqs_decode = 0
         num_decode_tokens = 0
         tokens_per_decode_seq = self.mtp_k + 1
