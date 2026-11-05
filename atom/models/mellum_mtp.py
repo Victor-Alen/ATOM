@@ -258,8 +258,18 @@ class MellumMTP(nn.Module):
             inputs_embeds = self.model.embed_tokens(input_ids)
         # llama.cpp graph_mtp uses [embedding, post-final-norm target hidden].
         # EagleProposer has already shifted input IDs and incremented positions.
-        x = self.mtp.fc(torch.cat((self.mtp.pre_fc_norm_embedding(inputs_embeds),
-                                  self.mtp.pre_fc_norm_hidden(hidden_states)), dim=-1))
+        projected_input = torch.cat((self.mtp.pre_fc_norm_embedding(inputs_embeds),
+                                     self.mtp.pre_fc_norm_hidden(hidden_states)), dim=-1)
+        from atom.utils.forward_context import get_forward_context
+        if (os.environ.get('ATOM_MELLUM_DRAFT_BATCHED_FC') == '1'
+                and not get_forward_context().context.is_prefill):
+            # This projection belongs only to the draft head. Its 2304x4608
+            # weight has no native target GEMM solution; batching avoids one
+            # GEMM per token row. Target verification arithmetic is unchanged.
+            x = torch.nn.functional.linear(projected_input, self.mtp.fc.weight,
+                                           self.mtp.fc.bias)
+        else:
+            x = self.mtp.fc(projected_input)
         x, residual = self.model.layers[str(self.model.mtp_start_layer_idx)](
             positions=positions, hidden_states=x, residual=None,
         )
