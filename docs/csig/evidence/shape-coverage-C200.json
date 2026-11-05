@@ -1,0 +1,154 @@
+{
+  "scope": "C200 public input-shape coverage only; no timing or correctness inferred.",
+  "candidates": {
+    "QK": {
+      "profile_path": "/workspace/ATOM-csig-global-qk/.runtime/340aadfc3f95d613/runtime/startup_delivery/native_sparse_qk_long_config.json",
+      "profile_entries": 12327,
+      "requests_covered": 198,
+      "uncovered_lengths": {
+        "4060": 1,
+        "4064": 1
+      },
+      "profile_examples": {
+        "15541": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "15557": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "15693": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "15785": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "15858": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "15908": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "15942": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "15965": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "16003": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        },
+        "16019": {
+          "row_tile": 224,
+          "depth": 64,
+          "mi": 16,
+          "kw": 8
+        }
+      }
+    },
+    "PV": {
+      "profile_path": "/workspace/ATOM-csig-global-qk/.runtime/340aadfc3f95d613/runtime/startup_delivery/native_sparse_pv_config.json",
+      "profile_entries": 13312,
+      "requests_covered": 200,
+      "uncovered_lengths": {},
+      "profile_examples": {
+        "15541": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "15557": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "15693": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "15785": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "15858": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "15908": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "15942": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "15965": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "16003": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        },
+        "16019": {
+          "mi": 16,
+          "kw": 8,
+          "row_tile": 288,
+          "depth": 64,
+          "rotate": false
+        }
+      }
+    }
+  }
+}

@@ -14,7 +14,7 @@
 | Content Strategy | 根据实测证据重组叙述；不得把小测、估算或历史版本当成最终全量数据 |
 | Created Date | 2026-11-05 |
 
-用户已在聊天确认推荐设计并授权自行迭代。主报告基于用户指定的 `OPTIMIZATION-REPORT.review-4pages.md` 更新。全量测试和最终消融尚在运行，涉及数据的页在最终证据冻结后再填定；禁止为赶制 PPT 补造数据。
+用户已在聊天确认推荐设计并授权自行迭代。主报告基于用户指定的 `OPTIMIZATION-REPORT.review-4pages.md` 更新。最终核心 `0453ef43` 的三轮完整测试、四行同版消融和三个profiling窗口已完成，源证据已导入 `sources/`；展示值与真实记录逐项核对。
 
 ## II. Canvas Specification
 
@@ -139,7 +139,7 @@ Runners-up considered：P04 不用 pareto_chart，尚无可支持累计占比因
 - Core message：吞吐和尾时延的瓶颈不同，长 prefill 会阻塞 decode。
 - Content：选取最终版本与对应对照的 torch profiler 原始 trace；展示主要 kernel 耗时与 launch 次数，注明采样负载和统计窗口。历史 trace 仅作为历史证据，不混入最终版本数字。
 - Visualization：stacked_bar_chart；辅以原生时间段示意，注明示意而非截图。
-- 时间：60 秒。
+- 时间：55 秒。
 
 ### Slide 05 - 优化点一：减少 MoE 的碎片计算与中间搬运
 
@@ -147,14 +147,14 @@ Runners-up considered：P04 不用 pareto_chart，尚无可支持累计占比因
 - Content：64 专家、top-8、hidden2304、中间维896；复用路由、stage1/stage2 shape 选择、slot 输出、有序累加。仅列最终实际启用且通过验证的内容。
 - Visualization：process_flow，输入→路由→专家→有序合并。
 - Evidence：展示同一优化点的独立开关、预估依据和同条件实测；不把所有无关小算子归入此点。
-- 时间：65 秒。
+- 时间：60 秒。
 
 ### Slide 06 - 优化点二：只计算注意力真正需要的区域
 
 - Core message：滑窗与数值等价约束共同决定可省掉的 QK、softmax、PV 工作。
 - Content：21 层1024滑窗、7层全注意力；保留 BF16 舍入边界；按冻结库的形状选择参数；未知形状安全回退。最终长上下文方案以完成验证的版本为准。
 - Layout：大幅因果矩阵与1024带状窗口，右侧两条关键约束；不是装饰卡片。
-- 时间：65 秒。
+- 时间：60 秒。
 
 ### Slide 07 - 优化点三：降低重复启动与图捕获成本
 
@@ -167,8 +167,8 @@ Runners-up considered：P04 不用 pareto_chart，尚无可支持累计占比因
 
 - Core message：收益来自同条件逐项开启的测量，不把独立测试加速比相乘。
 - Content：严格4行 Step0、+点1、+点1+2、+点1+2+3；列卡数、A吞吐、B TPOT P50、C TPOT P99/TTFT P99；注明请求数、重复次数、精度状态。
-- Visualization：basic_table。最终消融未完成前本页不填造值。
-- 时间：65 秒。
+- Visualization：basic_table。采用最终同版四行消融，明确小测规模，不拼接历史版本。
+- 时间：60 秒。
 
 ### Slide 09 - 全量结果逐项对照题目基线
 
@@ -182,21 +182,21 @@ Runners-up considered：P04 不用 pareto_chart，尚无可支持累计占比因
 - Core message：选择可验证的单卡收益，放弃缺乏完整证据或引入额外系统复杂度的方向。
 - Content：MTP 作为研究对照，默认关闭；双卡按卡数归一化且须复验；量化改变精度门槛；其他缓存/调度候选若未纳入最终三点则明确排除。说明实测失败和放弃原因，不用理论估算代替运行结果。
 - Visualization：pros_cons_chart。
-- 时间：40 秒。
+- 时间：50 秒。
 
 ### Slide 11 - 从仓库到服务只需一条启动命令
 
 - Core message：提交代码、开关、依赖、日志和评测命令形成可重复执行的交付。
 - Content：最终 GitHub 分支与提交；`bash scripts/start_server.sh`；三个优化点开关；manifest、真实生成检查、评测产物。最终路径以实际提交版核实。
 - Visualization：pipeline_with_stages，代码→服务→评测→证据。
-- 时间：40 秒。
+- 时间：45 秒。
 
 ### Slide 12 - 代码与结论都有可追溯证据
 
 - Closing impact：一句“能复现的收益，才计入最终结论”作为大字收束，下方两条证据链说明 AI 辅助与工作日志；并显示“进入10分钟问答”。
 - Core message：AI 帮助开发与诊断，正确性、性能和提交状态由实际运行确认。
 - Content：AI 工具用途、发现并纠正的错误建议；D1–D7 日志与真实提交对应。备页提供细节。
-- 时间：35 秒。前12页合计600秒。
+- 时间：40 秒。前12页合计600秒。
 
 ### Slide 13 - 备答：AI 使用与错误建议的验证
 

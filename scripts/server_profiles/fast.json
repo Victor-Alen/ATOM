@@ -365,12 +365,19 @@
     "atom/entrypoints/openai/api_server.py": "0772b3f554bfd897d8f07e51e08636271a730562b5b97a1706911df489c66e8e",
     "atom/model_ops/mellum_prefill_softmax_lane_cache.py": "ae0b91cda1799a75026478c0dbab695bdfdc78e09bcd00ded7ae430574b9dfcd",
     "atom/model_ops/mellum_prefill_global_qk.py": "d7c6a9ca03f2bd886ba57c1be631cf93bc23c97f97f869c087ad0578ada1daa0",
-    "scripts/start_server.py": "d10b8e799de0e1dd941ad66c058a156a2f40c87f6f83d9bf421a3d1e725949cb"
+    "scripts/start_server.py": "d10b8e799de0e1dd941ad66c058a156a2f40c87f6f83d9bf421a3d1e725949cb",
+    "scripts/validate_additional_long_context.py": "f9383e0d93484f0dc69b77c09cda651468f59de244e6bf781d4221365f90fd9f"
   },
   "cwd": "${REPO}",
   "evidence": {
-    "scope": "Isolated triangular global-QK workgroup mapping; fixed-input operator exact, full-model validation pending. MTP off.",
-    "baseline": "/data/datasets/baseline.json"
+    "scope": "Default point123 only: 1 MI308X, BF16, MTP off. Full public correctness and three complete benchmark repetitions recorded. A exceeds the supplied throughput baseline; C latency remains above baseline. Ablations are separately validated.",
+    "baseline": "/data/datasets/baseline.json",
+    "measured_core_commit": "0453ef43012b589e647a2d88e831f29ae880b665",
+    "correctness": "results/correctness-acceptance.json",
+    "performance": "results/full-performance-summary.json",
+    "cumulative_ablation": "results/cumulative-ablation.json",
+    "profiling": "results/current-profiling-digest.json",
+    "archive_sha256": "976e806f587684d41eb0243c88a11e339b462613fdc2458cf37fac4665cf0fb3"
   },
   "required_paths": [
     "${REPO}",

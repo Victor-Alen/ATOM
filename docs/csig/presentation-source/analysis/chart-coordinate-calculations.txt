@@ -6,37 +6,37 @@ Value scale: axis ticks (0.0-2.5)
 
 Index Label         Value       X        Y       Width    Height
 ----  ----------  --------  -------  -------  -------  -------
-   1  segment0         0.5     60.0    267.0    217.7     76.0
+   1  segment0         0.5     60.0    267.0    217.3     76.0
 
 
 === Bar Chart Coordinate Calculation ===
 Canvas: 1280×720
-Chart area: (277.650294704, 267.0) - (1437.6502947039999, 343.0)
+Chart area: (277.28098736000027, 267.0) - (1437.2809873600004, 343.0)
 Value scale: axis ticks (0.0-2.5)
 
 Index Label         Value       X        Y       Width    Height
 ----  ----------  --------  -------  -------  -------  -------
-   1  segment1         0.7    277.7    267.0    312.0     76.0
+   1  segment1         0.3    277.3    267.0    140.3     76.0
 
 
 === Bar Chart Coordinate Calculation ===
 Canvas: 1280×720
-Chart area: (589.603372192, 267.0) - (1749.603372192, 343.0)
+Chart area: (417.53521484800024, 267.0) - (1577.5352148480001, 343.0)
 Value scale: axis ticks (0.0-2.5)
 
 Index Label         Value       X        Y       Width    Height
 ----  ----------  --------  -------  -------  -------  -------
-   1  segment2         0.6    589.6    267.0    258.2     76.0
+   1  segment2         0.4    417.5    267.0    184.1     76.0
 
 
 === Bar Chart Coordinate Calculation ===
 Canvas: 1280×720
-Chart area: (847.7633613600001, 267.0) - (2007.76336136, 343.0)
+Chart area: (601.6287998720003, 267.0) - (1761.6287998720004, 343.0)
 Value scale: axis ticks (0.0-2.5)
 
 Index Label         Value       X        Y       Width    Height
 ----  ----------  --------  -------  -------  -------  -------
-   1  segment3         0.4    847.8    267.0    187.6     76.0
+   1  segment3         0.6    601.6    267.0    268.2     76.0
 
 
 === Bar Chart Coordinate Calculation ===
@@ -56,7 +56,7 @@ Value scale: axis ticks (0.0-800.0)
 
 Index Label         Value       X        Y       Width    Height
 ----  ----------  --------  -------  -------  -------  -------
-   1  actual         697.7    320.0    248.0    505.9     26.0
+   1  actual         699.2    320.0    248.0    506.9     26.0
 
 
 === Bar Chart Coordinate Calculation ===
@@ -76,7 +76,7 @@ Value scale: axis ticks (0.0-80.0)
 
 Index Label         Value       X        Y       Width    Height
 ----  ----------  --------  -------  -------  -------  -------
-   1  actual          68.3    320.0    373.0    495.4     26.0
+   1  actual          64.5    320.0    373.0    467.7     26.0
 
 
 === Bar Chart Coordinate Calculation ===
@@ -96,4 +96,4 @@ Value scale: axis ticks (0.0-5000.0)
 
 Index Label         Value       X        Y       Width    Height
 ----  ----------  --------  -------  -------  -------  -------
-   1  actual        4387.4    320.0    498.0    508.9     26.0
+   1  actual        3948.3    320.0    498.0    458.0     26.0

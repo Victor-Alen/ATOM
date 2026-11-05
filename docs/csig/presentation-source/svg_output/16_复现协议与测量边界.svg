@@ -35,7 +35,7 @@
   <text x="60" y="494" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#7ED8D0">bash scripts/benchmark.sh --repeat 3</text>
   <text x="60" y="543" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">/opt/venv/bin/python3 scripts/validate_public.py</text>
   <text x="60" y="594" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">A 通过 line_by_line 原样传递 prompt；5 条略超 4k 的原始记录不改写。</text>
-  <text x="60" y="628" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">冷启动与首次捕获单列；公开集三轮测试不替代裁判的隐藏集验收。</text>
+  <text x="60" y="628" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">本服务仅用一张卡，同机另一卡有独立服务；非整机空闲、非隐藏集验收。</text>
   <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
   <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">完整命令、冻结版本、依赖来源、服务停止方式与原始证据索引均随仓库交付。</text>
   <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">16 / 16</text>

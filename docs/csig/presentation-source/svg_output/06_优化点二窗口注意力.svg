@@ -3,7 +3,7 @@
   <g id="title">
     <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
     <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">点二：只计算注意力需要的区域</text>
-    <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">滑动窗口约束与数值等价约束同时满足。</text>
+    <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">滑窗裁剪与全局因果 QK，保留 HF 计算顺序。</text>
   </g>
   <g id="window-matrix">
     <text x="292" y="207" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">历史键位置 →</text>
@@ -18,11 +18,11 @@
   </g>
   <g id="attention-method">
     <text x="550" y="230" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">21 层滑窗，7 层全注意力</text>
-    <text x="550" y="273" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">窗口 QK → 保序 softmax → 窗口 PV</text>
+    <text x="550" y="273" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">滑窗裁剪；全局 QK 跳过未来块，缓存归约数据</text>
     <path d="M550 299H1220" fill="none" stroke="#294361" stroke-width="1"/>
     <text x="550" y="344" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">保留 BF16 舍入与归约顺序</text>
     <text x="550" y="387" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">形状族选择参数；不满足布局条件则回退。</text>
-    <text x="550" y="449" font-family="Arial, Microsoft YaHei" font-size="24" fill="#8EA5C1">16K 算子微基准（ms）</text>
+    <text x="550" y="449" font-family="Arial, Microsoft YaHei" font-size="24" fill="#8EA5C1">16K 滑窗算子微基准（ms）</text>
     <text x="550" y="499" font-family="Consolas, Microsoft YaHei" font-size="36" fill="#7ED8D0">PV       12.19 → 2.65</text>
     <text x="550" y="548" font-family="Consolas, Microsoft YaHei" font-size="36" fill="#7ED8D0">softmax  30.28 → 5.84</text>
     <text x="550" y="599" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">--attention-opt 0/1</text>

@@ -27,7 +27,7 @@ bash scripts/start_server.sh --gpu 1 --host 0.0.0.0 --port 8000 --engine-port 18
 | 优化点 | 解决的瓶颈 | 单独开关 | 主要实现 |
 |---|---|---|---|
 | 点 1：MoE 专家计算 | HF 形状兼容路径中的专家权重搬运、碎片化 GEMM、路由和输出归并 | `--moe-opt 0/1`；环境变量 `OPT_MOE` | 原生 CK 两阶段专家核、按形状选择归约次序、BF16 路由融合、独立 slot 输出、路由复用 |
-| 点 2：Attention 计算 | SWA 层对窗口外位置的无效计算与读写，以及 decode attention 的小算子启动 | `--attention-opt 0/1`；环境变量 `OPT_ATTENTION` | AITER/Gluon decode 核、窗口 QK、保持 HF 归约顺序的 softmax、窗口 PV |
+| 点 2：Attention 计算 | SWA 层对窗口外位置的无效计算与读写，以及 decode attention 的小算子启动 | `--attention-opt 0/1`；环境变量 `OPT_ATTENTION` | AITER/Gluon decode核、窗口QK/PV、全局因果QK、保序softmax与lane缓存 |
 | 点 3：分段编译与 Graph 执行 | 小算子调度、Python/CPU 提交和重复 kernel launch | `--compile-graph-opt 0/1`；环境变量 `OPT_COMPILE_GRAPH` | piecewise compile、稳定 decode 元数据与 ATOM decode graph；关闭时强制 eager |
 
 关闭某一点只回到其正确性兼容实现；Norm、Linear、RoPE 的适配与 BF16 精度修正属于共同的 Step 0 基础，不重复记作新的优化点。形状、dtype、布局或冻结版本不满足已验证条件时，相关算子回退到兼容路径。
@@ -74,6 +74,14 @@ bash scripts/benchmark.sh --screen --repeat 1
 
 正确性客户端将原始输出、逐 token 比较和 HumanEval 检查结果写到独立目录。`validation/references/` 保存固定哈希的历史 HF 参考，仅由验证客户端读取，服务和模型代码不导入这些答案。HumanEval 使用聊天模板、关闭思考、greedy、EOS 停止、最大输出2048 token，并使用固定官方 checker；协议与 256-token 性能测试分别记录。`scripts/validate_public.py --screen` 只测 C4 与严格16k，不能称为完整验收；`--verify-files-only` 只校验文件和比较器反例，不调用 GPU。
 
+新增的3条严格16K参考与生成manifest位于 `validation/additional-long-context-hf/`。它们由HF eager重新生成，并先校验历史锚点；仅用于补充精度，不改变性能数据。可独立复测：
+
+```bash
+/opt/venv/bin/python3 scripts/validate_additional_long_context.py --references validation/additional-long-context-hf --out results/my-extra-16k
+```
+
+共3条独立输入，各串行及并发3执行，共6请求、384输出token；不是6条不同提示。输出目录需尚不存在。
+
 A 使用并发 32、B 使用并发 1，C 使用开放环泊松到达率 0.30 请求/秒；均输出 256 token，`ignore_eos=true`、`temperature=0`、流式返回。C 的指标是 TPOT p99 / TTFT p99，不能拿 C 的吞吐代替。正确性检查与性能测量分开；HumanEval 的生成协议也不等同于 256-token 性能协议。
 
 冻结环境的 EvalScope 1.14.1 不支持把文件名直接当作 `--dataset` 插件名。因此脚本把 A 的 `prompt` 字段原样写成请求体，使用 `line_by_line` 读取，不截断、补齐或改写提示。默认 `--a-source all` 保留全部 512 条原始记录；源文件有 5 条实际 token 数略超 4096。`--a-source filtered` 是单独的补充测量，不能与原始 512 条结果混称。`--stream` 是该客户端布尔参数的正确拼写，语义对应题目的流式开启。
@@ -83,6 +91,8 @@ A 使用并发 32、B 使用并发 1，C 使用开放环泊松到达率 0.30 请
 最终数据、完整验收范围、消融样本量、未达标项见交付报告和 `results/` 内的证据索引。公开集通过不代表隐藏集已经验收。
 
 ## 源码和依赖位置
+
+开源框架、算子来源与修改边界见 [UPSTREAMS.md](UPSTREAMS.md)，许可证与原始来源随源码保留。
 
 - `atom/model_ops/mellum_*.py`：精度兼容、算子封装、Gluon/Triton 核与形状分派。
 - `atom/model_engine/model_runner.py`、`mellum_request_gemm.py`：Graph 生命周期与稳定元数据。

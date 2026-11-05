@@ -1,0 +1,75 @@
+{
+  "scope": "Read-only historical HF eager versus SDPA provenance audit; production acceptance remains pinned eager.",
+  "interpretation": "Stored outputs only. Original runtime/configuration identity was not established in this audit; disagreement cannot be attributed solely to attention backend.",
+  "HF_eager_vs_sdpa": {
+    "matched": 3469,
+    "total": 12800,
+    "agreement": 0.271015625
+  },
+  "candidates": [
+    {
+      "candidate": "native_all",
+      "references": {
+        "eager": {
+          "matched": 5935,
+          "total": 12800,
+          "agreement": 0.463671875
+        },
+        "sdpa": {
+          "matched": 3481,
+          "total": 12800,
+          "agreement": 0.271953125
+        }
+      }
+    },
+    {
+      "candidate": "native_global",
+      "references": {
+        "eager": {
+          "matched": 7079,
+          "total": 12800,
+          "agreement": 0.553046875
+        },
+        "sdpa": {
+          "matched": 3576,
+          "total": 12800,
+          "agreement": 0.279375
+        }
+      }
+    },
+    {
+      "candidate": "native_sliding",
+      "references": {
+        "eager": {
+          "matched": 5813,
+          "total": 12800,
+          "agreement": 0.454140625
+        },
+        "sdpa": {
+          "matched": 3302,
+          "total": 12800,
+          "agreement": 0.25796875
+        }
+      }
+    },
+    {
+      "candidate": "global_qk",
+      "references": {
+        "eager": {
+          "matched": 12800,
+          "total": 12800,
+          "agreement": 1.0
+        },
+        "sdpa": {
+          "matched": 3469,
+          "total": 12800,
+          "agreement": 0.271015625
+        }
+      }
+    }
+  ],
+  "source_hashes": {
+    "eager": "2f54ae0833629c7757cd0e72cdb05e03cfdb2a9c6f6f04781b44b2862b341924",
+    "sdpa": "4d2fdea88c50032161b54ab8d57a695737cba9508fa3ea0708a91d795ba76ea8"
+  }
+}

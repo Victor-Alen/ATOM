@@ -1,10 +1,35 @@
 {
   "repo": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\code",
-  "head": "26cf01dc10c97aced76445996e9b872940f9d562",
+  "head": "0453ef43012b589e647a2d88e831f29ae880b665",
   "base": "26f23a0bdbf50b9010c07ee3a71171189723e767",
   "timezone": "Asia/Shanghai",
   "days": {
     "2026-11-06": [
+      {
+        "commit": "0453ef43012b589e647a2d88e831f29ae880b665",
+        "time": "2026-11-05T21:24:33+00:00",
+        "subject": "Schedule only causal global QK workgroups without changing arithmetic"
+      },
+      {
+        "commit": "9c52eaf10c3f442b625d81b46d78a291bcaf0954",
+        "time": "2026-11-05T20:18:04+00:00",
+        "subject": "Skip masked global prefill QK tiles while retaining HF BF16 accumulation order"
+      },
+      {
+        "commit": "bd2dbdb0a1b88085ff6f443a8913e184015c34c1",
+        "time": "2026-11-05T20:18:03+00:00",
+        "subject": "Merge branch 'codex/csig-final-20261106' of /workspace/logs/step0_operator_parallel_20261104/startup_delivery/csig-materials.bundle into codex/csig-lane-cache"
+      },
+      {
+        "commit": "a17c94eb2d29a59fcd2444f7b293f4c919cf56ba",
+        "time": "2026-11-05T20:18:02+00:00",
+        "subject": "Cache full-attention softmax lanes with exact reduction order and guarded vector stores"
+      },
+      {
+        "commit": "a6fc1f5f854e9d4c2724f429d100bf0f4a323e5b",
+        "time": "2026-11-06T03:51:24+08:00",
+        "subject": "Deliver Chinese defense slides, four-page report, and reproducible evidence"
+      },
       {
         "commit": "26cf01dc10c97aced76445996e9b872940f9d562",
         "time": "2026-11-06T03:38:00+08:00",

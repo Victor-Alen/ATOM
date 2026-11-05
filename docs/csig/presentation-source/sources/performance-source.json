@@ -1,0 +1,128 @@
+{
+  "scope": "FULL_PUBLIC",
+  "num_gpus": 1,
+  "mtp": false,
+  "repeats": 3,
+  "a_source": "all",
+  "all_requests_successful": true,
+  "all_outputs_256": true,
+  "all_requests_streamed": true,
+  "metrics": {
+    "A_output_tokens_per_s_gpu": {
+      "rounds": [
+        699.088,
+        699.1678,
+        702.3639
+      ],
+      "median": 699.1678
+    },
+    "B_TPOT_p50_ms": {
+      "rounds": [
+        9.2401,
+        9.1946,
+        9.244
+      ],
+      "median": 9.2401
+    },
+    "C_TPOT_p99_ms": {
+      "rounds": [
+        64.4984,
+        64.5116,
+        64.5111
+      ],
+      "median": 64.5111
+    },
+    "C_TTFT_p99_ms": {
+      "rounds": [
+        3948.2632,
+        3964.4639,
+        3940.2434
+      ],
+      "median": 3948.2632
+    }
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 699.088,
+      "TPOT_p50_ms": 27.859,
+      "TPOT_p99_ms": 44.1914,
+      "TTFT_p99_ms": 7657.085
+    },
+    {
+      "repeat": 0,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 103.6838,
+      "TPOT_p50_ms": 9.2401,
+      "TPOT_p99_ms": 9.2459,
+      "TTFT_p99_ms": 123.0437
+    },
+    {
+      "repeat": 0,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.4851,
+      "TPOT_p50_ms": 23.4583,
+      "TPOT_p99_ms": 64.4984,
+      "TTFT_p99_ms": 3948.2632
+    },
+    {
+      "repeat": 1,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 699.1678,
+      "TPOT_p50_ms": 28.8778,
+      "TPOT_p99_ms": 44.4657,
+      "TTFT_p99_ms": 7654.2068
+    },
+    {
+      "repeat": 1,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 104.2488,
+      "TPOT_p50_ms": 9.1946,
+      "TPOT_p99_ms": 9.216,
+      "TTFT_p99_ms": 119.0534
+    },
+    {
+      "repeat": 1,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.4852,
+      "TPOT_p50_ms": 23.4045,
+      "TPOT_p99_ms": 64.5116,
+      "TTFT_p99_ms": 3964.4639
+    },
+    {
+      "repeat": 2,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 702.3639,
+      "TPOT_p50_ms": 28.639,
+      "TPOT_p99_ms": 43.9863,
+      "TTFT_p99_ms": 7661.8215
+    },
+    {
+      "repeat": 2,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 103.872,
+      "TPOT_p50_ms": 9.244,
+      "TPOT_p99_ms": 9.2655,
+      "TTFT_p99_ms": 124.1728
+    },
+    {
+      "repeat": 2,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.4824,
+      "TPOT_p50_ms": 23.4611,
+      "TPOT_p99_ms": 64.5111,
+      "TTFT_p99_ms": 3940.2434
+    }
+  ],
+  "interpretation": "Per-round percentiles followed by median across rounds; screening is not full acceptance. Correctness is validated separately."
+}

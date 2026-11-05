@@ -30,7 +30,7 @@
     <text x="60" y="570" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">单卡 · 输出 256 token · 流式 · greedy · 忽略 EOS</text>
     <text x="60" y="614" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">性能基线只取 baseline.json；B 未提供基线。公开测试与隐藏验收分开。</text>
     <path d="M60 649H1220" fill="none" stroke="#294361" stroke-width="1"/>
-    <text x="60" y="678" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">来源：题目第 6 节；A 原始数据中 5 条略超 4K，保留原始 512 条并单列过滤补充结果。</text>
+    <text x="60" y="678" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">来源：题目第 6 节；A 有 5 条略超 4K，本版保留原始 512 条，旧版过滤补充另存。</text>
     <text x="1220" y="678" text-anchor="end" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">02 / 16</text>
   </g>
 </svg>

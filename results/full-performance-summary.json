@@ -1,168 +1,128 @@
 {
-  "scope": "Full public-set correctness plus three full A/B/C rounds; two distinct A parsing protocols. Hidden-set judge evaluation not performed.",
-  "runtime": {
-    "run_dir": "/workspace/logs/mellum-start-server/20261105T165534Z-fast-8000-1641865",
-    "pid": 1641868,
-    "url": "http://127.0.0.1:8000"
-  },
-  "correctness": {
-    "label": "fast_full_correctness_20261105T165619Z",
-    "runtime_pid": 1641868,
-    "source_unchanged": true,
-    "C200": {
-      "name": "C200",
-      "port": 8000,
-      "requests": 200,
-      "concurrency": 8,
-      "tokens_per_request": 64,
-      "duration_s": 245.83895982103422,
-      "output_tokens": 12800,
-      "output_tokens_per_s": 52.06660494056003,
-      "matched_positions": 12800,
-      "total_positions": 12800,
-      "exact_requests": 200,
-      "complete": true,
-      "scope": "Nonstreaming HTTP wall throughput including prefill; no profiler; not A512x256 official performance"
-    },
-    "strict16k_exact": true,
-    "HumanEval": {
-      "backend": "atom",
-      "count": 164,
-      "passed": 148,
-      "pass_at_1": 0.9024390243902439,
-      "truncated": 3,
-      "protocol": "official chat template, enable_thinking=False, greedy, EOS stop, max_new_tokens2048; original HumanEval tests via pinned official checker; full-program extraction"
-    },
-    "HF_HumanEval": {
-      "backend": "hf",
-      "count": 164,
-      "passed": 148,
-      "pass_at_1": 0.9024390243902439,
-      "truncated": 3,
-      "protocol": "official chat template, enable_thinking=False, greedy, EOS stop, max_new_tokens2048; original HumanEval tests via pinned official checker; full-program extraction"
-    },
-    "HF_token_agreement": 1.0,
-    "HumanEval_gap_pp": 0.0,
-    "passed": true,
-    "scope": "Full correctness only, MTP off, one GPU. No new full performance claim."
-  },
-  "input_manifest": {
-    "original_path": "/data/datasets/scenario_a_prompts.jsonl",
-    "original_sha256": "f5cb156bb468757841a321142c8813d281c0732b494d70d3c59d5b415bf7489d",
-    "original_rows": 512,
-    "eligible_rows": 507,
-    "outside_range": [
-      {
-        "index": 15,
-        "id": "A-0015",
-        "tokens": 4105
-      },
-      {
-        "index": 105,
-        "id": "A-0105",
-        "tokens": 4113
-      },
-      {
-        "index": 176,
-        "id": "A-0176",
-        "tokens": 4101
-      },
-      {
-        "index": 382,
-        "id": "A-0382",
-        "tokens": 4097
-      },
-      {
-        "index": 403,
-        "id": "A-0403",
-        "tokens": 4109
-      }
-    ],
-    "A_original": "All 512 original prompts, original order. Includes source rows outside advertised token range.",
-    "A_filtered": "Original prompt text, filtered 512..4096 tokens, EvalScope cycles eligible rows to 512 requests.",
-    "C_sha256": "38fc340a76fd48c025bf5806376bdabbc7762f6b5c48d4509bbb109af2cfe265",
-    "baseline_sha256": "14674cbbc641709358e197bd5ad71c3cac8f41ed3932b3091266f5636b0dd6c8",
-    "line_by_line_plugin_sha256": "ff0cbcfbf6510a18734be884c4e4868c5b847f56ba7ccff1739892dd7669f208"
-  },
+  "scope": "FULL_PUBLIC",
+  "num_gpus": 1,
+  "mtp": false,
+  "repeats": 3,
+  "a_source": "all",
+  "all_requests_successful": true,
+  "all_outputs_256": true,
+  "all_requests_streamed": true,
   "metrics": {
-    "A_original": {
-      "all_requests_successful": true,
-      "output_tokens_per_s": [
-        670.5907,
-        697.9714,
-        697.738
+    "A_output_tokens_per_s_gpu": {
+      "rounds": [
+        699.088,
+        699.1678,
+        702.3639
       ],
-      "median_output_tokens_per_s": 697.738,
-      "above_baseline": true
+      "median": 699.1678
     },
-    "A_filtered": {
-      "all_requests_successful": true,
-      "output_tokens_per_s": [
-        704.0831,
-        704.5887,
-        704.6549
+    "B_TPOT_p50_ms": {
+      "rounds": [
+        9.2401,
+        9.1946,
+        9.244
       ],
-      "median_output_tokens_per_s": 704.5887,
-      "above_baseline": true
+      "median": 9.2401
     },
-    "B": {
-      "all_requests_successful": true,
-      "TPOT_p50_ms": [
-        9.2014,
-        9.257,
-        9.2052
+    "C_TPOT_p99_ms": {
+      "rounds": [
+        64.4984,
+        64.5116,
+        64.5111
       ],
-      "median_TPOT_p50_ms": 9.2052
+      "median": 64.5111
     },
-    "C": {
-      "all_requests_successful": true,
-      "TTFT_p99_ms": [
-        4393.2947,
-        4387.397,
-        4386.0031
+    "C_TTFT_p99_ms": {
+      "rounds": [
+        3948.2632,
+        3964.4639,
+        3940.2434
       ],
-      "median_TTFT_p99_ms": 4387.397,
-      "TTFT_below_baseline": false,
-      "TPOT_p99_ms": [
-        68.3301,
-        68.2711,
-        68.3573
-      ],
-      "median_TPOT_p99_ms": 68.3301,
-      "TPOT_below_baseline": false
+      "median": 3948.2632
     }
   },
-  "source_unchanged": true,
-  "baseline": {
-    "started_at": "2026-10-26T20:07:50+0800",
-    "config": "1 GPU, eager, compile level 0, bf16 KV, MTP off, SWA on",
-    "num_gpus": 1,
-    "precision": "bf16",
-    "rate_per_gpu": 0.3,
-    "scenario_a": {
-      "count": 512,
-      "elapsed_s": 205.35100678994786,
-      "output_tokens_per_s": 638.282724048549,
-      "ttft_p99_s": 5.009712699975353,
-      "tpot_p99_s": 0.050144394062797304,
-      "tpot_p50_s": 0.03895133477065019,
-      "tokens_per_s_gpu": 638.282724048549
+  "records": [
+    {
+      "repeat": 0,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 699.088,
+      "TPOT_p50_ms": 27.859,
+      "TPOT_p99_ms": 44.1914,
+      "TTFT_p99_ms": 7657.085
     },
-    "scenario_c": {
-      "count": 200,
-      "elapsed_s": 671.7715815720148,
-      "output_tokens_per_s": 76.21638277729272,
-      "ttft_p99_s": 0.9935489579802379,
-      "tpot_p99_s": 0.04126502377250433,
-      "tpot_p50_s": 0.03629019312336858
+    {
+      "repeat": 0,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 103.6838,
+      "TPOT_p50_ms": 9.2401,
+      "TPOT_p99_ms": 9.2459,
+      "TTFT_p99_ms": 123.0437
     },
-    "target_g_a": null,
-    "target_g_c": null,
-    "humaneval_pass1_bf16": null,
-    "humaneval_pass1_fp8": null,
-    "humaneval_passed_bf16": 3,
-    "humaneval_count_bf16": 164,
-    "humaneval_pass1_bf16_rejected": 0.018292682926829267,
-    "humaneval_note": "Rejected: raw /v1/completions without the chat template or thinking mode. Not comparable to the model card HumanEval+ 91.5."
-  }
+    {
+      "repeat": 0,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.4851,
+      "TPOT_p50_ms": 23.4583,
+      "TPOT_p99_ms": 64.4984,
+      "TTFT_p99_ms": 3948.2632
+    },
+    {
+      "repeat": 1,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 699.1678,
+      "TPOT_p50_ms": 28.8778,
+      "TPOT_p99_ms": 44.4657,
+      "TTFT_p99_ms": 7654.2068
+    },
+    {
+      "repeat": 1,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 104.2488,
+      "TPOT_p50_ms": 9.1946,
+      "TPOT_p99_ms": 9.216,
+      "TTFT_p99_ms": 119.0534
+    },
+    {
+      "repeat": 1,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.4852,
+      "TPOT_p50_ms": 23.4045,
+      "TPOT_p99_ms": 64.5116,
+      "TTFT_p99_ms": 3964.4639
+    },
+    {
+      "repeat": 2,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 702.3639,
+      "TPOT_p50_ms": 28.639,
+      "TPOT_p99_ms": 43.9863,
+      "TTFT_p99_ms": 7661.8215
+    },
+    {
+      "repeat": 2,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 103.872,
+      "TPOT_p50_ms": 9.244,
+      "TPOT_p99_ms": 9.2655,
+      "TTFT_p99_ms": 124.1728
+    },
+    {
+      "repeat": 2,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.4824,
+      "TPOT_p50_ms": 23.4611,
+      "TPOT_p99_ms": 64.5111,
+      "TTFT_p99_ms": 3940.2434
+    }
+  ],
+  "interpretation": "Per-round percentiles followed by median across rounds; screening is not full acceptance. Correctness is validated separately."
 }

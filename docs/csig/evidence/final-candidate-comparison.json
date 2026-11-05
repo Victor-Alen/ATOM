@@ -1,0 +1,145 @@
+{
+  "scope": "Complete three-round, same-protocol warm-process comparisons. Medians are observations, not statistical significance claims.",
+  "criteria": "Correctness + full request audit required; prioritize lower C TTFT median; reject >1% regression in A/B/C TPOT. Root must deliberately freeze selection.",
+  "candidates": [
+    {
+      "label": "global_qk",
+      "repo": "/workspace/ATOM-csig-global-qk",
+      "full": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/global_qk_model_20261105T202200Z",
+      "source_commit": "9c52eaf10c3f442b625d81b46d78a291bcaf0954",
+      "metrics": {
+        "A_output_tokens_per_s_gpu": {
+          "rounds": [
+            699.1983,
+            699.4108,
+            700.4744
+          ],
+          "median": 699.4108
+        },
+        "B_TPOT_p50_ms": {
+          "rounds": [
+            9.1863,
+            9.2319,
+            9.1909
+          ],
+          "median": 9.1909
+        },
+        "C_TPOT_p99_ms": {
+          "rounds": [
+            64.6495,
+            64.6654,
+            64.68
+          ],
+          "median": 64.6654
+        },
+        "C_TTFT_p99_ms": {
+          "rounds": [
+            3977.7345,
+            3966.6078,
+            3966.9984
+          ],
+          "median": 3966.9984
+        }
+      },
+      "correctness": {
+        "passed": true,
+        "scope": "FULL_PUBLIC_CORRECTNESS",
+        "C": {
+          "requests": 200,
+          "matched": 12800,
+          "total": 12800,
+          "exact_requests": 200,
+          "complete": true,
+          "agreement": 1.0
+        },
+        "strict16k_exact": true,
+        "HumanEval": {
+          "count": 164,
+          "passed": 148,
+          "pass_at_1": 0.9024390243902439,
+          "HF_passed": 148,
+          "gap_pp": 0.0,
+          "exact_HF_sequences": 164
+        },
+        "MTP": false,
+        "num_gpus": 1
+      }
+    },
+    {
+      "label": "triangular_qk",
+      "repo": "/workspace/ATOM-csig-triangular-qk",
+      "full": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/triangular_qk_model_20261105T212524Z",
+      "source_commit": "0453ef43012b589e647a2d88e831f29ae880b665",
+      "metrics": {
+        "A_output_tokens_per_s_gpu": {
+          "rounds": [
+            699.088,
+            699.1678,
+            702.3639
+          ],
+          "median": 699.1678
+        },
+        "B_TPOT_p50_ms": {
+          "rounds": [
+            9.2401,
+            9.1946,
+            9.244
+          ],
+          "median": 9.2401
+        },
+        "C_TPOT_p99_ms": {
+          "rounds": [
+            64.4984,
+            64.5116,
+            64.5111
+          ],
+          "median": 64.5111
+        },
+        "C_TTFT_p99_ms": {
+          "rounds": [
+            3948.2632,
+            3964.4639,
+            3940.2434
+          ],
+          "median": 3948.2632
+        }
+      },
+      "correctness": {
+        "passed": true,
+        "scope": "FULL_PUBLIC_CORRECTNESS",
+        "C": {
+          "requests": 200,
+          "matched": 12800,
+          "total": 12800,
+          "exact_requests": 200,
+          "complete": true,
+          "agreement": 1.0
+        },
+        "strict16k_exact": true,
+        "HumanEval": {
+          "count": 164,
+          "passed": 148,
+          "pass_at_1": 0.9024390243902439,
+          "HF_passed": 148,
+          "gap_pp": 0.0,
+          "exact_HF_sequences": 164
+        },
+        "MTP": false,
+        "num_gpus": 1
+      }
+    }
+  ],
+  "candidate_relative_percent": {
+    "A_output_tokens_per_s_gpu": -0.03474352983967588,
+    "B_TPOT_p50_ms": 0.5353121021880458,
+    "C_TPOT_p99_ms": -0.23861292128403155,
+    "C_TTFT_p99_ms": -0.47227646978632576
+  },
+  "passes_no_regression_guard": true,
+  "recommended": "triangular_qk",
+  "recommended_selection": {
+    "repo": "/workspace/ATOM-csig-triangular-qk",
+    "full": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/triangular_qk_model_20261105T212524Z",
+    "source_commit": "0453ef43012b589e647a2d88e831f29ae880b665"
+  }
+}

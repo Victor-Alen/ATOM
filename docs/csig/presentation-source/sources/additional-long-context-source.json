@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "unique_prompts": 3,
+  "requests": 6,
+  "total_tokens": 384,
+  "matched_tokens": 384,
+  "all_exact": true,
+  "phases": [
+    "sequential",
+    "concurrency3"
+  ],
+  "reference_sha256": "78cb6dde3c53b7fefa4b7ec93db79a8a47620c84da736eb6c18d984cc1a08baa"
+}

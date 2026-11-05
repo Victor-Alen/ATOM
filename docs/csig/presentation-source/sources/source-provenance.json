@@ -1,0 +1,51 @@
+{
+  "measured_core": "0453ef43012b589e647a2d88e831f29ae880b665",
+  "scope": "Dedicated slide-source snapshots; requested root deliverables and original report location are retained.",
+  "files": [
+    {
+      "imported": "report-source.md",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\优化报告.md",
+      "sha256": "8a5edf42adbdab27c812c41edc2199229f69bf07f178b45b78aae18a33f9a573"
+    },
+    {
+      "imported": "ai-use-source.md",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\AI-USE.md",
+      "sha256": "781658320c78fc9edd7ef6361229cf91f620bb05c0025f4c4ea4503b580034b0"
+    },
+    {
+      "imported": "worklog-source.md",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\WORKLOG.md",
+      "sha256": "0881eee415bdfe0a77a06314285b0b0d6fc8fc5683ac23a878dc083b9545a66e"
+    },
+    {
+      "imported": "qa-source.md",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\答辩问答准备.md",
+      "sha256": "db96717454c17f8988f4e364ceef75ee131881d2236ed90618aca6a97971426e"
+    },
+    {
+      "imported": "performance-source.json",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\evidence\\final-current\\model\\performance\\audited_summary.json",
+      "sha256": "fb18811331bf313561b9f28bd121571dad9c3f09dfcb934097d2275a4ee70d5d"
+    },
+    {
+      "imported": "ablation-source.json",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\evidence\\final-current\\ablation\\results.json",
+      "sha256": "de5aeaa33968de783d7bf11d147dae29e29dcc6efc76a60282f8cce61231c0ac"
+    },
+    {
+      "imported": "profiling-source.json",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\evidence\\final-current\\profiling\\digest.json",
+      "sha256": "ae1dcadc75f2146241ddbe0c25b9d8ecb6450a393a7aeee3032c054f876e38f3"
+    },
+    {
+      "imported": "correctness-source.json",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\evidence\\final-current\\model\\correctness\\acceptance.json",
+      "sha256": "6c808a50af823689837c609ed45dcd7dd4476e6a975ae1e4ebe674885faf4bc9"
+    },
+    {
+      "imported": "additional-long-context-source.json",
+      "original": "D:\\中国科学技术大学\\个人资料\\腾讯CSIG校招\\evidence\\final-current\\model\\additional_long_context\\summary.json",
+      "sha256": "b6af04dc6cc85cb5a2ca4a0edd3483af98ead8d6bc91c2eed14c5801c3e00d40"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
-  "head": "26cf01dc10c97aced76445996e9b872940f9d562",
+  "head": "0453ef43012b589e647a2d88e831f29ae880b665",
   "core_autocrlf_tested": true,
-  "files_checked": 256,
+  "files_checked": 260,
   "all_hashes_match": true,
   "scope": "Fresh checkout-index files with Windows core.autocrlf=true, source and pinned reference hashes; no GPU execution"
 }

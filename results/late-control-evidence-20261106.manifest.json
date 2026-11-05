@@ -1,0 +1,60 @@
+{
+  "archive": "late-control-evidence-20261106.tar.gz",
+  "sha256": "15da90b70aea4c29f8eff926050e0257f5f736bd76a91e863c0152baae8e8bf1",
+  "bytes": 32534219,
+  "sources": [
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/lane_model_screen_20261105T190333Z",
+      "archive_path": "lane-control/screen"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/lane_model_full_20261105T191255Z",
+      "archive_path": "lane-control/full"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/native_prefill_check_20261105T200422Z",
+      "archive_path": "native-prefill/all"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/scoped_native_prefill_20261105T200955Z",
+      "archive_path": "native-prefill/scoped"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/global_qk_operator_validation.json",
+      "archive_path": "experiment-sources/global_qk_operator_validation.json"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/mellum_global_causal_qk_candidate.py",
+      "archive_path": "experiment-sources/mellum_global_causal_qk_candidate.py"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/probe_global_causal_qk.py",
+      "archive_path": "experiment-sources/probe_global_causal_qk.py"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/prepare_global_qk_probe.py",
+      "archive_path": "experiment-sources/prepare_global_qk_probe.py"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/prepare_global_qk_model.py",
+      "archive_path": "experiment-sources/prepare_global_qk_model.py"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/run_global_qk_model.py",
+      "archive_path": "experiment-sources/run_global_qk_model.py"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/run_native_prefill_after_qk.py",
+      "archive_path": "experiment-sources/run_native_prefill_after_qk.py"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/run_scoped_native_prefill.py",
+      "archive_path": "experiment-sources/run_scoped_native_prefill.py"
+    },
+    {
+      "source": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/late_experiment_history.txt",
+      "archive_path": "experiment-sources/late_experiment_history.txt"
+    }
+  ],
+  "scope": "Complete lane-cache control and rejected original-prefill ablations; global QK operator-only evidence."
+}

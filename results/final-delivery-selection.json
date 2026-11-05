@@ -1,0 +1,12 @@
+{
+  "repo": "/workspace/ATOM-csig-triangular-qk",
+  "full": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/triangular_qk_model_20261105T212524Z",
+  "source_commit": "0453ef43012b589e647a2d88e831f29ae880b665",
+  "full_summary_local": "evidence/final-current/model/performance/audited_summary.json",
+  "correctness_local": "evidence/final-current/model/correctness/acceptance.json",
+  "profiler_digest_local": "evidence/final-current/profiling/digest.json",
+  "cumulative_local": "evidence/final-current/ablation/results.json",
+  "profile_remote": "/workspace/logs/step0_operator_parallel_20261104/final_delivery_profile_20261105T224908Z",
+  "ablation_remote": "/workspace/logs/step0_operator_parallel_20261104/final_cumulative_ablation_20261105T222417Z",
+  "archive_sha256": "976e806f587684d41eb0243c88a11e339b462613fdc2458cf37fac4665cf0fb3"
+}

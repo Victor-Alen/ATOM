@@ -1,0 +1,8 @@
+{
+  "measured_core": "0453ef43012b589e647a2d88e831f29ae880b665",
+  "existing_profile_source_hashes_verified": 255,
+  "env_unchanged": true,
+  "command_unchanged": true,
+  "new_client_sha256": "f9383e0d93484f0dc69b77c09cda651468f59de244e6bf781d4221365f90fd9f",
+  "scope": "Metadata/client documentation update only; measured model source bytes unchanged. Final checkout startup is verified separately."
+}

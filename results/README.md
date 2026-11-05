@@ -1,36 +1,40 @@
-# 当前完整测试与原始证据
+# 最终完整测试与原始证据
 
-核心实现 `73d21d03`，冻结原生依赖，单卡BF16、MTP关闭。以下是已完成的公开集结果，不能写成隐藏集成绩。
+完整测试核心 `0453ef43`，单卡MI308X、BF16、MTP关闭，冻结依赖。后续材料提交不改变模型字节与实际运行开关。以下是公开集结果，不是隐藏集成绩。
 
 | 指标 | 三轮中位数 | baseline.json | 结论 |
 |---|---:|---:|---|
-| A512 输出 token/s/GPU | 697.7380 | 638.2827 | 提升9.31% |
-| B50 TPOT p50，ms | 9.2052 | 未提供 | 不推算加速比 |
-| C200 TPOT p99，ms | 68.3301 | 41.2650 | 仍未达到 |
-| C200 TTFT p99，ms | 4387.3970 | 993.5490 | 仍未达到 |
+| A512 token/s/GPU | 699.1678 | 638.2827 | 提升9.54% |
+| B50 TPOT p50 ms | 9.2401 | 未提供 | 不推算加速比 |
+| C200 TPOT p99 ms | 64.5111 | 41.2650 | 仍未达到 |
+| C200 TTFT p99 ms | 3948.2632 | 993.5490 | 仍未达到 |
 
-每场景3轮，共2286条主测试请求全部成功、全部流式输出256 token；每轮先计算百分位，再对三轮指标取中位数。`full-performance-summary.json` 保存完整结果。过滤A输入的额外三轮是单独补充，不能替换原始A512主结果。
+每场景3轮，2286请求全部成功、全部流式输出256 token。先计算每轮百分位，再取三轮指标中位数；详细轮次见 `full-performance-summary.json`。C200为12800/12800、原严格16K为64/64、HumanEval148/164且164条序列与HF一致。另3条新16K输入串行/并发共384/384一致。数据与配置见 `correctness-acceptance.json`、`final-delivery-selection.json` 和归档。
 
-完整正确性见 `correctness-acceptance.json` 和 `portable-public-validation.json`：C200 12800/12800，严格16K 64/64，HumanEval148/164，与同协议历史HF参考相同，全部164条输出序列一致。参考协议、模型路径和数据哈希见相应记录。完整验证客户端实际复测也已经归档。
+服务选择HIP1，GPU显存实际分配位于PCI 0000:22:00.0；同机另一卡存在独立服务，不称为整机空闲测量。正式空闲环境和隐藏集仍待裁判复测。
 
-## 原始归档
-
-归档文件的SHA256和来源见对应的 `.tar.manifest.json`。解包方法：
+## 解包最终与历史证据
 
 ```bash
-mkdir -p results/evidence/full-current results/evidence/supplemental
+mkdir -p results/evidence/final-current results/evidence/full-current results/evidence/supplemental results/evidence/late-control
+tar -xzf results/final-acceptance-evidence-20261106.tar.gz -C results/evidence/final-current
 tar -xzf results/portable-full-evidence-20261106.tar.gz -C results/evidence/full-current
 tar -xzf results/delivery-supplemental-evidence.tar.gz -C results/evidence/supplemental
+tar -xzf results/late-control-evidence-20261106.tar.gz -C results/evidence/late-control
 ```
 
-- `full-current/performance/`：12组客户端结果，包括原始A、补充A、B、C；逐请求SQLite、summary、percentile、运行命令、请求审计和输入哈希。
-- `full-current/correctness/`：C200实际输出、严格16K结果、HumanEval实际输出、HF参考审计、源码快照。
-- `full-current/operators/`：QK/PV/softmax边界长度、负例与40次重复实验。
-- `supplemental/delivery_profile_20261105T183352Z/`：使用完整打包依赖环境采集的3个torch profiler窗口及原始trace。
-- `supplemental/cumulative_ablation_20261105T180217Z/`：四行累加消融，统一A64/B8/C12，每配置1轮，先过832 token小门槛。
-- `supplemental/portable-public-validation/`：仓库验证客户端的完整公开集复测。
+最终归档SHA256：`976e806f587684d41eb0243c88a11e339b462613fdc2458cf37fac4665cf0fb3`；逐成员SHA256见同名manifest及 `docs/csig/evidence/final-acceptance-member-audit.json`。
 
-`cumulative-ablation.json` 是小规模消融汇总；`current-profiling-digest.json` 是按kernel名称分类的GPU事件累计时间，不是无profiler的HTTP时延。原始归档与解包副本的413个文件已逐一比对，SHA256见 `docs/csig/evidence/archive-member-audit.json`。
+- `final-current/model/`：本版完整精度、三轮A512/B50/C200、逐请求SQLite与审计、源码快照、启动manifest；screen目录单独标明小测。
+- `final-current/ablation/`：本版四行累加消融，A64/B8/C12各一轮，每行先过832 token小门槛；不是全量消融。
+- `final-current/profiling/`：本版3个torch profiler窗口、原始trace、cases与digest；累计GPU事件时间不是HTTP墙钟。
+- `final-current/additional-long-context-hf/`：3条新增16K参考、HF生成参数/源码哈希、历史锚点与重复检查。
+- `final-current/experiments/`：融合、warp、三角任务映射的算子记录与脚本；失败候选没有进入默认配置。
+- `final-current/environment.json`：实际包版本、设备清单、打包依赖哈希及运行环境。
+- `full-current/`、`supplemental/`：首版73d的完整结果、过滤A补充、旧消融/profiler与算子微基准，仅作历史。
+- `late-control/`：lane-cache完整控制组和三种原生prefill失败消融。
+
+汇总 `cumulative-ablation.json`、`current-profiling-digest.json` 与最终归档同版。未将旧的过滤A结果继承为本版成绩。失败原始融合核单独保存在 [实验分支](https://github.com/Victor-Alen/ATOM/tree/codex/csig-native-prefill-experiment-20261106)。
 
 ## 从头复测
 
@@ -41,4 +45,4 @@ bash scripts/benchmark.sh --repeat 3 --out results/my-full-run
 /opt/venv/bin/python3 scripts/summarize_benchmark.py results/my-full-run
 ```
 
-输出目录应为新目录。`--screen --repeat 1`仅运行小测，审计时加`--expected-repeats 1`。新工具会检查请求数、失败、流式输出长度和生成参数，缺轮或不完整时不输出“完整通过”。精度与性能是两次独立验证。
+输出目录使用新目录。`--screen --repeat 1`仅小测，审计时另加 `--expected-repeats 1`。汇总工具检查请求数、失败、流式输出长度和生成参数；精度与性能独立验证。

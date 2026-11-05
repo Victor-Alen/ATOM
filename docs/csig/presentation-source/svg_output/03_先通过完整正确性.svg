@@ -9,6 +9,7 @@
     <text x="60" y="221" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">C200 · 每条前 64 token · 全部一致</text>
     <text x="55" y="326" font-family="Consolas, Microsoft YaHei" font-size="96" font-weight="700" fill="#7ED8D0">12800/12800</text>
     <text x="60" y="384" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">严格 16K 输入：64 个生成 token 完全一致</text>
+    <text x="60" y="425" font-family="Arial, Microsoft YaHei" font-size="24" fill="#64B5FF">另 3 条 16K 输入：串行 / 并发复测 384/384</text>
     <path d="M790 201V397" fill="none" stroke="#294361" stroke-width="2"/>
     <text x="830" y="227" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">HumanEval pass@1</text>
     <text x="830" y="298" font-family="Consolas, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">148/164</text>
@@ -30,7 +31,7 @@
   </g>
   <g id="footer">
     <path d="M60 649H1220" fill="none" stroke="#294361" stroke-width="1"/>
-    <text x="60" y="678" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">证据：fast_full_correctness_20261105T165619Z；单卡 BF16，MTP 关闭；公开集通过不等于隐藏集验收。</text>
+    <text x="60" y="678" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">证据：final-current/model/correctness 与补充16K；单卡 BF16、MTP 关闭；公开集不等于隐藏集。</text>
     <text x="1220" y="678" text-anchor="end" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">03 / 16</text>
   </g>
 </svg>

@@ -19,12 +19,12 @@
     <text x="60" y="596" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">面向重复解码的提交开销，提供 eager 对照。</text>
     <text x="682" y="300" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">MTP：保留研究记录，默认关闭</text>
     <text x="682" y="336" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">短提示收益不能代替完整负载与 on/off 验收。</text>
-    <text x="682" y="389" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">双卡：必须证明每卡受益</text>
-    <text x="682" y="425" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">总吞吐翻倍不足以证明归一化收益。</text>
-    <text x="682" y="478" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">量化：需要重新通过精度门槛</text>
-    <text x="682" y="514" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">缺少完整验收，不计入当前成果。</text>
-    <text x="682" y="567" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">缓存与调度：留作后续方向</text>
-    <text x="682" y="603" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">三点预算已满；形状改变后需重新对齐。</text>
+    <text x="682" y="389" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">原始融合核：完整精度未过</text>
+    <text x="682" y="425" font-family="Arial, Microsoft YaHei" font-size="24" fill="#FFB56B">C200 最高 55.30%，未过 90% 门槛。</text>
+    <text x="682" y="478" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">双卡与量化：尚缺完整证据</text>
+    <text x="682" y="514" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">需分别验证每卡收益和精度，不计入成果。</text>
+    <text x="682" y="567" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">前缀缓存与分块预填充</text>
+    <text x="682" y="603" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">保留 Step 0 设置；矩阵形状改变需重验。</text>
   </g>
   <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
   <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">题目第 5 节：每点针对一个瓶颈、有独立开关；Step 0 适配与精度修复不重复计点。</text>

@@ -1,0 +1,1193 @@
+{
+  "archive": "late-control-evidence-20261106.tar.gz",
+  "archive_sha256": "15da90b70aea4c29f8eff926050e0257f5f736bd76a91e863c0152baae8e8bf1",
+  "files_verified": 237,
+  "all_identical": true,
+  "files": [
+    {
+      "path": "lane-control/screen/DONE",
+      "bytes": 104,
+      "sha256": "468adee3bc32628c64cb3956d131d2ff4f7e0159837b8ced63cbf4b2dfccbd99"
+    },
+    {
+      "path": "lane-control/screen/correctness/C.responses.jsonl",
+      "bytes": 234499,
+      "sha256": "c5afac2680b73716ac8f5654283c8dbc8e9e13331d4f8219da32739d5620141f"
+    },
+    {
+      "path": "lane-control/screen/correctness/C.summary.json",
+      "bytes": 124,
+      "sha256": "6f0e73a4ffd0fb1cb772ed53b5ef160ad00a3abc13412c21eee35b6f80cd88df"
+    },
+    {
+      "path": "lane-control/screen/correctness/acceptance.json",
+      "bytes": 432,
+      "sha256": "6c808a50af823689837c609ed45dcd7dd4476e6a975ae1e4ebe674885faf4bc9"
+    },
+    {
+      "path": "lane-control/screen/correctness/he_atom.jsonl",
+      "bytes": 609492,
+      "sha256": "97fc0c5c69e3687f96178197e8f5c1c153739d11fe3eb051efbc96f2c9765415"
+    },
+    {
+      "path": "lane-control/screen/correctness/he_summary.json",
+      "bytes": 136,
+      "sha256": "5f1b5ce6d505eda25d849b6ae9f4011345c7882859a19d3ec946811651ef8088"
+    },
+    {
+      "path": "lane-control/screen/correctness/protocol.json",
+      "bytes": 1353,
+      "sha256": "b907956b9ce7d91bdf33984390aae17d9054c06498490ec0346935121a9874b7"
+    },
+    {
+      "path": "lane-control/screen/correctness/strict_16k.json",
+      "bytes": 1528,
+      "sha256": "e32df3f077fe7d8bd0fc506901f76bee41518f53c88b163dd2c9afb1fed35ea3"
+    },
+    {
+      "path": "lane-control/screen/correctness.log",
+      "bytes": 5462,
+      "sha256": "d7cd023a0ca900d7cfecb0d611e04d6659eb3c6861a19a920b03ddb9cb2b0f08"
+    },
+    {
+      "path": "lane-control/screen/performance/protocol.json",
+      "bytes": 465,
+      "sha256": "20d2c73705e38f6bc8f5c4ff666ebf8f0345b49b40a696b2929d5336edf2c8f2"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/benchmark.log",
+      "bytes": 9740,
+      "sha256": "5335662c6c733a24bbd90c033edc80ec0e5faf4a065e4fd38ce0eba6650538ec"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/parallel_32_number_64/benchmark_args.json",
+      "bytes": 2576,
+      "sha256": "3e26c189efd1e76499ce8abd7b1fef2e66afe1d6c6393dc2d814c6726d93a07a"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/parallel_32_number_64/benchmark_data.db",
+      "bytes": 6098944,
+      "sha256": "bb7850a51bf3408f713d679d62148dc5bb6fa2fb7e874338958445276fe609fc"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/parallel_32_number_64/benchmark_percentile.json",
+      "bytes": 3661,
+      "sha256": "5c09b262c7e9a01486c266d5bd06e42506c0954a7cfdf295f6fe1fade91add9a"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/parallel_32_number_64/benchmark_summary.json",
+      "bytes": 574,
+      "sha256": "591af2fef4dea82fd9a6d1c21b02affa1f0cbbe094b4ed001217db07ffb4d0e5"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/parallel_32_number_64/workload_throughput.json",
+      "bytes": 875,
+      "sha256": "ce221d3c20713c0da07d11d9cd64cfc6e07772a7580e1114314312901abf5cbd"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/parallel_32_number_64/workload_timeline.json",
+      "bytes": 10140,
+      "sha256": "a0f7628bf7fa3f5e646b9664a799cc8747791d123502af8842e7cbeae3a2eaca"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/perf_report.html",
+      "bytes": 175104,
+      "sha256": "446ceb95804e7d7cd7a0a21d8f2beb1da11ca943ad23169a4385fccb12c555dd"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/20261105_190930/Scenario_A_N1_r0/performance_summary.txt",
+      "bytes": 4906,
+      "sha256": "311a38ec8dda92e8825c3206050e806fd45f17c05e9fb3a13d39bfd7ea421479"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/client.log",
+      "bytes": 17730,
+      "sha256": "6357d8b028d2fa4d95d5f89612ef4211222d1842398472f0fbecf44fcd7c8e52"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/command.json",
+      "bytes": 913,
+      "sha256": "8b4dd180520e3823f23732b0593c347c756d9c1d6fef910e68fd94e17310cbe3"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/command.sh",
+      "bytes": 734,
+      "sha256": "ed9d6703bd955d96476bc7bf33d90d44fa582d799dc5dcf7a7e056a89e7245f3"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/A/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/benchmark.log",
+      "bytes": 9252,
+      "sha256": "0063e34ad522cdd28d866d1b342b888dfb33e0d94ea1aaa09afabb6105505260"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/parallel_1_number_8/benchmark_args.json",
+      "bytes": 2426,
+      "sha256": "9fd842418f04d14bc1727f96bf4921da4ff156030f1c1086541c1e94673ee0de"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/parallel_1_number_8/benchmark_data.db",
+      "bytes": 692224,
+      "sha256": "00524c52d02267e67ff7b34bc97b48bfa9d987239ef56fd1fd20ed5fe7e783ec"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/parallel_1_number_8/benchmark_percentile.json",
+      "bytes": 3643,
+      "sha256": "648cbe3132e8ab05e65f97895881de3e77b76856d0c5fb6515b20219e57574e9"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/parallel_1_number_8/benchmark_summary.json",
+      "bytes": 562,
+      "sha256": "0b13a83830c2786ab91f1d8058cd949c3cd9464446268562b38b8c6b109eaeaf"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/parallel_1_number_8/workload_throughput.json",
+      "bytes": 865,
+      "sha256": "4c7f2368a7ee3400b00a76ee1cb3e288122d8955edd826a753ed2a95249feb24"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/parallel_1_number_8/workload_timeline.json",
+      "bytes": 1301,
+      "sha256": "2742dbd9b5a9f4ea05f2277eab8ff8ed9d1f2b49957c266032157855cdc12204"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/perf_report.html",
+      "bytes": 167666,
+      "sha256": "8cdcdb569e7516719e68ec6bae2200edd5b398343b1944eb107f22e2cb211ede"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/20261105_190958/Scenario_B_N1_r0/performance_summary.txt",
+      "bytes": 4826,
+      "sha256": "3d87b94779c54973340f7b23d7e56876c39684d1bac4da550767673e1d95fc6b"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/client.log",
+      "bytes": 17955,
+      "sha256": "d28a88b567309a36ab7760fac69cec7736b4330be7ebe4f1fe2af71b7c6e0056"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/command.json",
+      "bytes": 737,
+      "sha256": "d2b9d9f6c9ff09b9f2745634f76ed5a1b0075ac30ac3518fb86ff571bd79144c"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/command.sh",
+      "bytes": 568,
+      "sha256": "f9e8a140e7fb5b86a40dc9a3c130e7267be24868ee03ae75d46a4bac5b6d131b"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/B/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/benchmark.log",
+      "bytes": 9273,
+      "sha256": "23f09e0fd7a7e79b80b0c7652366341aacc1ac1c4186077c32a1b29ac5d69607"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/perf_report.html",
+      "bytes": 168329,
+      "sha256": "feb713471e55ba226b34b6c598a7b855cd26fff7c8d71f3d75780eb0d2dfa933"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/performance_summary.txt",
+      "bytes": 4882,
+      "sha256": "ffa6488492d66369c8814f0a4718d11b36f9e05f673306c83dd1985f16653d21"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_args.json",
+      "bytes": 2465,
+      "sha256": "dfaf6e0eb7207b0a261c4037579237ef29aecbd0555c81c3e0461c251c3e94ad"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_data.db",
+      "bytes": 1810432,
+      "sha256": "83ddd6b70452289e5f5e433ddc97829d4762462758d162de8c398db768776f59"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_percentile.json",
+      "bytes": 3668,
+      "sha256": "5e967f043f16eb9ae9128c4e730f4ffb01a6b64bec5cdecf63c61a075e8c2195"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_summary.json",
+      "bytes": 573,
+      "sha256": "559207543f9b3e02c7ac53221c645a8ad6961583ba77e2e040674f23bf3263bf"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/rate_0.3_number_12/workload_throughput.json",
+      "bytes": 871,
+      "sha256": "a32387064ad858378c13a395bc57d1651ffce4db5b74ddc4b6eeb2122285247d"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/20261105_191023/Scenario_C_N1_r0/rate_0.3_number_12/workload_timeline.json",
+      "bytes": 1936,
+      "sha256": "d74bc639f80e385b0fe953b69c003c0bb7f636635974b55cdc9bcb0c014c9da5"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/client.log",
+      "bytes": 18316,
+      "sha256": "310f148ea9dcf50f35d3a8b862e71c2acb34f28295ed27af7839f4a2917323af"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/command.json",
+      "bytes": 785,
+      "sha256": "fc992ac0020af22639a48effbf0bf3c82d50136957a755a71470395cceccdd34"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/command.sh",
+      "bytes": 611,
+      "sha256": "be9177249e753cb0540bb09e0fdaba8dde25e0875d000047113c9cbf00610fc3"
+    },
+    {
+      "path": "lane-control/screen/performance/r0/C/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/screen/performance/scenario_a_prompt_bodies.jsonl",
+      "bytes": 7954092,
+      "sha256": "8f38e0161c2d6163efc4e411faf45f848577e45c7c25b96fcc906a5fde99e9e9"
+    },
+    {
+      "path": "lane-control/screen/performance.log",
+      "bytes": 172,
+      "sha256": "5c6f321411fcad018576bf90bd7e8d4b6c6ae38d02faa45025bd83f5c34863ed"
+    },
+    {
+      "path": "lane-control/screen/startup.log",
+      "bytes": 930,
+      "sha256": "837349af7b1644c7764f58a1bad6a65b52a7e3e355459acb2e044e7076c0363c"
+    },
+    {
+      "path": "lane-control/full/DONE",
+      "bytes": 9,
+      "sha256": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1"
+    },
+    {
+      "path": "lane-control/full/client.log",
+      "bytes": 296,
+      "sha256": "c1b5397db9d2d5076bb3796027738dbd775dd36a5caf8dcb4424afd0e692b3b1"
+    },
+    {
+      "path": "lane-control/full/correctness_pointer.json",
+      "bytes": 622,
+      "sha256": "8fa09cc1abfcbd8b589999bb4978e290e294b78af996968b4b73c2944ad67303"
+    },
+    {
+      "path": "lane-control/full/final_summary.json",
+      "bytes": 1324,
+      "sha256": "f240a15034ddc6d86c54d6f9b469bf2eabfc760a56b85401cea53c56210e4edf"
+    },
+    {
+      "path": "lane-control/full/git_diff.patch",
+      "bytes": 3981,
+      "sha256": "79ae3261e117e819ac9c3b84bc1181100eb92acd9177b14b9cc4a332b92722bf"
+    },
+    {
+      "path": "lane-control/full/git_head.txt",
+      "bytes": 41,
+      "sha256": "fe12756594a11d0360ec10ef5cbf63ea44da0716bd745c0a75ef6ae33b38bcfe"
+    },
+    {
+      "path": "lane-control/full/performance/protocol.json",
+      "bytes": 470,
+      "sha256": "02caf426d324ffeb58b25718c9f1056c61c716a41d70d689f92e76dd1ec9eef2"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/benchmark.log",
+      "bytes": 12776,
+      "sha256": "bb88347cdabd207fcfe57970f0c4b3e7d139cd989b553f25b24c6ba4fdf486ac"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/parallel_32_number_512/benchmark_args.json",
+      "bytes": 2574,
+      "sha256": "db7d2f08ad925d80ca30cd21a45e2a3964ba0cedc81bf0ef2e0b3da4dc0f69a0"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/parallel_32_number_512/benchmark_data.db",
+      "bytes": 48709632,
+      "sha256": "cfff2b0b49cb58ad720bc424916d12ea852c4f1e63d74e27c9d38bf652d18fe8"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/parallel_32_number_512/benchmark_percentile.json",
+      "bytes": 3658,
+      "sha256": "d404e4d14a7f283dd275226f1269d2f8d78d8025fbe589eed04d85972828fcd4"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/parallel_32_number_512/benchmark_summary.json",
+      "bytes": 577,
+      "sha256": "7c0ba6fd45d70ad1e943d18366c82ff5dab788768968517ff40d746cfea3b5a0"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/parallel_32_number_512/workload_throughput.json",
+      "bytes": 875,
+      "sha256": "d7d9e2f1c93b8dded502d8688d9079a23aaea7cb5805b668f9740a22d626e515"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/parallel_32_number_512/workload_timeline.json",
+      "bytes": 81801,
+      "sha256": "c3eb81cc9a801f08a42ef20acb3963a86bef5a7f4dffbfbf4070d6324593a76d"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/perf_report.html",
+      "bytes": 236192,
+      "sha256": "209af01063e4c435f3e46dd0648b70c1fe76894279375f059c1a083253f7500f"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/20261105_191256/Scenario_A_N1_r0/performance_summary.txt",
+      "bytes": 4889,
+      "sha256": "d64799efefab9d89e9444a60613d7cd11d3e3c6a8ed2b0bf0dab1b7f95e97303"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/client.log",
+      "bytes": 24686,
+      "sha256": "577c84f61d738812ae4af4d1c83df8f19a69bf4cdfbc94ec1e3784cea90879cd"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/command.json",
+      "bytes": 910,
+      "sha256": "ed0ac61bf2868cf61b52d45aaa171267197c93e7b4529621607d0d2b5f9e3f0d"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/command.sh",
+      "bytes": 731,
+      "sha256": "6332466dfbf6417a966adee1db76ce682d0cf609916a6dc8c9a83d20ab5c8706"
+    },
+    {
+      "path": "lane-control/full/performance/r0/A/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/benchmark.log",
+      "bytes": 9436,
+      "sha256": "ff85e5e733218841e279061a0824c0618206ffdf4bf2348d46d415213a778e38"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/parallel_1_number_50/benchmark_args.json",
+      "bytes": 2426,
+      "sha256": "89de0b2f674114ef13d848ec9c57ba1f473191603aacc8f90123c6e8b1ac9b28"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/parallel_1_number_50/benchmark_data.db",
+      "bytes": 4308992,
+      "sha256": "186fd487c9f06ac54b2ecf1dd4097474e2c2d3d04bb842e3b7b30959fc3ca8e6"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/parallel_1_number_50/benchmark_percentile.json",
+      "bytes": 3648,
+      "sha256": "81ccfb5e1e34a0e94a41c4faa40dc40acbd751145cd46a40c4f974716cad2425"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/parallel_1_number_50/benchmark_summary.json",
+      "bytes": 566,
+      "sha256": "5e3eecdc6caccb43d329b6b298de99a782a1c24d3c7be0962f8e3a409cc1f250"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/parallel_1_number_50/workload_throughput.json",
+      "bytes": 876,
+      "sha256": "017d82fadbe6722db4fd24dea7f5c9f6564d8e87c68f31553d6de55e305cb9cd"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/parallel_1_number_50/workload_timeline.json",
+      "bytes": 7912,
+      "sha256": "190e654dfa6ba6633b0afe4fdf4e5693b5a6401b4605a918bb5e204672518a82"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/perf_report.html",
+      "bytes": 173123,
+      "sha256": "ef23211f46d60c455f5c6c174dc2250a3a7b2139d6d5cf9bc2a77c0ca0718f1a"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/20261105_191609/Scenario_B_N1_r0/performance_summary.txt",
+      "bytes": 4838,
+      "sha256": "dcf07c56694ac538d507e876447354c69e5ae2ec5fc0a168c8d4653a67cb418f"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/client.log",
+      "bytes": 22750,
+      "sha256": "5448ee7e06ee60ec43119da4254264fd5bf704684dfbe514f2f4e2cf131e41cb"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/command.json",
+      "bytes": 736,
+      "sha256": "0c38ddc6aec54227114ed27d9f53933183e7b7aae31a001dc62aa7e51aee8f21"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/command.sh",
+      "bytes": 567,
+      "sha256": "a9978e87901270219a0c401384a8c2360073c269199e271c6f8ff54dbb1d94c0"
+    },
+    {
+      "path": "lane-control/full/performance/r0/B/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/benchmark.log",
+      "bytes": 11586,
+      "sha256": "533aab856239e5af4fd4fdd61e4fec99f4ba995e8ddc239920c3d6b9ed9dfafb"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/perf_report.html",
+      "bytes": 193545,
+      "sha256": "6adb2ff75f58e4682fce12a5144f0be7f668572acb1dccb35d9311112c0fdef9"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/performance_summary.txt",
+      "bytes": 4865,
+      "sha256": "345544f045ad8739c74833a90230c0b0ae8e24cd5ea0d8b8e89239ca4f2038fd"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/rate_0.3_number_200/benchmark_args.json",
+      "bytes": 2465,
+      "sha256": "0fa3ae6a8ccb4685eea2b13f455d99686b38032b3a89785f3491798949cfd658"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/rate_0.3_number_200/benchmark_data.db",
+      "bytes": 29417472,
+      "sha256": "2c1681a1df388f2a539ad3762d3bfbd3e4e94ebda436ee9a371ea42609ad4c68"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/rate_0.3_number_200/benchmark_percentile.json",
+      "bytes": 3666,
+      "sha256": "6ae593cd73ea844a26614b33154e1e70d5114ca7f545405463ca9394ec0e9f11"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/rate_0.3_number_200/benchmark_summary.json",
+      "bytes": 574,
+      "sha256": "2ae4908a4e230f32529fe2708764f768148b32e539b3fe83cab2c78deedd83dc"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/rate_0.3_number_200/workload_throughput.json",
+      "bytes": 879,
+      "sha256": "bfba0322c984f8652f936aa4b1e949e70a7dbf8125e13477361e04186919a237"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/20261105_191818/Scenario_C_N1_r0/rate_0.3_number_200/workload_timeline.json",
+      "bytes": 32069,
+      "sha256": "578a7aa9fe7fc0d455a4fe56282c906f0d2e4fc7216a9684b280c7244fc611c1"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/client.log",
+      "bytes": 36348,
+      "sha256": "ba7dae8529f5224ddd17e9d463d3d1653be39b6034f8bb6c125edd52b600201e"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/command.json",
+      "bytes": 784,
+      "sha256": "6bde6d0829f512e76d383e050f5c7d18f193bcc6315ffadca85007602bd83096"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/command.sh",
+      "bytes": 610,
+      "sha256": "46f01c9769dbfcc5b002cad2fa0c3d5c677c35a09bdbc2c422641dc67076a994"
+    },
+    {
+      "path": "lane-control/full/performance/r0/C/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/benchmark.log",
+      "bytes": 12790,
+      "sha256": "dc75341834ee744ba4b1091d64857b6984afcf06c4bbea4ba623e80b86fdf3ff"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/parallel_32_number_512/benchmark_args.json",
+      "bytes": 2574,
+      "sha256": "b9b3d5c1532352ceb388ac010724d9a2ed61d7b581064e4233d1ecea29504278"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/parallel_32_number_512/benchmark_data.db",
+      "bytes": 48734208,
+      "sha256": "c5f9276bfc7395631c6463cc7f7c8243f417750185d9539e74f81a129652bf24"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/parallel_32_number_512/benchmark_percentile.json",
+      "bytes": 3655,
+      "sha256": "975b0f0ee198a68ea377dd09f91f63bf34df833419a294508f650b625b380ccd"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/parallel_32_number_512/benchmark_summary.json",
+      "bytes": 578,
+      "sha256": "966b593b3ad283f301c5a5b3d222b4ba11115d734391572d5cdc6632947c153a"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/parallel_32_number_512/workload_throughput.json",
+      "bytes": 874,
+      "sha256": "39a21b1c82fe81d065ddf72d10c30dcba7e4c6bf32647ca9d66b038e9b630602"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/parallel_32_number_512/workload_timeline.json",
+      "bytes": 81782,
+      "sha256": "ee97493e03ce7d4335b5e4a0774666e3b66a6e5d9d4ab72f1cae3c0770969ad6"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/perf_report.html",
+      "bytes": 236225,
+      "sha256": "5da428d9f7ed642853d677518690b758697f683a292adb99bc73033862a686e4"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/20261105_192934/Scenario_A_N1_r1/performance_summary.txt",
+      "bytes": 4894,
+      "sha256": "e726a72587749656803f6fadcdb962ffc36ced3bf8507d1847acbf3c61242b6c"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/client.log",
+      "bytes": 24389,
+      "sha256": "bc78bbfa18acdb0f56d42bf3da71bc044a9958bac63e23a9a1fc25a2e1c3b912"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/command.json",
+      "bytes": 910,
+      "sha256": "e6e6ad06f01fabcc922a6d7be7d254dccf095e2df32c017fecec7a2835042e5c"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/command.sh",
+      "bytes": 731,
+      "sha256": "63dae5e2c29ac65caffd7cd097a782a79bb81ee0b76c11eabfe72de4fdf4e834"
+    },
+    {
+      "path": "lane-control/full/performance/r1/A/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/benchmark.log",
+      "bytes": 9436,
+      "sha256": "b7c826b2678fed350d5142eab7f0897c49c0972987279777cd710b57b3e6333a"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/parallel_1_number_50/benchmark_args.json",
+      "bytes": 2426,
+      "sha256": "c3b11324243e12d48d2d1b06dfe13a6fe0148abeeaa0a605296cc4ac94021faf"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/parallel_1_number_50/benchmark_data.db",
+      "bytes": 4308992,
+      "sha256": "24b49e4605d4e3267959cd96cb9198e7fe464f44dbf0dc459d0af03771a6d69a"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/parallel_1_number_50/benchmark_percentile.json",
+      "bytes": 3649,
+      "sha256": "4f23ec6dffd2296fa206861308ef6d9507fc5608d96b01787ea87109081db115"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/parallel_1_number_50/benchmark_summary.json",
+      "bytes": 566,
+      "sha256": "67665aa42cf9c729f6eb507717aabea5642c3e4bd373abd59b5e7d6ad30e8bb4"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/parallel_1_number_50/workload_throughput.json",
+      "bytes": 877,
+      "sha256": "fc4f3b28f1193203fc981f0696510208a4bd0c7d8d3f5fd16317e9895a8ed297"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/parallel_1_number_50/workload_timeline.json",
+      "bytes": 7912,
+      "sha256": "88c310899c87e3dd901f3e2659410b3ff6e68c7f20a387e85f6da5fbfd60f8fd"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/perf_report.html",
+      "bytes": 173123,
+      "sha256": "7162fab5ec619a3e6ee98268e0a3dafd80b5abdc09ac9977110b29a137f5de57"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/20261105_193247/Scenario_B_N1_r1/performance_summary.txt",
+      "bytes": 4826,
+      "sha256": "a16c88c33df77af37c435ccac8eab3ae12a0fb87b2fabae191a0f936db71e54c"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/client.log",
+      "bytes": 22738,
+      "sha256": "f07261baf8e3817b60bf4bc9edb7bec854b7330267720b9e64a216a643ed1870"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/command.json",
+      "bytes": 736,
+      "sha256": "288fb32e196b11e52f2eef2835d1ecb6b3ad055845482165e5ce2332bb4c6bae"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/command.sh",
+      "bytes": 567,
+      "sha256": "2eb440bbb1ef618eea52c3917884ad90202898cf5cc7bfa4e71c1e466c93d8be"
+    },
+    {
+      "path": "lane-control/full/performance/r1/B/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/benchmark.log",
+      "bytes": 11585,
+      "sha256": "277538adb2c8aefcb6818af4e8c5fc066e5cd3900f55deddc075237ff8b321df"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/perf_report.html",
+      "bytes": 193537,
+      "sha256": "3845d045474a742a8a3fb43942045cd58425e42eb1871d53a327eeb80afb540f"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/performance_summary.txt",
+      "bytes": 4882,
+      "sha256": "ca66de344c114839b86d0ddc6f3acec8842aca4c3b7e1afd187ecd32ff29030b"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/rate_0.3_number_200/benchmark_args.json",
+      "bytes": 2465,
+      "sha256": "1bcf780d1f7464b84894ed1388908fb114408e212ac3d218405402e9990d093a"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/rate_0.3_number_200/benchmark_data.db",
+      "bytes": 29417472,
+      "sha256": "7d55c2b08fb49b1ea46410ba84d24e29434ec8002d4fef07655d00c54d5a7fbc"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/rate_0.3_number_200/benchmark_percentile.json",
+      "bytes": 3665,
+      "sha256": "706b30277364bd0d00f3bc178664f80e9cfc11250c2319aad8b36654de3487f1"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/rate_0.3_number_200/benchmark_summary.json",
+      "bytes": 572,
+      "sha256": "88244b551d9da8dfaf33f276e4127b47ed57ccd05f448d78f66c908ee9248a63"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/rate_0.3_number_200/workload_throughput.json",
+      "bytes": 878,
+      "sha256": "a8219da76053d0d704574b77520570b1b03516bb38cd5dd62e27650a6bccd797"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/20261105_193456/Scenario_C_N1_r1/rate_0.3_number_200/workload_timeline.json",
+      "bytes": 32044,
+      "sha256": "593a8c05fa7b82f0371b34247fffd65b0374c02902f323eeadd1a89ac6115db8"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/client.log",
+      "bytes": 36364,
+      "sha256": "1b106500109d21953dffc10f86bbb71d2d691eb950a6dce4b107065a79fc3403"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/command.json",
+      "bytes": 784,
+      "sha256": "89d8bc63b993b4b3bf57cd8d5602d91b0ed05df08f6fcc292350e86fffc164ef"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/command.sh",
+      "bytes": 610,
+      "sha256": "9f509bbf1072ac159895df751b82ec8044230cc0d7c3a8cc04fc8b84f1c17f77"
+    },
+    {
+      "path": "lane-control/full/performance/r1/C/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/benchmark.log",
+      "bytes": 12794,
+      "sha256": "2bbae016164e13c1128d067a1c576767c4498b88d281fa04fb217d1fec0277a9"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/parallel_32_number_512/benchmark_args.json",
+      "bytes": 2574,
+      "sha256": "f50c4cc46ae879a1f47e459e578214491cc8b1716698b9c1f6dcca6c63864160"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/parallel_32_number_512/benchmark_data.db",
+      "bytes": 48746496,
+      "sha256": "511f00f6617b722b2c091b5158f5a613ebc1ff2132e5f4a7ff89d84f092b9100"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/parallel_32_number_512/benchmark_percentile.json",
+      "bytes": 3649,
+      "sha256": "14386246b9e5c7cb6b03c7febe945f8ad137517e718f62771301b28698d15d06"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/parallel_32_number_512/benchmark_summary.json",
+      "bytes": 579,
+      "sha256": "e82b346ac2d98de78955ef0f80530278747f9201ce3fe1e9c25860270b1174f1"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/parallel_32_number_512/workload_throughput.json",
+      "bytes": 873,
+      "sha256": "478188cc95a9a2f205f4c5800e796561081abed8615c8ad4f1422d072a1a9648"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/parallel_32_number_512/workload_timeline.json",
+      "bytes": 81778,
+      "sha256": "b5ab9481836f5ff0cc4b4166585cfa8b981b10f9ef07e421519d3fbcc7b96a2e"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/perf_report.html",
+      "bytes": 236172,
+      "sha256": "8794e5e04c984e76d9dee488e49914c2366f8319392a8c42c13eea8f95d39700"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/20261105_194612/Scenario_A_N1_r2/performance_summary.txt",
+      "bytes": 4906,
+      "sha256": "2858afe023693808ae35d2723754d90bd6e184afe14e1a94fee4c72dc6599246"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/client.log",
+      "bytes": 24405,
+      "sha256": "347ec3a53f64fa404457718d054641d4bb603c4f2b0b6aae2ebc46ec34eb57ef"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/command.json",
+      "bytes": 910,
+      "sha256": "15534f91e3b6cb4a1f971832b08cbf5bd24d42d849b12fa28e77afc1d144a2de"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/command.sh",
+      "bytes": 731,
+      "sha256": "bb848c1a0c35c31f26b605f36f6652ee8448f789b25b604a48c9dc63db082b55"
+    },
+    {
+      "path": "lane-control/full/performance/r2/A/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/benchmark.log",
+      "bytes": 9436,
+      "sha256": "e0d95a95893d8943fa449875930e4f0a41c6f7955aaabe72f13d306f5bb5e040"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/parallel_1_number_50/benchmark_args.json",
+      "bytes": 2426,
+      "sha256": "d2befaac2c7443fd81852d0f61e1bf7dea9a2e22aabc2a9a92bb8285e6f3f40c"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/parallel_1_number_50/benchmark_data.db",
+      "bytes": 4308992,
+      "sha256": "1851a627cd9586aba451a8d51de31e4518ef8195e35328afc9238a49a5a8a64c"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/parallel_1_number_50/benchmark_percentile.json",
+      "bytes": 3648,
+      "sha256": "0fd15bbad896a1fb3d81886ffdb971aa87aebd2bc020fe8812e236b9e624b9fb"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/parallel_1_number_50/benchmark_summary.json",
+      "bytes": 565,
+      "sha256": "58719a466eaeaf229fed5c609e66d15e04ae2c5cadbabc9cacd6f4b2a65310fd"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/parallel_1_number_50/workload_throughput.json",
+      "bytes": 881,
+      "sha256": "127b72b66bb78f3d3991de107a009238a5bcb4d185d1097cbc5ec252842253d0"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/parallel_1_number_50/workload_timeline.json",
+      "bytes": 7912,
+      "sha256": "5ad502d8fcda25a505b54917c3125545cfce9a51d759aa2a5ee79d2278ce7cb9"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/perf_report.html",
+      "bytes": 173113,
+      "sha256": "244685af2b86f929e0389852c1bda7722323ad793093cc867679765def352655"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/20261105_194925/Scenario_B_N1_r2/performance_summary.txt",
+      "bytes": 4838,
+      "sha256": "677c06054c7974de4ca291b3865ef08f5ed832da20d84fe1c7a5897b6563cbc4"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/client.log",
+      "bytes": 22750,
+      "sha256": "e39ae42c73b5093bb9c6b3e5cda4e4ddb136ea39a1c37d12856146faa8dc79b6"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/command.json",
+      "bytes": 736,
+      "sha256": "14f422d2d09f13e62423cd0ec6023ca034cc1bdad5748751b1854156114c3052"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/command.sh",
+      "bytes": 567,
+      "sha256": "dd39a80e41f728acf26b6fcc50cfd313040f2cf0a939e85aa0797f49f71e6add"
+    },
+    {
+      "path": "lane-control/full/performance/r2/B/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/benchmark.log",
+      "bytes": 11586,
+      "sha256": "0e4c715c38bb51481d9e243ff5929face143ea00da61a695edfb34154a051214"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/perf_report.html",
+      "bytes": 193544,
+      "sha256": "225f834a95b46404ae5ad0f4c53b7b6f0b1c788bde38d296a6947f357815160b"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/performance_summary.txt",
+      "bytes": 4848,
+      "sha256": "bc5f03bf75abb98ddbf20fbb651569d109951e7cd0de5ace2df338c9aeb5a509"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/rate_0.3_number_200/benchmark_args.json",
+      "bytes": 2465,
+      "sha256": "5824d10f0d3b1fba9bf1c099ca21bae9d1ec8d84b66e31c7bbd3a1759ad0d827"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/rate_0.3_number_200/benchmark_data.db",
+      "bytes": 29417472,
+      "sha256": "cb7e5e7230966eec1650410aae05fca6cd4bd33544c3f10c64eeff272fab1915"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/rate_0.3_number_200/benchmark_percentile.json",
+      "bytes": 3663,
+      "sha256": "3817fe2521b4cdd4c4ec153351aecee4eb59373cd62304224a414d22f4f34725"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/rate_0.3_number_200/benchmark_summary.json",
+      "bytes": 573,
+      "sha256": "e1f18d582609b7409794949228ceed717bfca3a614efaaf9c03b63d61c4851da"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/rate_0.3_number_200/workload_throughput.json",
+      "bytes": 879,
+      "sha256": "2374bd38acbb8c79e3d618225cfe1f152b421f626d08c1ccffd89b5fb0067fb5"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/20261105_195133/Scenario_C_N1_r2/rate_0.3_number_200/workload_timeline.json",
+      "bytes": 32059,
+      "sha256": "555e25dc5b81dfe5729e12ac597fd6f79b128bd404eade6e6dfeed072ad5960b"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/client.log",
+      "bytes": 36331,
+      "sha256": "5a4a70e8098196a4d2639085268a0ea4b4759aeee1d4fa41b9d17c08b7e230ad"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/command.json",
+      "bytes": 784,
+      "sha256": "08b82aadcdda8d7e79696ca00ea1213a4e337dc05d4c489c90576a43cfab9dc7"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/command.sh",
+      "bytes": 610,
+      "sha256": "8e7bea02141abc17ed25578806158b1da1d4af3104611a21ccc05e0452eebb96"
+    },
+    {
+      "path": "lane-control/full/performance/r2/C/exit_code",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "path": "lane-control/full/performance/scenario_a_prompt_bodies.jsonl",
+      "bytes": 7954092,
+      "sha256": "8f38e0161c2d6163efc4e411faf45f848577e45c7c25b96fcc906a5fde99e9e9"
+    },
+    {
+      "path": "lane-control/full/request_audit.json",
+      "bytes": 4988,
+      "sha256": "ed3b9793e7a180c2e8eb92479528453d2f2bbca03473022c2e98e00133957423"
+    },
+    {
+      "path": "lane-control/full/results.json",
+      "bytes": 40339,
+      "sha256": "8e2df762f76b1ea9bd1de0ee56d0c9e6421311506a0730f7abd629818062cda6"
+    },
+    {
+      "path": "lane-control/full/runtime.json",
+      "bytes": 5192,
+      "sha256": "d32be9b3b8f0034f3d688d5807efa0975dbca2618de9056d32090b225aa488d8"
+    },
+    {
+      "path": "lane-control/full/source_hashes.json",
+      "bytes": 27841,
+      "sha256": "bb774f44da7d87d3f2853c9ee6599923c413443828098fa588bd4d0b8a98628b"
+    },
+    {
+      "path": "native-prefill/all/DONE",
+      "bytes": 70,
+      "sha256": "1ea191d9a44b31a3d12946fa158ecb408ea8b8ef66babe03fc7e5e0c26010c27"
+    },
+    {
+      "path": "native-prefill/all/correctness/C.responses.jsonl",
+      "bytes": 233544,
+      "sha256": "f1b11e5f451d23fc67b5fc088d66aca18461f15e80f1709eb2a9d26021b151af"
+    },
+    {
+      "path": "native-prefill/all/correctness/C.summary.json",
+      "bytes": 130,
+      "sha256": "e9e4653a5b3da0e4109cadf60d58103fdd5b35e6c30e5d73ddd17d140cf05f7b"
+    },
+    {
+      "path": "native-prefill/all/correctness/acceptance.json",
+      "bytes": 438,
+      "sha256": "124c531446cfbb2f1f7f02845f32c14bf165dd809a5d4253fca815f7b1db4bd3"
+    },
+    {
+      "path": "native-prefill/all/correctness/he_atom.jsonl",
+      "bytes": 618348,
+      "sha256": "9459ce6deb50c123fd4cc3982cdc147a3b6e64a76d239124b20887b5d78900ab"
+    },
+    {
+      "path": "native-prefill/all/correctness/he_summary.json",
+      "bytes": 135,
+      "sha256": "8c5f1607763402c45b44484be677124ab985807a4a141874fea71f2315ded90a"
+    },
+    {
+      "path": "native-prefill/all/correctness/protocol.json",
+      "bytes": 1356,
+      "sha256": "abac13131845ab0303b64e397bb4a1d068cc021f3c5b31af0aaa6f26d06cb557"
+    },
+    {
+      "path": "native-prefill/all/correctness/strict_16k.json",
+      "bytes": 1528,
+      "sha256": "9cf2b09433dcac16a2564ac17a080c2191306e0a4e267d7d0dc35f24ccbcb501"
+    },
+    {
+      "path": "native-prefill/all/correctness.log",
+      "bytes": 6459,
+      "sha256": "7d3ec9195467c2033e9792a918a485448a2bffe6b5eb79d0d24e7cba0cb2c398"
+    },
+    {
+      "path": "native-prefill/all/manifest.json",
+      "bytes": 5362,
+      "sha256": "ee966a23705e9bc6559bd8d8a7ac90ab103bca0ef84d446a7f8f97af1849cad1"
+    },
+    {
+      "path": "native-prefill/all/restore.log",
+      "bytes": 930,
+      "sha256": "4512a66691481dbd3917cff0151c0e7e3d7933df7230c5fe43c63c0db97545c4"
+    },
+    {
+      "path": "native-prefill/all/review.json",
+      "bytes": 901,
+      "sha256": "787c76659dcb4a3c133121266890e80682ebb4a031258087a590b59be349d21f"
+    },
+    {
+      "path": "native-prefill/all/smoke.json",
+      "bytes": 867,
+      "sha256": "07a764d42a9cddb60fef3696692fb09504496014017c12185c0cf79586f8c1c3"
+    },
+    {
+      "path": "native-prefill/all/source_commit.txt",
+      "bytes": 41,
+      "sha256": "0d5253cd91052a87889c55141a8f60458f5747b50e5524d25057955e208bd6fc"
+    },
+    {
+      "path": "native-prefill/all/startup.log",
+      "bytes": 965,
+      "sha256": "5390a8faa72f3d909cb2397f3ba32b2c59051b60e9d59704779056c2568525a2"
+    },
+    {
+      "path": "native-prefill/scoped/DONE",
+      "bytes": 10,
+      "sha256": "d3be030801b90ea8057d3997d9845c7f850cc7b784450645d5ec2811cc927d7a"
+    },
+    {
+      "path": "native-prefill/scoped/global/DONE",
+      "bytes": 10,
+      "sha256": "d3be030801b90ea8057d3997d9845c7f850cc7b784450645d5ec2811cc927d7a"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness/C.responses.jsonl",
+      "bytes": 233738,
+      "sha256": "d2610dea74ecfc4d7871e72d17f4fd0e7fabadd3645215b2f9df57ce9a984f61"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness/C.summary.json",
+      "bytes": 130,
+      "sha256": "d5afc2cdfdb3f016bd7cd7c5685b9480bef6f7e42d7845b13639839db120f9cc"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness/acceptance.json",
+      "bytes": 453,
+      "sha256": "55057932250b6ed0542e494ffa13c3463f2fb0f3a94fd9c3041d31eddc54be89"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness/he_atom.jsonl",
+      "bytes": 601362,
+      "sha256": "6d4fe11e44a61b8d3bd82d1e3f228d7dfcb4a10e2b0f60b68332d47b1c630970"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness/he_summary.json",
+      "bytes": 150,
+      "sha256": "8b3fe1277dd3c0b7a16947d72be31833c0e2a11cac3e1b5e971066c8c63d9dc9"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness/protocol.json",
+      "bytes": 1364,
+      "sha256": "edc1c9e1200c5912bb35efdf58169c78ba599dad48847e2cc911fd33014c2db7"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness/strict_16k.json",
+      "bytes": 1528,
+      "sha256": "274f8da9733393c05bec2a2400999da52ec87fbd9b2951269c7cfc1832572f04"
+    },
+    {
+      "path": "native-prefill/scoped/global/correctness.log",
+      "bytes": 6472,
+      "sha256": "d50bfd89bc93511de0162bfe9ae3fc597b7217fb9edae5bb6e3aff1670f8cdb8"
+    },
+    {
+      "path": "native-prefill/scoped/global/manifest.json",
+      "bytes": 5342,
+      "sha256": "d341cc9da857c7009dadea61097bd43c34e5b1f964154c598418b1fc17433862"
+    },
+    {
+      "path": "native-prefill/scoped/global/restore.log",
+      "bytes": 930,
+      "sha256": "f96f091757677ae1e12adfa7864430b3c3a5e2581a21512d1ecd898d45450103"
+    },
+    {
+      "path": "native-prefill/scoped/global/review.json",
+      "bytes": 756,
+      "sha256": "657db929723eea5d8029e65988238bdc6f97d20c8444f11466c02a028d6a7a70"
+    },
+    {
+      "path": "native-prefill/scoped/global/smoke.json",
+      "bytes": 867,
+      "sha256": "fc1c43895e961a794d26d85a0974f82644491359718580d995b73c9859c352bf"
+    },
+    {
+      "path": "native-prefill/scoped/global/source_commit.txt",
+      "bytes": 41,
+      "sha256": "5da271469abbd63f8cc3fa64b4a151d073be7923862201b46d8384e509b9e4b9"
+    },
+    {
+      "path": "native-prefill/scoped/global/startup.log",
+      "bytes": 938,
+      "sha256": "0a0b04510f892554b96f041db7b6c937355656012536ed73abfbc88dd3d2cb5f"
+    },
+    {
+      "path": "native-prefill/scoped/results.json",
+      "bytes": 1647,
+      "sha256": "e7a9e51f7d1180c1350f8b2b160686b2c0882b3e0365a3384c5a14d7893783ba"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/DONE",
+      "bytes": 10,
+      "sha256": "d3be030801b90ea8057d3997d9845c7f850cc7b784450645d5ec2811cc927d7a"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness/C.responses.jsonl",
+      "bytes": 234146,
+      "sha256": "cf4d446b5e770abe9ddd128186b2badcc984957e3603b2e595b7e491445eb6b7"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness/C.summary.json",
+      "bytes": 130,
+      "sha256": "91002496fefb466c6575771137747f71dc1380b69ca47a2b90287b33d0ac57c6"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness/acceptance.json",
+      "bytes": 453,
+      "sha256": "94646ca60b7cdfc00f49e435bec9b8d34d67ee33216e27825852fdda11623642"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness/he_atom.jsonl",
+      "bytes": 613801,
+      "sha256": "ee7995fe347d00ae8500eabd40c582c93430a7f9e9c06a8c7e56f0eba0b3fe82"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness/he_summary.json",
+      "bytes": 150,
+      "sha256": "2416c72fcb2016c81bce641c91626843bbf3c9e60464bcf7c2ccf740fb85b206"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness/protocol.json",
+      "bytes": 1365,
+      "sha256": "2ba4cf5a500d8399cfe62e9a6cd50d1601432e1bd0ea6e03660f2b74c94063d8"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness/strict_16k.json",
+      "bytes": 1529,
+      "sha256": "31aa98eb8fc2b072e0f9ed770499fb5b3e26522d62d5c0944f7d22edfe704618"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/correctness.log",
+      "bytes": 6473,
+      "sha256": "8481e454c313dd710b90197d5575e2841e15f1a16e421c27c9282dd415809ff8"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/manifest.json",
+      "bytes": 5344,
+      "sha256": "89c2d2db4869eb39030551af4166247a917c2464726701ca0b980d920968e8be"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/restore.log",
+      "bytes": 930,
+      "sha256": "055f3038a28ba5f20a1d994300c59204ae821038e8f00cd37f4bebeb0dee0445"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/review.json",
+      "bytes": 757,
+      "sha256": "ed8444ee8cf594f5a063973c1ea3c68a0f10e58cf3d31830b3c0b4d5863c442a"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/smoke.json",
+      "bytes": 867,
+      "sha256": "c96dd774a6f8bbff6a3f9b2231b5c9211cbf3e8dcf53a6e6bdb3663e4311063a"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/source_commit.txt",
+      "bytes": 41,
+      "sha256": "20f7e5c91bd15082fe5361bebe2d04ccafe59fecd3b1f5e7dc0869b1af285fd4"
+    },
+    {
+      "path": "native-prefill/scoped/sliding/startup.log",
+      "bytes": 939,
+      "sha256": "376f8ab2f013a72c0111fa2ea0f07cefa7cedc01faaf35b9ba5ff806254ff590"
+    },
+    {
+      "path": "experiment-sources/global_qk_operator_validation.json",
+      "bytes": 12096,
+      "sha256": "41d3579a2e4f2ac1ec08923c1739ffcda5dcf6857336e13c707015aefe54effd"
+    },
+    {
+      "path": "experiment-sources/mellum_global_causal_qk_candidate.py",
+      "bytes": 3524,
+      "sha256": "f92725fdb564509564f6f3796918c6a8d5e3a5f2a7e2b1c3d842a349fbcf6280"
+    },
+    {
+      "path": "experiment-sources/probe_global_causal_qk.py",
+      "bytes": 3065,
+      "sha256": "0d21b53b32972f82758e5be0565fa64f5cac0ab7b87de924a0b3d9226690d36f"
+    },
+    {
+      "path": "experiment-sources/prepare_global_qk_probe.py",
+      "bytes": 1351,
+      "sha256": "cad5e70b314c99b010851c179686ba6bc8690fca5a0f89490cabbcb8811714f8"
+    },
+    {
+      "path": "experiment-sources/prepare_global_qk_model.py",
+      "bytes": 4862,
+      "sha256": "c6226b1c111cf95ea3cc29fe9004cf7d92fc83442f030b36ecf92dcef794a575"
+    },
+    {
+      "path": "experiment-sources/run_global_qk_model.py",
+      "bytes": 4297,
+      "sha256": "7edce4885ee3b7394cd94d039ac75eb1be613b603d6d325834f5838809069bcf"
+    },
+    {
+      "path": "experiment-sources/run_native_prefill_after_qk.py",
+      "bytes": 4525,
+      "sha256": "1684b511ae66a770b090101078d28cc934b92c5ffeb7e80cab2abbd90bac409e"
+    },
+    {
+      "path": "experiment-sources/run_scoped_native_prefill.py",
+      "bytes": 5230,
+      "sha256": "43c5fe4842c18771b83605bb3d075a7672c00ebc78c4e428955902afaaa091cf"
+    },
+    {
+      "path": "experiment-sources/late_experiment_history.txt",
+      "bytes": 1104,
+      "sha256": "49d0db9e41e3183ed935c583e7a24c5d4128f94f0f576185924d3e91e61c7b0d"
+    }
+  ]
+}

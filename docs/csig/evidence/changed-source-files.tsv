@@ -9,7 +9,7 @@ added_lines	deleted_lines	path
 44	1	atom/model_ops/layernorm.py
 29	0	atom/model_ops/linear.py
 64	0	atom/model_ops/mellum_batch_decode_attention.py
-145	0	atom/model_ops/mellum_bf16_attention.py
+153	0	atom/model_ops/mellum_bf16_attention.py
 70	0	atom/model_ops/mellum_ck_korder.py
 58	0	atom/model_ops/mellum_decode_norm.py
 53	0	atom/model_ops/mellum_grouped_decode.py
@@ -39,10 +39,12 @@ added_lines	deleted_lines	path
 150	0	atom/model_ops/mellum_ordered_moe.py
 66	0	atom/model_ops/mellum_paged_decode.py
 128	0	atom/model_ops/mellum_piecewise.py
+104	0	atom/model_ops/mellum_prefill_global_qk.py
 75	0	atom/model_ops/mellum_prefill_softmax.py
 56	0	atom/model_ops/mellum_prefill_softmax_adaptive.py
 105	0	atom/model_ops/mellum_prefill_softmax_gluon.py
-19	0	atom/model_ops/mellum_prefill_softmax_hybrid.py
+23	0	atom/model_ops/mellum_prefill_softmax_hybrid.py
+115	0	atom/model_ops/mellum_prefill_softmax_lane_cache.py
 100	0	atom/model_ops/mellum_prefill_softmax_large_cache.py
 82	0	atom/model_ops/mellum_prefill_softmax_runtime.py
 89	0	atom/model_ops/mellum_prefill_softmax_window_cache.py
@@ -422,7 +424,7 @@ added_lines	deleted_lines	path
 72	0	scripts/scen_ref_run.py
 70	0	scripts/scenario_table.py
 32	0	scripts/score_a_fresh.py
-382	0	scripts/server_profiles/fast.json
+387	0	scripts/server_profiles/fast.json
 33	0	scripts/shuf_check.py
 32	0	scripts/shuffle_check.py
 16	0	scripts/start_mellum.sh
