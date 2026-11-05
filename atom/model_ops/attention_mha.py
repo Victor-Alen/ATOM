@@ -857,9 +857,14 @@ class PagedAttentionImpl(nn.Module):
 
         ctx = fwd_ctx.context
 
+        native_phase = __import__('os').environ.get('ATOM_MELLUM_NATIVE_ATTN_PHASE', '')
+        native_prefill = ctx.is_prefill and (
+            native_phase == 'prefill'
+            or (native_phase == 'prefill_global' and self.sliding_window <= 0)
+            or (native_phase == 'prefill_sliding' and self.sliding_window > 0))
         if (__import__('os').environ.get('ATOM_MELLUM_BF16_HF_ATTENTION')=='1'
-                and __import__('os').environ.get('ATOM_MELLUM_NATIVE_ATTN_PHASE', '')
-                    != ('prefill' if ctx.is_prefill else 'decode')
+                and not native_prefill
+                and (ctx.is_prefill or native_phase != 'decode')
                 and self.head_dim==128 and self.kv_cache_dtype=='bf16'
                 and not self.use_flash_layout and self.sinks is None
                 and getattr(get_current_atom_config().hf_config,'model_type',None)=='mellum'):

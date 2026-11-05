@@ -78,7 +78,7 @@
     "ATOM_MELLUM_PREFILL_SPARSE_WINDOW": "1",
     "ATOM_MELLUM_PREFILL_SPARSE_PV": "1",
     "ATOM_MELLUM_PREFILL_PV_CONFIG": "${RUNTIME}/runtime/startup_delivery/native_sparse_pv_config.json",
-    "ATOM_MELLUM_NATIVE_ATTN_PHASE": "prefill"
+    "ATOM_MELLUM_NATIVE_ATTN_PHASE": "prefill_global"
   },
   "cmd": [
     "python3",
@@ -188,7 +188,7 @@
     "atom/model_ops/paged_attention.py": "d8a2609552f37fc638866c93ce2a60f4c282c5c3907c45fd4fdbcb34c4de25d0",
     "atom/model_ops/mellum_prefill_sparse_qk.py": "236805ca77416a058bc3c751cbbc663b1a623be1cc73b8db503df1bf6e6538ae",
     "atom/model_ops/mellum_prefill_softmax_adaptive.py": "a25603717d5aacc32c245ea2622b07b5ff374df3b152c2d4a574427afafbcdd0",
-    "atom/model_ops/attention_mha.py": "015e3cce34db1504032fa42ee738a814c0ea670d5b01f034ef7241cb27ee05dc",
+    "atom/model_ops/attention_mha.py": "8c7352b331fcb33846ba2f846db573aadd4f6404ac68c2d3a41e77fd4d5a2b50",
     "atom/model_ops/base_attention.py": "4d63f732d9fb5458df212573acf5d572581191ccb2988e4445ee541906e1ae64",
     "atom/model_ops/triton_gemma_rmsnorm.py": "33dba79d7ccc829707c6a69a0dd809a37c3e74c2d833139b7aff35ce1971b25b",
     "atom/model_ops/mellum_hf_attention.py": "aa402edadddb5b1aa10ea268c0edeb569e2f02bf0c1b01fa31037971c63c72ca",
@@ -365,7 +365,7 @@
   },
   "cwd": "${REPO}",
   "evidence": {
-    "scope": "Isolated original AITER fused prefill ablation. Decode, norm, linear, MoE, graph unchanged. MTP off. Not accepted until full checks.",
+    "scope": "Isolated original AITER prefill on global layers; all other operators fixed. MTP off. Validation pending.",
     "baseline": "/data/datasets/baseline.json"
   },
   "required_paths": [
