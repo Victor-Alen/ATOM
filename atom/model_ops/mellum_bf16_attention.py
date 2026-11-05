@@ -71,6 +71,14 @@ def attention(q, k, v, kc, vc, metadata, scale, window, cache_format='NHD'):
             # masked-load softmax below may consume this allocation.
             from atom.model_ops.mellum_prefill_sparse_qk import try_qk
             scores = try_qk(q[start:stop], key)
+        if (count == context_length and (window is None or window <= 0)
+                and 2048 <= key_length <= 16384
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_GLOBAL_QK') == '1'
+                and __import__('os').environ.get('ATOM_MELLUM_FUSED_PREFILL_SOFTMAX') == '1'
+                and __import__('os').environ.get('ATOM_MELLUM_PREFILL_SOFTMAX_VARIANT') == 'hybrid'):
+            # Only causal positions are written. The hybrid softmax must mask loads.
+            from atom.model_ops.mellum_prefill_global_qk import try_qk
+            scores = try_qk(q[start:stop], key)
         query = q[start:stop].transpose(0,1).unsqueeze(0)
         key = key.transpose(0,1).unsqueeze(0)
         value = value.transpose(0,1).unsqueeze(0)

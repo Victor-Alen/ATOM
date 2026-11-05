@@ -78,7 +78,8 @@
     "ATOM_MELLUM_PREFILL_SPARSE_WINDOW": "1",
     "ATOM_MELLUM_PREFILL_SPARSE_PV": "1",
     "ATOM_MELLUM_PREFILL_PV_CONFIG": "${RUNTIME}/runtime/startup_delivery/native_sparse_pv_config.json",
-    "ATOM_MELLUM_PREFILL_LANE_CACHE": "1"
+    "ATOM_MELLUM_PREFILL_LANE_CACHE": "1",
+    "ATOM_MELLUM_PREFILL_GLOBAL_QK": "1"
   },
   "cmd": [
     "python3",
@@ -163,7 +164,7 @@
     "atom/model_ops/mellum_prefill_softmax.py": "4b2636ce87f7905890f0212dafe185cfad158ebfd44ae4de59fa6bb6daf80a12",
     "atom/model_ops/mellum_native_decode_moe.py": "322f68ac88791a9410f393b93aa313aae6f17289a680c650cf8f25aa991e84d9",
     "atom/model_ops/mellum_decode_norm.py": "f82a76f6f573515ee1f8b42dbad2fca48011fc31a64da6f096f7a6ed02d630f7",
-    "atom/model_ops/mellum_bf16_attention.py": "0f1cfa20a2e739e57e561bd0023256594a528ea14392ee13aacd98a969639fdc",
+    "atom/model_ops/mellum_bf16_attention.py": "7be52f218883340b37867fd9d4c63e98460feab10fcd1093e62913153bb29d93",
     "atom/model_ops/mellum_native_prefill_rotv1m32.py": "4348f29a15e5a45dc08966bc66ec1f2360e712eebea02110af70d801edb1074a",
     "atom/model_ops/mellum_prefill_sparse_pv.py": "9452f9acb3da6f3036bbf11edbe05a000a11d35e977c07f522124bdcd994286d",
     "atom/model_ops/mellum_native_linear.py": "ee1de72057e324e39e9551f4eab639e25b3883cab346526a4bfa702a2c9dbb77",
@@ -362,11 +363,13 @@
     "atom/entrypoints/openai/reasoning.py": "d22734dc359e4f793f5eba81ebdb3ecee7951eb44d2c4862a6ad52ea8f6fcf4d",
     "atom/entrypoints/openai/__init__.py": "f6f90e287f9a9255945c19068656cb854b9b249f35b97eb1537c23a5c6533e01",
     "atom/entrypoints/openai/api_server.py": "0772b3f554bfd897d8f07e51e08636271a730562b5b97a1706911df489c66e8e",
-    "atom/model_ops/mellum_prefill_softmax_lane_cache.py": "ae0b91cda1799a75026478c0dbab695bdfdc78e09bcd00ded7ae430574b9dfcd"
+    "atom/model_ops/mellum_prefill_softmax_lane_cache.py": "ae0b91cda1799a75026478c0dbab695bdfdc78e09bcd00ded7ae430574b9dfcd",
+    "atom/model_ops/mellum_prefill_global_qk.py": "486fcdc417996105b89f01635a22145eab92263ab74795bc383ab58bf96f0ea4",
+    "scripts/start_server.py": "d10b8e799de0e1dd941ad66c058a156a2f40c87f6f83d9bf421a3d1e725949cb"
   },
   "cwd": "${REPO}",
   "evidence": {
-    "scope": "Isolated lane-cache softmax candidate; MTP off. Promotion requires full public correctness and performance.",
+    "scope": "Lane softmax full-validated control plus isolated causal global QK; model validation pending. MTP off.",
     "baseline": "/data/datasets/baseline.json"
   },
   "required_paths": [
