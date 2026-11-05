@@ -2,6 +2,8 @@
 
 这是腾讯 CSIG 云一计算加速题目的交付入口。模型为 Mellum2.1-12B-A2.5B-Thinking，运行于题目冻结的 ROCm / PyTorch / AITER 环境和单张 MI308X。默认 **三个优化点开启，MTP 关闭**。本项目保留完整提交历史，不 squash。
 
+[四页报告、中文PPT、10分钟讲稿及AI说明](docs/csig/README.md) · [完整测试与原始证据](results/README.md) · [D1–D7工作日志](WORKLOG.md)
+
 ## 一条命令启动
 
 在题目给定的 Linux 容器内进入本仓库，执行：
@@ -60,6 +62,15 @@ bash scripts/benchmark.sh --repeat 3
 # 优化阶段的小规模筛选：A64 / B8 / C12
 bash scripts/benchmark.sh --screen --repeat 1
 ```
+
+测试结束后，可对输出目录做逐请求审计并计算三轮中位数：
+
+```bash
+/opt/venv/bin/python3 scripts/summarize_benchmark.py results/本次输出目录
+# 小测只有1轮时另加 --expected-repeats 1
+```
+
+汇总工具要求每轮请求数完整、没有失败、每条流式输出256 token，并检查greedy与ignore_eos参数；遇到缺轮或不完整请求会报错，不会仅按成功子集计算一个好看的结果。它读取现有客户端数据，不运行GPU，也不替代精度验证。
 
 正确性客户端将原始输出、逐 token 比较和 HumanEval 检查结果写到独立目录。`validation/references/` 保存固定哈希的历史 HF 参考，仅由验证客户端读取，服务和模型代码不导入这些答案。HumanEval 使用聊天模板、关闭思考、greedy、EOS 停止、最大输出2048 token，并使用固定官方 checker；协议与 256-token 性能测试分别记录。`scripts/validate_public.py --screen` 只测 C4 与严格16k，不能称为完整验收；`--verify-files-only` 只校验文件和比较器反例，不调用 GPU。
 

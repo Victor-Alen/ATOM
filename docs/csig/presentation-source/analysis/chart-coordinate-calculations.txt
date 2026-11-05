@@ -1,0 +1,99 @@
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (60.0, 267.0) - (1220.0, 343.0)
+Value scale: axis ticks (0.0-2.5)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  segment0         0.5     60.0    267.0    217.7     76.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (277.650294704, 267.0) - (1437.6502947039999, 343.0)
+Value scale: axis ticks (0.0-2.5)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  segment1         0.7    277.7    267.0    312.0     76.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (589.603372192, 267.0) - (1749.603372192, 343.0)
+Value scale: axis ticks (0.0-2.5)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  segment2         0.6    589.6    267.0    258.2     76.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (847.7633613600001, 267.0) - (2007.76336136, 343.0)
+Value scale: axis ticks (0.0-2.5)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  segment3         0.4    847.8    267.0    187.6     76.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (320.0, 240.0) - (900.0, 282.0)
+Value scale: axis ticks (0.0-800.0)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  band           800.0    320.0    240.0    580.0     42.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (320.0, 248.0) - (900.0, 274.0)
+Value scale: axis ticks (0.0-800.0)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  actual         697.7    320.0    248.0    505.9     26.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (320.0, 365.0) - (900.0, 407.0)
+Value scale: axis ticks (0.0-80.0)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  band            80.0    320.0    365.0    580.0     42.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (320.0, 373.0) - (900.0, 399.0)
+Value scale: axis ticks (0.0-80.0)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  actual          68.3    320.0    373.0    495.4     26.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (320.0, 490.0) - (900.0, 532.0)
+Value scale: axis ticks (0.0-5000.0)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  band          5000.0    320.0    490.0    580.0     42.0
+
+
+=== Bar Chart Coordinate Calculation ===
+Canvas: 1280×720
+Chart area: (320.0, 498.0) - (900.0, 524.0)
+Value scale: axis ticks (0.0-5000.0)
+
+Index Label         Value       X        Y       Width    Height
+----  ----------  --------  -------  -------  -------  -------
+   1  actual        4387.4    320.0    498.0    508.9     26.0

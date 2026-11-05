@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+  <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">备答｜复现时，必须同时固定四件事</text>
+  <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">环境、代码开关、输入负载与统计方式。</text>
+  <g id="reproducibility-pipeline" data-chart-type="pipeline_with_stages">
+    <rect x="60" y="203" width="250" height="232" fill="#10243C"/>
+    <text x="84" y="252" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">冻结环境</text>
+    <text x="84" y="298" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">MI308X × 1</text>
+    <text x="84" y="337" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">固定库与二进制哈希</text>
+    <line x1="84" y1="367" x2="286" y2="367" stroke="#294361"/>
+    <text x="84" y="407" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#64B5FF">environment.json</text>
+    <path d="M321 317H346 M339 310L346 317L339 324" fill="none" stroke="#64B5FF" stroke-width="3"/>
+    <rect x="360" y="203" width="250" height="232" fill="#10243C"/>
+    <text x="384" y="252" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">运行配置</text>
+    <text x="384" y="298" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">代码、开关与设备</text>
+    <text x="384" y="337" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">默认 MTP 关闭</text>
+    <line x1="384" y1="367" x2="586" y2="367" stroke="#294361"/>
+    <text x="384" y="407" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">manifest.json</text>
+    <path d="M621 317H646 M639 310L646 317L639 324" fill="none" stroke="#64B5FF" stroke-width="3"/>
+    <rect x="660" y="203" width="250" height="232" fill="#10243C"/>
+    <text x="684" y="252" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">输入负载</text>
+    <text x="684" y="298" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">A512 / B50 / C200</text>
+    <text x="684" y="337" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">输出固定为 256</text>
+    <line x1="684" y1="367" x2="886" y2="367" stroke="#294361"/>
+    <text x="684" y="407" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">protocol.json</text>
+    <path d="M921 317H946 M939 310L946 317L939 324" fill="none" stroke="#64B5FF" stroke-width="3"/>
+    <rect x="960" y="203" width="260" height="232" fill="#10243C"/>
+    <text x="984" y="252" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">统计方式</text>
+    <text x="984" y="298" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">三轮指标取中位数</text>
+    <text x="984" y="337" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">计时关闭 profiler</text>
+    <line x1="984" y1="367" x2="1196" y2="367" stroke="#294361"/>
+    <text x="984" y="407" font-family="Arial, Microsoft YaHei" font-size="24" fill="#64B5FF">SQLite / JSON</text>
+  </g>
+  <text x="60" y="494" font-family="Consolas, Microsoft YaHei" font-size="32" fill="#7ED8D0">bash scripts/benchmark.sh --repeat 3</text>
+  <text x="60" y="543" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">/opt/venv/bin/python3 scripts/validate_public.py</text>
+  <text x="60" y="594" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">A 通过 line_by_line 原样传递 prompt；5 条略超 4k 的原始记录不改写。</text>
+  <text x="60" y="628" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">冷启动与首次捕获单列；公开集三轮测试不替代裁判的隐藏集验收。</text>
+  <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">完整命令、冻结版本、依赖来源、服务停止方式与原始证据索引均随仓库交付。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">16 / 16</text>
+</svg>

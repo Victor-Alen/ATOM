@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+  <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">备答｜D1–D7：卡点、转向与决策</text>
+  <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">按真实日历记录；补充工作单列，不倒填。</text>
+  <g id="seven-day-timeline" data-chart-type="timeline">
+    <path d="M80 357H1200 M1192 349L1200 357L1192 365" fill="none" stroke="#0052D9" stroke-width="4"/>
+    <path d="M100 357V307 M270 357V412 M440 357V307 M610 357V412 M780 357V307 M950 357V412 M1120 357V307" fill="none" stroke="#294361" stroke-width="2"/>
+    <circle cx="100" cy="357" r="9" fill="#64B5FF"/><circle cx="270" cy="357" r="9" fill="#64B5FF"/>
+    <circle cx="440" cy="357" r="9" fill="#64B5FF"/><circle cx="610" cy="357" r="9" fill="#64B5FF"/>
+    <circle cx="780" cy="357" r="9" fill="#64B5FF"/><circle cx="950" cy="357" r="9" fill="#64B5FF"/>
+    <circle cx="1120" cy="357" r="9" fill="#7ED8D0"/>
+    <text x="60" y="205" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">D1 · 10/28</text>
+    <text x="60" y="246" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">接入并真实生成</text>
+    <text x="60" y="281" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">启动不等于验收通过</text>
+    <text x="60" y="311" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">05a095b6</text>
+    <text x="360" y="205" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">D3 · 10/30</text>
+    <text x="360" y="246" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">建立同序参考</text>
+    <text x="360" y="281" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">接受慢路径用于定位</text>
+    <text x="360" y="311" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">cbcdc9f1</text>
+    <text x="660" y="205" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">D5 · 11/01</text>
+    <text x="660" y="246" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">检查形状与状态</text>
+    <text x="660" y="281" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">拆开数值和生命周期</text>
+    <text x="660" y="311" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">5b1d121a</text>
+    <text x="960" y="205" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">D7 · 11/03</text>
+    <text x="960" y="246" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">定位 K 归约顺序</text>
+    <text x="960" y="281" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">局部修复仍未过门槛</text>
+    <text x="960" y="311" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">29fd4865</text>
+    <text x="220" y="438" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">D2 · 10/29</text>
+    <text x="220" y="478" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">提高重复实验要求</text>
+    <text x="220" y="513" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">撤回过早的编译归因</text>
+    <text x="220" y="543" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">6c96b87a</text>
+    <text x="550" y="438" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">D4 · 10/31</text>
+    <text x="550" y="478" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">排查长输入</text>
+    <text x="550" y="513" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">保留失败与中断记录</text>
+    <text x="550" y="543" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">79a9d44d</text>
+    <text x="880" y="438" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">D6 · 11/02</text>
+    <text x="880" y="478" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">复核运行版本</text>
+    <text x="880" y="513" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">撤回来自旧服务的结论</text>
+    <text x="880" y="543" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">797e20d7</text>
+  </g>
+  <rect x="60" y="580" width="1160" height="52" fill="#10243C"/>
+  <text x="80" y="615" font-family="Arial, Microsoft YaHei" font-size="24" fill="#7ED8D0">补充：11/4 完整精度 → 11/5 原生优化 → 11/6 全量复测与交付整理</text>
+  <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">来源：WORKLOG.md 与提交索引；教训：应更早锁定 Step 0 验证协议。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">14 / 16</text>
+</svg>

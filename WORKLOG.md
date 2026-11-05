@@ -1,102 +1,49 @@
-# WORKLOG
+# Mellum 适配 ATOM 工作日志
 
-## D1 - 2026-10-28
+按已有对话和提交记录回顾整理。D1–D7 为 10 月 28 日至 11 月 3 日，之后的工作单列补充。
 
-- Confirmed the assigned host has two AMD Instinct MI308X GPUs and the frozen Mellum 2.1 weights under `/data/models`. Kept `/app/ATOM` unchanged and used `/workspace/ATOM` at upstream commit `26f23a0b` for the integration work.
-- Registered the `mellum` config and `MellumForCausalLM` architecture. Added a Mellum model based on the Qwen3-MoE weight layout, with per-layer full/sliding attention and per-attention-type RoPE/YaRN configuration.
-- Started a single-engine ATOM OpenAI server in eager mode at compilation level 0 with bf16 KV cache and a 32,768-token maximum length. Verified `/health` and observed HTTP 200 completion requests with 5, 990, and 7,881 input tokens.
-- Reviewed the initial integration and confirmed it already calls ATOM `FusedMoE`; a generic "replace Python MoE loop with fused MoE" item is therefore not a valid later optimization for this Step 0.
-- Correctness is not yet certified: the 200-prompt first-64-token HF comparison, separate 16k check, and HumanEval comparison are still pending. No formal scenario A/B/C baseline result has been recorded.
+**D1｜10 月 28 日：把模型接进来**
 
-## D2 - 2026-10-29
+检查模型结构和权重，完成基础接入，服务能生成文字。但能跑不等于算对，决定先保留原环境，建立和 Hugging Face 的对照。
 
-- Added a native HF Mellum reference path pinned to upstream Transformers commit `ca68c9e07b69cd686c8bbf8869cc40889f5c82ce`, with compatibility shims confined to the local reference modules. The frozen installed packages were not changed.
-- Added exact non-streaming ATOM token IDs and a comparison script that records per-prompt agreement, exact 64-token sequence matches, and the 90% token-position gate. Streaming performance traffic is unchanged.
-- Diagnosed the initial invalid HF smoke output: frozen Transformers 5.2.0 loaded checkpoint expert shards as unexpected keys while native Mellum's packed 3D expert parameters remained missing. Added explicit gate/up/down checkpoint packing to the reference loader; this does not alter ATOM.
-- After the reference fix, the `2+2=` smoke produced identical ATOM and HF token IDs at all 16 positions, with text `4, 2+2=4, 2+2=4,`. This validates the reference path but is not the 200-prompt gate.
-- Started greedy 64-token HF generation for all 200 scenario C public prompts. The 200-prompt comparison, separate 16k-input statistics, and HumanEval remain pending; Step 0 is not yet certified.
+**D2｜10 月 29 日：推翻过早的归因**
 
-### D2 (cont.) - 2026-10-29, 01:00-01:30 Beijing time (remote clock is UTC 2026-10-28 17:xx)
+尝试编译和图执行后，速度变快，输出却有差异。开始怀疑是编译导致，重复请求后发现事情没这么简单。决定先做重复实验，不凭一次结果判断修好了。
 
-- Fixed a real off-by-one in the Mellum prefill attention mask and committed it as `5b72cc44`. aiter/FlashAttention's `window_size=(left, right)` counts keys *outside* the query token, so passing the configured window N as `left` let the varlen prefill path attend to N+1 keys; the decode path in the same file already passed N-1, and the HF reference mask keeps exactly N keys (`kv_idx > q_idx - N`). Only prefill was wrong.
-- Wrote `scripts/margin_probe.py` to test something I had been assuming: is the HF reference output a stable target at all? It teacher-forces HF's own 64 reference tokens back through HF eager in a single forward pass and records the top-1/top-2 logit margin at every step. Result over the first five scenario-C prompts (6.2k-12.6k tokens): HF reproduces its own greedy tokens at 313/320 positions (97.8%); 4 of 5 prompts have 1-2 positions where the argmax flips to a different token. Every flipped position has a low top-1 probability (0.14-0.65) and a small logit margin (0.09-0.63). Data: `/workspace/correctness/margin_probe_first5.json`.
-- Interpretation kept deliberately narrow: the reference is numerically fragile on these random-token prompts, so per-token agreement will never be a stable 100% target. But ATOM at 59.1% is far below the reference's own 97.8% self-consistency, so this does not excuse the gap - it only bounds how much of it can be blamed on bf16 noise. Remaining candidates, in the order I intend to test: ATOM prefill uses FlashAttention while HF uses a materialised mask, and the MoE reduction order differs; the task's own baseline was measured with "explicit-mask SDPA", which suggests matching that path is what the setter considered reference-equivalent.
-- Decision: stop guessing and measure. Started the Step 0 scenario A/B/C baseline against the running server (`--level 0 --enforce-eager --kv_cache_dtype bf16 --no-enable_prefix_caching`, i.e. the task's "most naive port"), using `scripts/bench_scenarios.py` with the exact numbers from the task's own eval commands (A: 512 reqs / concurrency 32 / 256 out; B: 50 reqs / concurrency 1 / 1024 in; C: 200 reqs, open-loop Poisson r=0.30/s). `evalscope` is not installed in the frozen image and the task forbids changing the environment, so I wrote an independent client and will state the difference in the report; the official client is being installed into a separate venv that does not touch `/opt/venv`.
+**D3｜10 月 30 日：建立能看清楚的参考路径**
 
-### D3 - 2026-10-29, 01:30-02:00 Beijing time
+固定输入，逐层比较中间结果，补上 PyTorch 参考计算。局部接近不代表后续生成一致，决定先接受慢路径，把它当排查工具，再查第一次分叉。
 
-- Ran the three task scenarios against the Step 0 server (level 0, eager, bf16 KV, MTP off, SWA on, prefix cache off) with a local harness that mirrors the task's own eval commands. 762 requests total, 0 failures. Scenario A: 714.1 tokens/s (published baseline 638.3), TTFT p99 3.47 s vs 5.01 s. Scenario C: 80.9 tokens/s vs 76.2, TPOT p99 42.4 ms vs 41.3 ms. Full table in `RESULTS.md`.
-- Deliberately did not celebrate the scenario A gap over the published baseline: my client is not evalscope (which is absent from the frozen image), so the absolute numbers are not bit-comparable. The level-0 vs level-3 rows were measured back to back with the same client and are the ones I trust.
-- Started optimization candidate 1: piecewise `torch.compile` + CUDA graph capture (`--level 3`, dropping `--enforce-eager`). The Mellum model turned out to be graph-capturable out of the box, contrary to "if Step 0 cannot capture" in the task text. Wins: scenario A 714 -> 1003 tokens/s (1.40x, wall 183.5 s -> 130.7 s), single-stream TPOT 29.06 -> 4.89 ms (5.9x).
-- Then checked tokens, and the win came with a regression: on C-0003 (6183 input tokens) level 3 diverges from level 0 at generated step 2, while C-0000 (7881 tokens) and the short prompt are 32/32 identical. Level 3 splits the graph at `aiter.unified_attention_with_output`, so prefill no longer runs through the varlen FlashAttention path that commit `5b72cc44` fixed. In `atom/model_ops/attention_mha.py` the sliding-window argument is `window-1` on the decode and varlen-Flash paths but the raw `self.sliding_window` on the paged/persistent-ASM path, so exactly one of them is off by one key. Decision: report point 1 as an *unvalidated candidate* with its measured win and its correctness gap, not as a finished optimization.
-- Separately, the HF-side probe from earlier still stands: the reference greedy path reproduces itself at only 313/320 positions on these prompts, so the 90% gate needs a reference whose numerics are pinned down before the remaining agreement gap can be attributed.
+**D4｜10 月 31 日：长输入仍然过不了**
 
-### D3 (cont.) - 2026-10-29, 02:00-02:30 Beijing time
+继续查长上下文、注意力和逐步生成。短样例正常，完整场景仍有问题。保留失败记录，继续定位，没有把局部改善算成验收通过。
 
-- Went to unify the sliding-window convention across ATOM's attention paths, and while checking which path level 3 actually selects found that `use_triton_attn` only depends on window size / head geometry, so level 0 and level 3 take the *same* attention path. That killed my explanation for the token difference and sent me to test the engine's reproducibility instead.
-- Cross-level probe: level 0 against itself, level 1 (dynamo-as-is), level 3. Level 0 disagreed with its own second run on C-0003 (2/32), while a third capture matched the first. So the engine, not the compiler, was the variable.
-- Repeat-request probe (`scripts/repeat_tokens.py`, 8 identical greedy requests per prompt): 3 distinct token streams on a 10-token prompt with 64 output tokens, at level 3, at level 0, and with the MoE forced onto the aiter kernel via `ATOM_USE_TRITON_MOE=0`. C-0000 is stable 8/8 in every configuration.
-- Repeated the whole 5-prompt comparison ten times against the identical HF reference file: agreement ranged 0.250-0.594 (mean 0.469) on a warm server. This is the important result of the day: my earlier "59.1% after the window fix" was one sample, and the level-0-vs-level-3 delta I reported an hour ago is *inside* the engine's own noise.
-- Decision: stop treating single-run agreement as a measurement. Ruled out compile level, MoE kernel, and context length. Next suspect is the paged-attention / KV-block-layout path (reduction order depends on the block allocation a request receives). I would rather spend the next block of time making the engine deterministic than chasing another percentage point of agreement - without determinism the 90% gate is not even measurable.
-- Corrected `RESULTS.md` in place rather than editing history away, so the wrong reading and the probe that overturned it are both visible.
+**D5｜11 月 1 日：检查请求状态和计算方式**
 
-### D3 (cont.) - 02:30-02:50 Beijing time
+排查连续请求之间的状态影响，也对比不同矩阵乘计算路径。此前的确定性判断范围太大，需要撤回。决定把请求状态和数值计算分开查，不能只用“浮点误差”解释失败。
 
-- Bisected the nondeterminism instead of guessing. Output lengths 1/2/4/8/12/16/20/24/32/48 are perfectly reproducible over 10 requests each; 64 is not. Across 10 runs at length 64 the common prefix is exactly 55 generated tokens, so the first unstable prediction sits at context length 65.
-- So it is a single step that goes bad once the context passes 64 tokens, not diffuse jitter. `context_partition_size` is 128/256 so the attention partition path is not the explanation; KV block size is 16, making 64 = 4 blocks.
-- This also explains why C-0000 looked stable and C-0003 did not: the instability only shows when the affected step happens to be near a tie. I had been reading that as evidence that some paths work and others do not - wrong. Recorded that in `RESULTS.md` so the next person does not repeat it.
-- Next concrete test, if I pick this up: vary `kv_cache_block_size` and check whether the unstable index moves with it.
+**D6｜11 月 2 日：先确认测到的是哪个版本**
 
-### D3 (cont.) - 02:50-03:05 Beijing time
+修正请求状态隔离，复查时发现部分历史结果来自旧服务，还有对照方法不适用。先撤回这些结论、重新标明范围，再继续排查，避免拿错结果指导修改。
 
-- Ran the block-size discrimination test to check my own "4 blocks = 64 tokens" hypothesis. It failed in an informative way: block size 32 and 64 are unstable from the first decoded token (10 distinct streams / 10 runs), while the default 16 is stable to 64 tokens. So block size changes which attention kernel runs, and my hypothesis is not confirmed - I wrote it up as an open question instead of a cause.
-- Useful by-product: default `block_size=16` is the least unstable of the three, so the KV-block axis is a thing to re-probe after any future change rather than a knob to tune for speed.
-- Restored the canonical Step 0 server (level 0, eager, bf16 KV, default block size, prefix cache off) so the machine is left in the configuration that `RESULTS.md` describes.
+**D7｜11 月 3 日：找到局部原因，仍未完成**
 
-### D3 (cont.) - 03:05-03:25 Beijing time
+继续追查 MoE 累加和矩阵乘的计算顺序，修正了部分差异。但实际快路径仍没通过，早期这轮尝试没有完成 Step 0。决定保留参考路径，把局部修复和整体验收分开，继续逐项推进。
 
-- Swept prompt length instead of trusting one prompt. 21 / 61 / 130 / 294 / 997 / 2989 tokens with 10 identical requests each. The 61-token prompt stayed bit-identical across 960 decode steps while crossing the alleged 65-token boundary, and the 997 / 2989 prompts diverged at the first or second token. So the "64 threshold" I reported an hour ago was a coincidence on one prompt, not a structural edge - corrected in `RESULTS.md` rather than quietly dropped.
-- The graded behaviour (stable at <=300 tokens, immediately divergent at >=1k) points at the split/partition count of the attention reduction growing with context length, which is a much better-fitting hypothesis than KV block boundaries. That is now the stated next probe.
-- On block size, definitively: it is not a fixable knob. Changing it swaps the attention kernel (32/64 diverge from the first token) rather than only changing layout, so it stays at the default and any future tuning that touches it has to re-run the determinism probe first.
+**补充｜11 月 4 日：完成对齐，再恢复速度**
 
-### D3 (cont.) - 03:25-03:45 Beijing time
+固定配置完成完整正确性检查，开始把慢路径逐项换回并行计算，并接入 MTP。MTP 早期设计也有前提错误，需对照已有实现纠正。输出不一致的快方案暂不采用。
 
-- Chased the "kernel never reads the earlier blocks" idea properly instead of dismissing it. The docstring of `pa_decode_gluon` states `max_context_partition_num = ceil(max_context_length / context_partition_size)` while ATOM forces 1 partition of 128 keys for sliding layers, which literally reads as "sliding layers only see the last 128 keys". Designed a test that would settle it: 284-token prompt, where the engine is bit-identical across runs, so any disagreement with HF is systematic rather than noise.
-- Result: 64/64 tokens identical to HF, five repetitions, agreement 1.0000. Theory rejected, and the kernel's partition count is a tiling parameter rather than a coverage limit.
-- The by-product is the most useful result of the whole investigation: the Mellum port reproduces HF exactly whenever the engine is deterministic. So the integration (weight mapping, 3:1 layer pattern, per-layer RoPE/YaRN, QK-norm, top-8 MoE) is validated, and the ~50% figures were never a correctness measurement.
-- Reframed the remaining problem as long-context numerics only, and wrote down the specific suspect: the multi-partition softmax combine in `paged_attention_triton`, whose `exp_sums` / `max_logits` / `temporary_output` buffers are `torch.empty` (uninitialised) and which reduces up to 8 partitions.
+**补充｜11 月 5 日：在完整负载下继续补问题**
 
-### D3 (cont.) - 03:45-04:05 Beijing time
+优化原生算子，修正 MTP 的计算分组和缓存空间预留。小样本没暴露的问题在完整测试里出现，修复后重新检查。MTP 保留独立开关，和默认方案分别验证。
 
-- Answered "what are the actual segment counts" by measuring instead of reading: MI308X has 80 SMs and occupancy 2, so `get_recommended_splits` returns 8 partitions at concurrency 1 and 2 partitions at concurrency 32, each partition 256 tokens; sliding layers always get 1 partition of 128 tokens.
-- Two findings from that. First, the partition count is a function of concurrency, so scenario A (32 concurrent) does not share numerics with scenario B/C (1 concurrent) - correctness measured at one concurrency cannot be assumed at the other. Second, the kernel asserts CONTEXT_PARTITION_SIZE == 256 while ATOM passes 128 for sliding layers; either the assert is in an unused variant or the 128 config is unsupported.
-- The 284 / 997 boundary now has a plausible mechanism: 284 tokens spans at most two partitions and matched HF exactly, while 997 is the first length where four full partitions enter the softmax combine, and 997 is exactly where divergence moves to the first generated token. Logged as correlation, not proof.
+**补充｜11 月 6 日：整理交付和复盘**
 
-### D3 (cont.) - 04:05-04:25 Beijing time
+把优化收敛到 MoE、Attention、编译与图执行三个点，默认关闭 MTP。完成 C200、严格16K、HumanEval完整检查及 A512/B50/C200 三轮性能测试；A超过基线，但 C 仍未达到要求，材料中保留这个结果。补齐四行小规模消融，并明确它不是全量结果。重新采集正确依赖环境下的 profiler，补上可移植验证客户端和原始证据。
 
-- Ran the agreed order: gating top-k first. G1 (deterministic torch top-k) looked like a clean win - short64 went from 3 distinct streams to 1 - and I nearly reported it as the root cause.
-- Then ran the combination test and, as a control, repeated G1 verbatim as H2. H2 came back with 3 distinct streams on the same patch. So G1 was noise.
-- This is the second lucky-sample trap of the day (the first was the "64-token threshold"). Both had the same shape: n=8 runs, coarse statistic, and a configuration that can look fixed or broken depending on the draw. Recorded that as the methodology conclusion rather than burying it, because it changes how every determinism number in this file should be read.
-- Consequence: stop testing more candidate fixes until the protocol is strong enough to judge them. Next step is n>=40 with a modal-agreement statistic, then re-test the two suspects that survive (gluon kernel reduction, aiter GEMM solution selection).
+整理启动脚本、完整Git历史、四页报告、AI说明、讲稿与答辩PPT，并将当前完整测试版推送到 GitHub。交付检查发现 Windows 自动换行会破坏源码哈希，恢复 LF 并增加仓库约束。保留失败实验，不为了结论好看而选择最好一轮。对应核心交付提交 `73d21d03`，验证客户端提交 `2acf1885`。
 
-### D3 (cont.) - 04:30-04:50 Beijing time
+这次最深的教训是：不能被 AI 的解释牵着走。目标、baseline 和当前方案要自己掌握，也要留出亲自读代码、做判断的时间。
 
-- Built the stronger protocol the G1/H2 contradiction demanded: 40 identical requests per prompt, report modal_rate with its binomial standard error plus the all-runs common prefix, instead of the distinct count over 8.
-- Baseline: short64 modal 0.600 (3 outcomes, prefix 55), C-0000 modal 1.000 (40/40, prefix 64), C-0003 modal 0.225 with 14 different outputs and a common prefix of 2 tokens.
-- The most useful part is that C-0000 is perfectly deterministic at 7881 tokens, so "long context" was never the driver - the content is. That gives me a control prompt (must stay 1.000) and a sensitive prompt (must rise above ~0.36) to judge any future fix, instead of reading tea leaves from 8 runs.
-- Adopted a written verdict rule so I stop promoting lucky draws: n>=40, C-0003 up by 2 SE, C-0000 unchanged at 1.000, short64 not regressed. Anything measured at n=8 in this file is now labelled anecdote.
-
-### D3 (cont.) - 04:50-05:40 Beijing time
-
-- Ran the three surviving suspects at n=40 against the new baseline. All three land within one standard error of baseline: gating top-k 0.275, single partition 0.250, aiter MoE 0.250, against 0.225 baseline on C-0003. So there is no quick Python-level fix for the nondeterminism.
-- Two facts are now firm because they held in all four configurations: the 10-token prompt always diverges at exactly generated token 55 (context 65), and C-0000 stays 40/40 identical at 7881 tokens. The first says a 64-token boundary triggers something; the second says content, not length, is the driver.
-- The only remaining suspect I can name is a reduction inside the compiled gluon paged-attention kernel, which cannot be patched from Python. That is where I would continue, with a kernel-level read rather than more black-box runs.
-- Strategic conclusion for the deliverable: report the gate honestly. The port is bit-exact against HF wherever the engine is deterministic (proven at 284 tokens), and the engine's own temperature-0 nondeterminism is an ATOM/AITER property. Any single-run 90% figure would be measuring the engine's coin flips, not the port. Recommend stating the repetition-based protocol in the report.
-
-## 2026-11-04 — complete selected single-GPU Step 0 self-check
-
-- Kept arithmetic commit a787ed59 unchanged; rechecked source hashes and ran the full selected BF16, TP1, MTP-off configuration.
-- Fresh public C200 greedy64: 12800/12800 positions, 200/200 exact sequences. Original near16k group: 11 cases,704/704; additional exact16384-token input:64/64 versus fresh HF.
-- Rebuilt paired HumanEval with official chat template, enable_thinking=False, greedy, EOS stop,2048-token cap. HF and the same single-GPU ATOM instance each scored148/164 (90.24%),0pp gap; all164 complete token sequences identical; each had3 truncated outputs. Official checker canonical164/164 and negative controls validated.
-- Fresh MTP-on and TP2 startup probes failed; kept logs. User explicitly chose single-GPU BF16 with MTP off, so these optional configurations are outside the passed baseline.
-- Corrected the earlier token-stage acceptance scope and the historical16019-token OOM dataset ID (C0049, not C0059). No squash, no arithmetic changes.
+提交依据另存于 [原始提交追溯记录](docs/csig/evidence/WORKLOG.commit-record.before-concise.md)、[历史提交索引](docs/csig/evidence/worklog_git_history.json) 和 [交付分支当前索引](docs/csig/evidence/worklog_git_history.current.json)。D1–D7的代表提交依次为 `05a095b6`、`6c96b87a`、`cbcdc9f1`、`79a9d44d`、`5b1d121a`、`797e20d7`、`29fd4865`；完整日期和父子关系以Git原始记录为准。

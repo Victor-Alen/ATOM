@@ -1,0 +1,2083 @@
+[
+  {
+    "archive": "portable-full-evidence-20261106.tar.gz",
+    "sha256": "3bb31e0113a677b3f5cbe0da0c6ea3924dc77ef188af4117ff62015ed59991ce",
+    "extracted_directory": "full-current",
+    "members": [
+      {
+        "path": "performance/A_filtered.jsonl",
+        "size": 7819127,
+        "sha256": "cb43948ff892bb7b1925cc7f686371a9efb0941b0a26cd2a4951b56eeb1e15d6"
+      },
+      {
+        "path": "performance/A_original.jsonl",
+        "size": 7954092,
+        "sha256": "8f38e0161c2d6163efc4e411faf45f848577e45c7c25b96fcc906a5fde99e9e9"
+      },
+      {
+        "path": "performance/baseline.json",
+        "size": 1070,
+        "sha256": "14674cbbc641709358e197bd5ad71c3cac8f41ed3932b3091266f5636b0dd6c8"
+      },
+      {
+        "path": "performance/final_summary.json",
+        "size": 5222,
+        "sha256": "0c08000bffd25d072962ed7e771cd5dc1e070a0b2f7055f663c2867d4647f72f"
+      },
+      {
+        "path": "performance/gate_pointer.json",
+        "size": 189,
+        "sha256": "49697ae1942ce8d7a3f0d208833dbeda381f90077a363d45c3e96e39b16c3aa9"
+      },
+      {
+        "path": "performance/input_manifest.json",
+        "size": 1106,
+        "sha256": "729e5f327bf919f751f9879535ed33c9c2a7d81b2e33fe8170e1f6d3aaf0795f"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/benchmark.log",
+        "size": 12642,
+        "sha256": "4a202b2dfe55094757ec2875f6769c8a73d81c62c0ec8efe8efa8ba159c422b8"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/parallel_32_number_512/benchmark_args.json",
+        "size": 2521,
+        "sha256": "295adf6f7825645804883bc83140c336e9915cc9d0647de657502f0b8d666db0"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/parallel_32_number_512/benchmark_data.db",
+        "size": 48660480,
+        "sha256": "8d6c2dd279275feb685c93c683440d5922de1e0eaa88df211a49996e0ba914c8"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/parallel_32_number_512/benchmark_percentile.json",
+        "size": 3643,
+        "sha256": "aad8c7cedb484999bc7882e7b5fe5a8603cfa39ca6563e2dc8bf9b42018ebd33"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/parallel_32_number_512/benchmark_summary.json",
+        "size": 579,
+        "sha256": "703673fd8cf25943b2e35d3c3665cfd3411cf609a0a88b466b265bb87c5ca2eb"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/parallel_32_number_512/workload_throughput.json",
+        "size": 875,
+        "sha256": "c60a2ef0b0a18b97a21f06e49c58b45ea9aae07969301499fe3c444f8de5d692"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/parallel_32_number_512/workload_timeline.json",
+        "size": 81772,
+        "sha256": "bae817becb123c69c7da7e278f8b74532298fda6309d9a719cae75957b1ca214"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/perf_report.html",
+        "size": 236145,
+        "sha256": "f670330aa8a43907f2b77654c0e78b14f83e01a77389d289aa0867c73d8bcfc7"
+      },
+      {
+        "path": "performance/r0/A_filtered/20261105_171907/A_filtered_N1_r0/performance_summary.txt",
+        "size": 4889,
+        "sha256": "ea7b9ad8c2e324bbd99555aaf4b1663aecd29586ebd467ae823bf3f05269f63a"
+      },
+      {
+        "path": "performance/r0/A_filtered/client.log",
+        "size": 24221,
+        "sha256": "e0ee20680b4a307f237198d1542c60a1d39cf9fcaa37359f54df3caa718ab494"
+      },
+      {
+        "path": "performance/r0/A_filtered/command.json",
+        "size": 857,
+        "sha256": "82bb06f23bf413425e9c96e0ea472049d15009e3d9811d942ed5d39fd512bdc0"
+      },
+      {
+        "path": "performance/r0/A_filtered/command.sh",
+        "size": 678,
+        "sha256": "0da0c68c15bd6519e4f6b747d6c6ac2b379cca04809808c10eab85cc73fd65d3"
+      },
+      {
+        "path": "performance/r0/A_filtered/gpu_before.txt",
+        "size": 1243,
+        "sha256": "5cc37175c91cbe7f03ba4f67d9cac12360a091db7247628020fab0a621cbe388"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/benchmark.log",
+        "size": 12721,
+        "sha256": "d1986a5ccf4d6921e4be40c1ed31d7b6efc932980fa5cd8c82b730ff7444cd52"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/parallel_32_number_512/benchmark_args.json",
+        "size": 2521,
+        "sha256": "43f9e69a2e326edfc9a6459aab574c3725138e83fe151ac6081f62990e660cfc"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/parallel_32_number_512/benchmark_data.db",
+        "size": 48746496,
+        "sha256": "0c4bc6d647718510f825219e7ad09547c70d5b50c503fa76bc203233434085f3"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/parallel_32_number_512/benchmark_percentile.json",
+        "size": 3657,
+        "sha256": "8051dc3edf1bac73be94451c5ea2c3ffafb6f68339da7b7f43810ff1ef0c847c"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/parallel_32_number_512/benchmark_summary.json",
+        "size": 579,
+        "sha256": "5b5cc946779d5f12e322e89fc2765c235a96c95ab19e3d1f30678d5b7d3c4704"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/parallel_32_number_512/workload_throughput.json",
+        "size": 878,
+        "sha256": "79c0484fa37fd6bdd7b62c164cd3f6d8ede7ad313b220b79a48a29684667a44b"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/parallel_32_number_512/workload_timeline.json",
+        "size": 81835,
+        "sha256": "c91c7cec93f021771c4927ef1a1277fd16465ff3edda3e14133a4762254df4db"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/perf_report.html",
+        "size": 236201,
+        "sha256": "1374972349df416f35ab7eaecad9d89b9766d193dfde2d8d77892449e956f1b6"
+      },
+      {
+        "path": "performance/r0/A_original/20261105_170216/A_original_N1_r0/performance_summary.txt",
+        "size": 4940,
+        "sha256": "906cbff0a617e8cf184e44cb0da6a96c7427f31f439dd1afa9c9b72e68b2d629"
+      },
+      {
+        "path": "performance/r0/A_original/client.log",
+        "size": 24349,
+        "sha256": "835df8a0f19d2e3227b74d037080d3ed98ab86948e7f923f63d31006fab787bc"
+      },
+      {
+        "path": "performance/r0/A_original/command.json",
+        "size": 857,
+        "sha256": "104252e8760e8f9c398bd3fdd52f280403229226fef55051933297fbc6c08cd7"
+      },
+      {
+        "path": "performance/r0/A_original/command.sh",
+        "size": 678,
+        "sha256": "8e39efbf358a444c87150a20501dcefb1139eb54370f1d436c759fd8bcfd65c7"
+      },
+      {
+        "path": "performance/r0/A_original/gpu_before.txt",
+        "size": 1243,
+        "sha256": "a3fdf30ed789a60a1077e171859c9043402513ca42fc6d649ec663dc5c11bea7"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/benchmark.log",
+        "size": 9262,
+        "sha256": "6942e23959d6825d1bc775d335106b65822cc760f538a258c701b030eed11baa"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/parallel_1_number_50/benchmark_args.json",
+        "size": 2384,
+        "sha256": "93a625ed31328711dec41ee1809c76822dbb78d9b6debc458fe7f07d84c2e517"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/parallel_1_number_50/benchmark_data.db",
+        "size": 4308992,
+        "sha256": "c01abb4e4da2b9354daeb3fcd0fcf15892efd2a3e3a6676aa236fa86558766ad"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/parallel_1_number_50/benchmark_percentile.json",
+        "size": 3649,
+        "sha256": "a0e993dc6c386716d4e9e0812a742f2e327e3d7335f4add17d86b0498af9ddd6"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/parallel_1_number_50/benchmark_summary.json",
+        "size": 566,
+        "sha256": "91c5015959ee5fbafdea004c3c4cb1f2127102f29a5e14fb192eb889a6ca2a5c"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/parallel_1_number_50/workload_throughput.json",
+        "size": 883,
+        "sha256": "f0b843f5827056a98514e645a3a7371f372d6f1b887dcf9712339cf7428e0bc2"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/parallel_1_number_50/workload_timeline.json",
+        "size": 7909,
+        "sha256": "a12c0aba1ebded513496cf4ac0ccd5e2074fb8cf2dee0aa96f011d1b30ee7d89"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/perf_report.html",
+        "size": 173128,
+        "sha256": "29af37c9253fc90b70978834c402c40c6b3a55742fb2c6f85fc62c4ab487225c"
+      },
+      {
+        "path": "performance/r0/B/20261105_170538/B_N1_r0/performance_summary.txt",
+        "size": 4838,
+        "sha256": "1eda5def26e6808d2aaade0d94c3823d9c9ca25eb656f0b2faae0eedd2c7d947"
+      },
+      {
+        "path": "performance/r0/B/client.log",
+        "size": 22543,
+        "sha256": "f410c26d68658491b3c4bf980653fb5928c840b05d74f6c07ecbceb40ba3daad"
+      },
+      {
+        "path": "performance/r0/B/command.json",
+        "size": 703,
+        "sha256": "5bace02181ccfa76def59739bc4c34511390610932f09cd53de1392eba5a3a6c"
+      },
+      {
+        "path": "performance/r0/B/command.sh",
+        "size": 534,
+        "sha256": "9422d789721728f2e1ced641ab7765e38b334880e3a4d5cdb4d7eb3a6a97d94f"
+      },
+      {
+        "path": "performance/r0/B/gpu_before.txt",
+        "size": 1244,
+        "sha256": "85fc54c5ed4d050604891378ce922e140fbc5a1511fcff8f9e656cf8afa35857"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/benchmark.log",
+        "size": 11413,
+        "sha256": "f7046bba56ced70209239917a9081d1b69e95b333e4903b76cd91c7c789794c3"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/perf_report.html",
+        "size": 193562,
+        "sha256": "d744f900e211fb5af19be78b329ecdc00ed10d77b0cc1c647cbbc63c05fb6239"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/performance_summary.txt",
+        "size": 4865,
+        "sha256": "bb791cb87518f1be82975034f0a83859a566db61baf1a1c7ee65286749a696e9"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/rate_0.3_number_200/benchmark_args.json",
+        "size": 2423,
+        "sha256": "ff8e3c2e8e9958c8108966c7a99483e13557fb93801405fe2934422c47e7c400"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/rate_0.3_number_200/benchmark_data.db",
+        "size": 29417472,
+        "sha256": "a63604c794a4628cddbf48cef6803cbe137d47efbd349635d372ad60ddf5b584"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/rate_0.3_number_200/benchmark_percentile.json",
+        "size": 3665,
+        "sha256": "e2944830b10d13cfcad43807ab0f4c95a28f17f126ea164cbb0b9b3880c85a56"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/rate_0.3_number_200/benchmark_summary.json",
+        "size": 574,
+        "sha256": "3ae2ea5bc6a21cf86588d893e33b4d9abce7840812a55d3b96c5f06faf3f4007"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/rate_0.3_number_200/workload_throughput.json",
+        "size": 877,
+        "sha256": "569150d667c6edba428d53a9cfc92a6a1cfa52f5387a018b01af1a49217d810d"
+      },
+      {
+        "path": "performance/r0/C/20261105_170748/C_N1_r0/rate_0.3_number_200/workload_timeline.json",
+        "size": 32058,
+        "sha256": "0318280c5873ae8b310c764e7f6bade5449b64a443e495f240076b428535c864"
+      },
+      {
+        "path": "performance/r0/C/client.log",
+        "size": 36047,
+        "sha256": "ae7f94daf9e0ab555ac968bbd98997801605944a27c1339514e204d05002d8a1"
+      },
+      {
+        "path": "performance/r0/C/command.json",
+        "size": 751,
+        "sha256": "c16f3874bd78531ff8cc248e0fe7e4445284891d41650f0fa04333251f598c0d"
+      },
+      {
+        "path": "performance/r0/C/command.sh",
+        "size": 577,
+        "sha256": "9d74bd099686e6ee9067fceda84e4bd012357f1505e9fada2854b0c29f99482d"
+      },
+      {
+        "path": "performance/r0/C/gpu_before.txt",
+        "size": 1241,
+        "sha256": "f556a50e11b7855a1f9a5299eeb6e3982302df6409be9b526b6c470c690da666"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/benchmark.log",
+        "size": 12678,
+        "sha256": "f4901cfda0eb04123543a6b72eadcc96cabdbf191c5dfeb311db072fb405cabc"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/parallel_32_number_512/benchmark_args.json",
+        "size": 2521,
+        "sha256": "2ae560c4d587e8c0c7b5cee550b6baed9850d9981145d08e83272cf0ecdae9ff"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/parallel_32_number_512/benchmark_data.db",
+        "size": 48676864,
+        "sha256": "9508eaa55d8677be6fb3e8361b8f4865261a4f27fb2f70ccd3595d4e2c3be261"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/parallel_32_number_512/benchmark_percentile.json",
+        "size": 3659,
+        "sha256": "b6934476a0c4b64bbb5e69c1157684995a747c7f8e29d19b71c90bd60f7f5230"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/parallel_32_number_512/benchmark_summary.json",
+        "size": 579,
+        "sha256": "98048e9029b2b4ed8ee591dbe0cf7aa5a56cae0ea5e56e38dd5496de810a8e50"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/parallel_32_number_512/workload_throughput.json",
+        "size": 877,
+        "sha256": "6cba5e963f382b113663c7694e70a25a4f1544aafcdf96d26d10fd2d2a74686f"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/parallel_32_number_512/workload_timeline.json",
+        "size": 81787,
+        "sha256": "b6e9c6fc6c95365b843e17d2dfff641fc0392873d064c6a1fcbcba5fdcacb240"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/perf_report.html",
+        "size": 236225,
+        "sha256": "8d5a4ed014eb85cfea93479a28727a74a3fd0a2274900a8ffc40f5ede8524618"
+      },
+      {
+        "path": "performance/r1/A_filtered/20261105_173904/A_filtered_N1_r1/performance_summary.txt",
+        "size": 4906,
+        "sha256": "f3755fc6e0050419c782e61b11fce174a7ae7cc6438e6466231a073692f7c831"
+      },
+      {
+        "path": "performance/r1/A_filtered/client.log",
+        "size": 24274,
+        "sha256": "0f976a268ff32384e9b5589daa24dab6671be987e00c88c893182c11db528fb7"
+      },
+      {
+        "path": "performance/r1/A_filtered/command.json",
+        "size": 857,
+        "sha256": "e57ef58fdaaa9e0a202a9ed18fde86953ded8f82197477e8c027f4eec58a2f86"
+      },
+      {
+        "path": "performance/r1/A_filtered/command.sh",
+        "size": 678,
+        "sha256": "ed476114a5712347c48ea4bb001c52c5fc13e2bc0775ec45ada9fcec5b304b15"
+      },
+      {
+        "path": "performance/r1/A_filtered/gpu_before.txt",
+        "size": 1243,
+        "sha256": "064bd284f54421eafe0d21beb610b901c42600518da1e5cd4f43f0e56f1f6c52"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/benchmark.log",
+        "size": 12643,
+        "sha256": "ae00d5804858e55b2f0b662aba5e43469ac4d76bf8303ed50f0de45f74ae415d"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/parallel_32_number_512/benchmark_args.json",
+        "size": 2521,
+        "sha256": "4c8036cea02a42d9d5be05e96f4bbbc5d531603f18c98122bbd3e644cf4af78c"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/parallel_32_number_512/benchmark_data.db",
+        "size": 48721920,
+        "sha256": "1c48fe91db5163388ab8c47160ad92decd717fa2b72d458dd7cb1ec13497fa68"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/parallel_32_number_512/benchmark_percentile.json",
+        "size": 3654,
+        "sha256": "acb1ad034adc58a7e7e8868ca17072de108e37a8010122e90268ef567921dd7d"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/parallel_32_number_512/benchmark_summary.json",
+        "size": 579,
+        "sha256": "f4f17e4dcdf99a165387d04f049d2ab8871e6d937973e1eafddc3f6c43411c8d"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/parallel_32_number_512/workload_throughput.json",
+        "size": 877,
+        "sha256": "1c6990e15d4f6e505663d44d31159ea90d8b753cce421587159aa4dd7a430cf7"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/parallel_32_number_512/workload_timeline.json",
+        "size": 81793,
+        "sha256": "50ab6ed71bd300472df91a4bbec4ae06bbbef92fad345a4dabf8e9e6e3d66ac3"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/perf_report.html",
+        "size": 236243,
+        "sha256": "ba184d2aa1d63d2527e523fc7082df413724f9dd049ad9c816c4147a0a28effe"
+      },
+      {
+        "path": "performance/r1/A_original/20261105_172220/A_original_N1_r1/performance_summary.txt",
+        "size": 4906,
+        "sha256": "d9313034406275b83daf0c6f33a78cc48c7c12ff57de1e1088a913b5a472820d"
+      },
+      {
+        "path": "performance/r1/A_original/client.log",
+        "size": 24239,
+        "sha256": "80baed57da1ae6db8add46abb053ff47c1ca54e6df68adef899c728de2b04e48"
+      },
+      {
+        "path": "performance/r1/A_original/command.json",
+        "size": 857,
+        "sha256": "7e0399207f326b5eb3c877467ae794e8ffbe2d493afa9034afee08a0ab335950"
+      },
+      {
+        "path": "performance/r1/A_original/command.sh",
+        "size": 678,
+        "sha256": "b59053f2e8fccbd47f59b5cec617c617837e5657b95ae50c59d898e3021565e0"
+      },
+      {
+        "path": "performance/r1/A_original/gpu_before.txt",
+        "size": 1244,
+        "sha256": "c3b477a38219f649bf151191d9bdf79fe47632a415f44f0b9cca510c50aff73d"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/benchmark.log",
+        "size": 9262,
+        "sha256": "e8b8a14496701632f71a9b02b086cd9a0b19731669a2fe95d39655cfec63f3f7"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/parallel_1_number_50/benchmark_args.json",
+        "size": 2384,
+        "sha256": "3172dc62afffc52e26e9165caa5cc87d1ad93b72b79264a6df730a76b64b3f52"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/parallel_1_number_50/benchmark_data.db",
+        "size": 4308992,
+        "sha256": "772ae718fa96e3151d445491c3a540019dba82aed5e70b15cceedc9cba17b847"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/parallel_1_number_50/benchmark_percentile.json",
+        "size": 3646,
+        "sha256": "0ce7a741da34542eeadf0cebc46424100f4934cd605601a040fabb9096dd66aa"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/parallel_1_number_50/benchmark_summary.json",
+        "size": 565,
+        "sha256": "24e8308d7fd3553f76cd478bef10a077477348c996cb5533c86642d63cc747a3"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/parallel_1_number_50/workload_throughput.json",
+        "size": 881,
+        "sha256": "f01ab6a1213121dc07a5ff2dbcb92c2e101a5d2956f583f291c137e809056a9e"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/parallel_1_number_50/workload_timeline.json",
+        "size": 7909,
+        "sha256": "bd476471df2ce38281b99628586ad60ec9a3d5777c85a1c09f03e476ed4781bd"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/perf_report.html",
+        "size": 173105,
+        "sha256": "f2df498fc7bf7001753a06ac8e7775499355c1d9418b35e18f53d345b344d44c"
+      },
+      {
+        "path": "performance/r1/B/20261105_172535/B_N1_r1/performance_summary.txt",
+        "size": 4826,
+        "sha256": "bf2ea617f48c8eb3a59ef3ee2d0fe92d533af3a0e6f96622a1a347afd293382e"
+      },
+      {
+        "path": "performance/r1/B/client.log",
+        "size": 22531,
+        "sha256": "fac3ec19258abe067298ca33f51503735261a1b7ebcc942d7946fbc17de71ec0"
+      },
+      {
+        "path": "performance/r1/B/command.json",
+        "size": 703,
+        "sha256": "617e07ad4cfad2dbd40672e5a40a7612c46a9a98b83c4df87341416fa2298ea8"
+      },
+      {
+        "path": "performance/r1/B/command.sh",
+        "size": 534,
+        "sha256": "3646c293975aaff9936501f4ba4498acb5b7eb958c723526341a845bf0c31177"
+      },
+      {
+        "path": "performance/r1/B/gpu_before.txt",
+        "size": 1240,
+        "sha256": "cef9f3155d8de21880faeffbf3c14d54dada22ec6c3b2d6ec5614000e7e00192"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/benchmark.log",
+        "size": 11410,
+        "sha256": "e5830dca0de08576a0102ee36c31e39651395012ff53f6407bfdd95d8ef1daae"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/perf_report.html",
+        "size": 193566,
+        "sha256": "b2e870e64bbb1666e0026a17991c22ddebd87dd5c5c5ef06f1020dbdec3f953a"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/performance_summary.txt",
+        "size": 4865,
+        "sha256": "019a2a7663071cdef3d5ef1f8ebe38f960e19eddeeb36b23cdd70f3af435a29b"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/rate_0.3_number_200/benchmark_args.json",
+        "size": 2423,
+        "sha256": "7e7adcf208f790987de3be93f62206a380687182f58c029cedee56d106f97252"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/rate_0.3_number_200/benchmark_data.db",
+        "size": 29417472,
+        "sha256": "11f79498b66b57a2c4c96fb49b84561a17919f5ba56d6cecae7640b9f03e6f9e"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/rate_0.3_number_200/benchmark_percentile.json",
+        "size": 3670,
+        "sha256": "11911d7f736abd052a62aa6da6864fe1cace979303daca54fcabde41e5e0a354"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/rate_0.3_number_200/benchmark_summary.json",
+        "size": 572,
+        "sha256": "712595b9cffa7804507b2ed564c286f92b4edd7ddd466a4e0db0eb0364ed721c"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/rate_0.3_number_200/workload_throughput.json",
+        "size": 879,
+        "sha256": "97ebdb0d0db73412809eebec1a90fc3b3b7453f39050c79fc16a0ff69e2efe0f"
+      },
+      {
+        "path": "performance/r1/C/20261105_172745/C_N1_r1/rate_0.3_number_200/workload_timeline.json",
+        "size": 32053,
+        "sha256": "7a27f8bd2a3c7c4188d886208e2b6797ad2414d25900069d6779a8a469a2c1b3"
+      },
+      {
+        "path": "performance/r1/C/client.log",
+        "size": 35869,
+        "sha256": "cc9d279b82d1fc031bd2d138dba937fe60e689ce34e7556ec33b0585cbff4cbe"
+      },
+      {
+        "path": "performance/r1/C/command.json",
+        "size": 751,
+        "sha256": "0a3fbce4be987623eedc55698492057ac12f97af36a68c3b964650c6fb331ac4"
+      },
+      {
+        "path": "performance/r1/C/command.sh",
+        "size": 577,
+        "sha256": "3dc85b97a2781c853ca49cba16ad841af9ed13df5eb0322c161261037da1c025"
+      },
+      {
+        "path": "performance/r1/C/gpu_before.txt",
+        "size": 1243,
+        "sha256": "f8c2568f00ea063d0d48df2872497ea28bf7fd72c389a274e543d4f853a7f537"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/benchmark.log",
+        "size": 12645,
+        "sha256": "4bb5264ca100e81dbefabb5b00ffba5492ed709487a8aa00dc8b5c537c0ed3ef"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/parallel_32_number_512/benchmark_args.json",
+        "size": 2521,
+        "sha256": "fb45a4b9c281169b8ed5e30381ef26748a4a0f0a442b058b03876a63d1a08aab"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/parallel_32_number_512/benchmark_data.db",
+        "size": 48664576,
+        "sha256": "1735ef1817efb65c4354622d7302c5dc2577a30f8d4e921ec5d6a47dc4421b6c"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/parallel_32_number_512/benchmark_percentile.json",
+        "size": 3654,
+        "sha256": "34ca95a7cbc99d76ee4161358ccf94d6b3d5ade579c5e145ea80597d93f71b48"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/parallel_32_number_512/benchmark_summary.json",
+        "size": 579,
+        "sha256": "199a9d322814c850e489893b128f305ef9275b4a1142a822bd9d3346427612dd"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/parallel_32_number_512/workload_throughput.json",
+        "size": 874,
+        "sha256": "23c04bd8f5ab9a3ac78fb5f861e96eb91296d61a90252cdc0af205a0b0d766f6"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/parallel_32_number_512/workload_timeline.json",
+        "size": 81794,
+        "sha256": "7c863d5d5e80b16464b789726e5de9436592ba3671cd92f91af4895241b12b1a"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/perf_report.html",
+        "size": 236236,
+        "sha256": "b791d06168bd4145c9c743e846f5bf67617dbae75d663594e9ef227107075c8a"
+      },
+      {
+        "path": "performance/r2/A_filtered/20261105_175900/A_filtered_N1_r2/performance_summary.txt",
+        "size": 4906,
+        "sha256": "2b76f82f1d5551f372040db3e0835846ce12a5f1684f286e40660d0d9baff54a"
+      },
+      {
+        "path": "performance/r2/A_filtered/client.log",
+        "size": 24241,
+        "sha256": "c79e2e13f94c7821a18d2f0be1775ac1e05d9469623099e1775857bfeef22632"
+      },
+      {
+        "path": "performance/r2/A_filtered/command.json",
+        "size": 857,
+        "sha256": "c1b4dd87ba9f924ac3d2eb304d684079b5bb4bfcb8822b9cc4c55b1d74267568"
+      },
+      {
+        "path": "performance/r2/A_filtered/command.sh",
+        "size": 678,
+        "sha256": "23e23d7903dbaefe576c44703ca65f51771050a3de0e85d36c8e169f94f4e9da"
+      },
+      {
+        "path": "performance/r2/A_filtered/gpu_before.txt",
+        "size": 1243,
+        "sha256": "313198bdb24a0ec8101ec96b044ff77e40eb65fbee449a128dd43b252a0eadb5"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/benchmark.log",
+        "size": 12663,
+        "sha256": "760d0ea441e4e57e8899c7aa4a0a10a4e64a035df07bf1df4e6fa933db34adba"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/parallel_32_number_512/benchmark_args.json",
+        "size": 2521,
+        "sha256": "e85a2c8ddd9ef291b7af268a963ae99a0ffe1de60d1172a9e31057506ef8405f"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/parallel_32_number_512/benchmark_data.db",
+        "size": 48734208,
+        "sha256": "d8c8143f1ced0bb99e76ce7c9717f02353e32de0767c20e8ca68b1525cb5d020"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/parallel_32_number_512/benchmark_percentile.json",
+        "size": 3658,
+        "sha256": "aaacd9a19169c932528de1f0d27ab19e3824a86617fce06aa2e59bfae3da773f"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/parallel_32_number_512/benchmark_summary.json",
+        "size": 578,
+        "sha256": "b1d9d17a16cba47da9ba8cb279ac3f61ccb7a4c6ca274c83d8f6c28a5b285041"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/parallel_32_number_512/workload_throughput.json",
+        "size": 876,
+        "sha256": "162b61876abb6d8268f5aa23acab898847f386b1d9cc9d52c646c3fd38a7b7b4"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/parallel_32_number_512/workload_timeline.json",
+        "size": 81786,
+        "sha256": "c4fc7ec81bf72055f340aa908c2a08c4c636f5334bdeb3364c486458d65cb213"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/perf_report.html",
+        "size": 236218,
+        "sha256": "0a8eccdbaedd6c3f2fdfb59d1ca0d0c6c75344199be893e8716c09816d27d1dc"
+      },
+      {
+        "path": "performance/r2/A_original/20261105_174217/A_original_N1_r2/performance_summary.txt",
+        "size": 4906,
+        "sha256": "9a8ff9d2527f3c719ca1a51710ff1f05279dd6ca89e8de774758f79f0000fbc7"
+      },
+      {
+        "path": "performance/r2/A_original/client.log",
+        "size": 24795,
+        "sha256": "078ca02c1874e35e319d2112404c2ae3aee7cb22563a35d53e433c533af50690"
+      },
+      {
+        "path": "performance/r2/A_original/command.json",
+        "size": 857,
+        "sha256": "7a3b6c4688ff4cd33cb2e2f04b47e5b4e8aa65f46b8871d8c7213ef9f9450174"
+      },
+      {
+        "path": "performance/r2/A_original/command.sh",
+        "size": 678,
+        "sha256": "921c8e0189b8ea0809a43a9b7af68d06b2329a31f7e116ed1a28d7d44b0566ce"
+      },
+      {
+        "path": "performance/r2/A_original/gpu_before.txt",
+        "size": 1241,
+        "sha256": "a1df573a5ce8e6d300f74e655f42032fb7244583119313682215f66445b78d76"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/benchmark.log",
+        "size": 9262,
+        "sha256": "013dd539b332b10c7dea017a752f78cec3d995cd7cb8a4d9fdd66877d22f503a"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/parallel_1_number_50/benchmark_args.json",
+        "size": 2384,
+        "sha256": "f52920122da95b10115e2f1d5197dc621b7e7fd7c731957f9dd92e62d85dafc9"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/parallel_1_number_50/benchmark_data.db",
+        "size": 4308992,
+        "sha256": "ff13894ff1f70308779bb0440e52e9e75edb27eea0e8c9c5091ed382aacb8875"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/parallel_1_number_50/benchmark_percentile.json",
+        "size": 3639,
+        "sha256": "ca98f9e749fbb494986596d7dc81e639a7ef337cbaa9e3656a603bed2da5793c"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/parallel_1_number_50/benchmark_summary.json",
+        "size": 566,
+        "sha256": "896e49f464c374735487b12f31b146736e6699644c1d5702de4833ea65660da9"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/parallel_1_number_50/workload_throughput.json",
+        "size": 881,
+        "sha256": "1092dde56367d0356072b8f3ec4e47b77f69df429f1aaa791a26ca6855f352e3"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/parallel_1_number_50/workload_timeline.json",
+        "size": 7913,
+        "sha256": "d6ae8276a3cdb4b199bc60a698e5deac54825712d21cbc44dbf571e91e6e230a"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/perf_report.html",
+        "size": 173101,
+        "sha256": "faf40e3eaec86d5d62a2b011d0e23abd7d9f2865069e61cd3b5d32c6651fd471"
+      },
+      {
+        "path": "performance/r2/B/20261105_174531/B_N1_r2/performance_summary.txt",
+        "size": 4838,
+        "sha256": "3a5a47f37f75397896546ed3ad609948ae43c743493dc5d19907a487deb37b01"
+      },
+      {
+        "path": "performance/r2/B/client.log",
+        "size": 22543,
+        "sha256": "8dac8dbe91c4c7d786a9220e33178c7fd6d55148326efce5f1f48b6fec61aa9b"
+      },
+      {
+        "path": "performance/r2/B/command.json",
+        "size": 703,
+        "sha256": "cf2b88d7280a0aed09b6509295229dc26812a0b01932eaab3f695c2800da7629"
+      },
+      {
+        "path": "performance/r2/B/command.sh",
+        "size": 534,
+        "sha256": "3955c1a6b18c9dc6950c0c08afde1f9bc04b77bbb94dfa3e5775031c392a9054"
+      },
+      {
+        "path": "performance/r2/B/gpu_before.txt",
+        "size": 1243,
+        "sha256": "6d45829dadd57d9eb74342519c6593721a9de1da93f8b1607db38fcfe47a09d5"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/benchmark.log",
+        "size": 11413,
+        "sha256": "e00a9ea2c5c0faad5befac51fe729d8371272a501741e4106a4f83bb33f2b489"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/perf_report.html",
+        "size": 193575,
+        "sha256": "2cc134a0df9619d0a114d38fb4652107726594cdb7216c7a631052e14bd6ac83"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/performance_summary.txt",
+        "size": 4865,
+        "sha256": "4c79881742a205abca140bc75cc567ad3fa08069009423198658543fd26000fc"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/rate_0.3_number_200/benchmark_args.json",
+        "size": 2423,
+        "sha256": "6fbd679a07df74e43280de386adde9f5be8f4a94049567f3926ed5269310ae7d"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/rate_0.3_number_200/benchmark_data.db",
+        "size": 29417472,
+        "sha256": "7260eda63710724c20d838180d1388a66b1b230477a1161d40690c8fe98b15e1"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/rate_0.3_number_200/benchmark_percentile.json",
+        "size": 3671,
+        "sha256": "8b015fc9ae38ea68e7e671b623577c4db6e82c5cc36c823310b5ae90f425c00b"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/rate_0.3_number_200/benchmark_summary.json",
+        "size": 574,
+        "sha256": "f1dc21704877b3dc1d93f1fe0d79f868125fa64aa59bba1b9dea8cbc4bfa6a6c"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/rate_0.3_number_200/workload_throughput.json",
+        "size": 879,
+        "sha256": "b73a77bdd8ef77b217797a9e4199f66c97ac479d0ed5c0c0861b4c6b5c56607c"
+      },
+      {
+        "path": "performance/r2/C/20261105_174741/C_N1_r2/rate_0.3_number_200/workload_timeline.json",
+        "size": 32056,
+        "sha256": "ee56bf36dadaa05ef5af78e90038630e4c827a567bfcae63eea9fc2f354f07c4"
+      },
+      {
+        "path": "performance/r2/C/client.log",
+        "size": 35765,
+        "sha256": "d320a073729ee2867c79d27c785d67e3221243d9f20823af5a04b823a361b65c"
+      },
+      {
+        "path": "performance/r2/C/command.json",
+        "size": 751,
+        "sha256": "d1e9e78cec328e679e4a6833c50e0f0561029c864e862033338ec3a3ab293149"
+      },
+      {
+        "path": "performance/r2/C/command.sh",
+        "size": 577,
+        "sha256": "f22df75318360ce5bc297907211dcb893232eb4addc8f9509a1c26ad9f4ec0f2"
+      },
+      {
+        "path": "performance/r2/C/gpu_before.txt",
+        "size": 1241,
+        "sha256": "9e326a108e7dc33c20da03bd50a15702f6cf4355238e000cbc47aa6d95912a4a"
+      },
+      {
+        "path": "performance/request_audit.json",
+        "size": 17050,
+        "sha256": "4dcda0d97351cee54e15ce7cfaa0fe5c36be3abbbd86ae14fcf3986b63a802fe"
+      },
+      {
+        "path": "performance/results.json",
+        "size": 56133,
+        "sha256": "cb7b96c2b5c4db35cce4631a80469c70640dab14e3faf4a637937196b528cb8e"
+      },
+      {
+        "path": "performance/runtime.json",
+        "size": 5119,
+        "sha256": "2197aba199e15a5d1efd80c188284235825472fb0a1c86a04232efcb814d3510"
+      },
+      {
+        "path": "performance/status.json",
+        "size": 3130,
+        "sha256": "521dde18daf15730a143fa6a8abdf9a323a5c71b3e6e5ce6c939aad83644b82b"
+      },
+      {
+        "path": "correctness/ACCEPTED",
+        "size": 70,
+        "sha256": "6979cd4c1f7f567dfe554fc93d4ebb50d8411e08f5436f3e90f6379952c0af53"
+      },
+      {
+        "path": "correctness/C200.responses.jsonl",
+        "size": 237475,
+        "sha256": "bf7bc4c6b94405f9bae92f17c6dcc139d350f807092e9f5615f1f816f3b4ea8a"
+      },
+      {
+        "path": "correctness/C200.summary.json",
+        "size": 426,
+        "sha256": "3201fa7ace01769a68be2093d237223a9e3325c1c5ca2b5515226ea1179a94ee"
+      },
+      {
+        "path": "correctness/DONE",
+        "size": 64,
+        "sha256": "6fba44f14a527f97a21d9a922fb8d6ccf47be20c88af41a7cad4adf866e6179b"
+      },
+      {
+        "path": "correctness/acceptance.json",
+        "size": 1403,
+        "sha256": "c7da04c96ef8f38f56d29dc46fadf34c3ef8a79707a47d5fd0b259e4c04c1357"
+      },
+      {
+        "path": "correctness/he_atom.jsonl",
+        "size": 622275,
+        "sha256": "83b96880aeab32c63e799b1df3807157c2ae6d03d34301da62212aba27145919"
+      },
+      {
+        "path": "correctness/he_atom_summary.json",
+        "size": 289,
+        "sha256": "1eeeca32aea54f7209346d0ba9ab7aaaa28108d7cea804f03b6f85a95abd1c41"
+      },
+      {
+        "path": "correctness/he_hf_summary.json",
+        "size": 287,
+        "sha256": "4c1c0fcf559bebe60d3ca9a61dee8cc0b31a33b4034e7c121f31adf745ec8aa1"
+      },
+      {
+        "path": "correctness/he_worker.py",
+        "size": 399,
+        "sha256": "6bf9528924b7adeb0dcf7c86ba6532e80c5c331119a6b1a044c0697339b69b73"
+      },
+      {
+        "path": "correctness/reference_audit.json",
+        "size": 1322,
+        "sha256": "efc450458a4027f7ee7d87ba492875c45338c012ca5d454b83ede1dc73fd069b"
+      },
+      {
+        "path": "correctness/runtime.json",
+        "size": 5119,
+        "sha256": "2197aba199e15a5d1efd80c188284235825472fb0a1c86a04232efcb814d3510"
+      },
+      {
+        "path": "correctness/source_hashes.json",
+        "size": 144034,
+        "sha256": "641c00f51977561cc9d724b5ca0a4b2bc9134406c9b52f56bf9d7f238a846d9d"
+      },
+      {
+        "path": "correctness/strict_16k.json",
+        "size": 1510,
+        "sha256": "ba4a2ac9c6dbbd4feb82eccca1229519f2532f1f8a1044d07f50bca94eeea49b"
+      },
+      {
+        "path": "correctness/validate_full.py",
+        "size": 4277,
+        "sha256": "95fa08e5a92f6ca04f900db70516f19ca33958745d1676ef1b141988025beaf9"
+      },
+      {
+        "path": "baseline.json",
+        "size": 1070,
+        "sha256": "14674cbbc641709358e197bd5ad71c3cac8f41ed3932b3091266f5636b0dd6c8"
+      },
+      {
+        "path": "humaneval_bf16.rejected.json",
+        "size": 43788,
+        "sha256": "399354335c6da2f1e57ca0f14133a509b60b8e99d7588b4bd97011dad2b9287b"
+      },
+      {
+        "path": "operators/long_qk_operator_validation.json",
+        "size": 10129,
+        "sha256": "37ceb98c33cbbb67822e696e0f1f1309398430d3319203236b205a02ddcde16f"
+      },
+      {
+        "path": "operators/pv_operator_validation.json",
+        "size": 1688,
+        "sha256": "7f1dc08a4dd9c9d05a3ebce18828813cbf6dc82170872b3383c2ee200b129083"
+      },
+      {
+        "path": "operators/window_sparse_validation.json",
+        "size": 1217,
+        "sha256": "10ad3c438ced78ab6fe7952dd1b5753f29cddabbc81b05f192d46fd3459e5d6b"
+      },
+      {
+        "path": "operators/pv_operator_probe.json",
+        "size": 7606,
+        "sha256": "010f0984bf514cf38a7694e4060d2291733ad35be718583baa675627cfa043d8"
+      }
+    ],
+    "all_members_match": true
+  },
+  {
+    "archive": "delivery-supplemental-evidence.tar.gz",
+    "sha256": "734df55ec03367319bfe69e92d141514dfa0aebfffd0c2a3969192342442475f",
+    "extracted_directory": "supplemental",
+    "members": [
+      {
+        "path": "delivery_profile_20261105T183352Z/DONE",
+        "size": 61,
+        "sha256": "ad25142fa435e755b3d048d7a6e93d305678e0b563c65fffc2c8e2dce59d3dad"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/cases.json",
+        "size": 1221,
+        "sha256": "ce205075f855cd16e81d1f27c95b647b865e3d35b9c02166c2c4565dfae3cab7"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/digest.json",
+        "size": 63203,
+        "sha256": "9f33a8e4c1c28b9ece063c1f30aa73b189e1c0107cde2f1bdc64e32601edf1f5"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/restore.log",
+        "size": 965,
+        "sha256": "d25b015451ebf2aaf5312373afbac21572cb2cac7330b099774e33189b061ae3"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/runtime.json",
+        "size": 5327,
+        "sha256": "4a4d474fed82d7ba0874e9be3b6f72a73cd5eed46f6c7676c681ae357cb0ed5a"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/server.log",
+        "size": 26503,
+        "sha256": "b0293ae7dd6ac6ae10b4fae33607d7a7dc21941a2c52285b03b454368f6cf016"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/traces/rank_0/Mellum2.1-12B-A2.5B-Thinking_ts_20261105_183434_508.pt.trace.json.gz",
+        "size": 1256712,
+        "sha256": "5f16a53eecb866b02dcdbfa9ddbfadf2bd1d9a142bfed11c1d30151e6a19e7a6"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/traces/rank_0/Mellum2.1-12B-A2.5B-Thinking_ts_20261105_183442_644.pt.trace.json.gz",
+        "size": 537771,
+        "sha256": "e7bade1121e91c2075a04b74c16781282ff0a80b12de2213571d3fb404da714c"
+      },
+      {
+        "path": "delivery_profile_20261105T183352Z/traces/rank_0/Mellum2.1-12B-A2.5B-Thinking_ts_20261105_183502_723.pt.trace.json.gz",
+        "size": 9008921,
+        "sha256": "d0a9ffade5210e528b1adcab7000e5e0f6b8bf8137ddfe971f7d191b92cf193c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/DONE",
+        "size": 74,
+        "sha256": "24f5d71c80355cb1ae33a176bc7b8ada74219631298ae0a5cc4f3c318ad5fbb8"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/A8_HF64.responses.jsonl",
+        "size": 9309,
+        "sha256": "ba65e3a1a1878ac02592b4881affae1f87791819e84b4c2a08a098d2a46dc158"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/A8_HF64.summary.json",
+        "size": 418,
+        "sha256": "637ff87b5ca5a090b08cea36489dd55801d9e5b47fb3ef3dde5462291eaf4276"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/C4_HF64.responses.jsonl",
+        "size": 4789,
+        "sha256": "7fcff68402dd9a423d5696005edb2c512d69e467d51e7fb4c1370c1f4a713c58"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/C4_HF64.summary.json",
+        "size": 419,
+        "sha256": "4cfcd232dd3041c35034a8178587daf1191004ec647161a2f3ef8d41037f8129"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/benchmark.log",
+        "size": 164,
+        "sha256": "c4f799488517d27e12a54d640b6360a9811694f5521b310587414fc4803af502"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/correctness.json",
+        "size": 54,
+        "sha256": "137c055a89b829020719c2bf388744a4c09f73e83119d82383d0962c6c67c133"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/protocol.json",
+        "size": 465,
+        "sha256": "20d2c73705e38f6bc8f5c4ff666ebf8f0345b49b40a696b2929d5336edf2c8f2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/benchmark.log",
+        "size": 9979,
+        "sha256": "9a0c5a305d3eb8707688ef5000400d6f9dae0ba31a16ab8c405431b7ccbf94f6"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/parallel_32_number_64/benchmark_args.json",
+        "size": 2560,
+        "sha256": "23a91223805155542c969b69068e868fb4eb5b5c3ae9c122991c4c781ea844b2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/parallel_32_number_64/benchmark_data.db",
+        "size": 6090752,
+        "sha256": "0cf4d1b8e3047b3b88e9df549cc6da5e0cb6754ad287de571b05165c92ba0521"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/parallel_32_number_64/benchmark_percentile.json",
+        "size": 3653,
+        "sha256": "06d75427cdfde058962963936755b596a6f1b996ad3cfa5bdb38ea4292c75bcf"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/parallel_32_number_64/benchmark_summary.json",
+        "size": 578,
+        "sha256": "424079aeca931109339c459574553f014fa476fc1150c0fba283cea8ba2b709d"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/parallel_32_number_64/workload_throughput.json",
+        "size": 878,
+        "sha256": "8b1e3ef8b4ec19f49a4425f2702b6c052d0a4c3555474d35252fb8dc6dd136f9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/parallel_32_number_64/workload_timeline.json",
+        "size": 10172,
+        "sha256": "c4277a6daf01300bd36755e0f056d0149d38d186b2cb882935db1d863a67e7cd"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/perf_report.html",
+        "size": 175029,
+        "sha256": "efe9dc3dd9548eeb62a6fde996ce544cf352cbda4a624a0135f7de69488aa9ce"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/20261105_181325/Scenario_A_N1_r0/performance_summary.txt",
+        "size": 4911,
+        "sha256": "8a870657d8d0c59a6e40df9ff03a4711b1abb458d9e6a593ce6afdab60a46e33"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/client.log",
+        "size": 18579,
+        "sha256": "0eb3b628d5f42136cbda03b3a6776d01d0a7619334c3e06a0b04bd63afb5bcef"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/command.json",
+        "size": 897,
+        "sha256": "569fbb1c389e0ed09f8561d2f7cda60341a6855b5a6ec1c75a4b5ce4f4d270b0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/command.sh",
+        "size": 718,
+        "sha256": "9c22984b3df04ef9c4148a7de63fa52644e500077c424fcd50e2e301af988a63"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/A/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/benchmark.log",
+        "size": 9342,
+        "sha256": "6271b877214546618a4b72b5bd6abfe93665f3f0cba0f4cfef255578c803a13c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/parallel_1_number_8/benchmark_args.json",
+        "size": 2418,
+        "sha256": "eed990848d1b013e2410c7c373fa35b18fc64ebd3d00ff96865759437331a3c4"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/parallel_1_number_8/benchmark_data.db",
+        "size": 692224,
+        "sha256": "cdfd3a91d658a1c56443f9b182718aeb76fb3518cc79f597034cdfb1b61e2d6d"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/parallel_1_number_8/benchmark_percentile.json",
+        "size": 3651,
+        "sha256": "70a79cddc1be7604050308abcf634a9350975064eb1758df9c57ca0f28ff5846"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/parallel_1_number_8/benchmark_summary.json",
+        "size": 564,
+        "sha256": "68ae6555eed1c431d29f7429e0b215bbb75fbd8dda3fea97d0ba9029ca111415"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/parallel_1_number_8/workload_throughput.json",
+        "size": 874,
+        "sha256": "bfab3fa42f59297b67e81e7c168c0cbdd6fd58614d18b5ccf68432af2666ec9b"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/parallel_1_number_8/workload_timeline.json",
+        "size": 1305,
+        "sha256": "fedd02fd9d08fb158df30eecdd49e26ea1429b804149efd383fd52b47431c094"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/perf_report.html",
+        "size": 167718,
+        "sha256": "2ba99386bf8d1cf9da11f9b6d9d0af011594cd7a7e85ce815c816474764b2c1b"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/20261105_181617/Scenario_B_N1_r0/performance_summary.txt",
+        "size": 4826,
+        "sha256": "33eee593b5b5793694f309e2b43f7cd21beaedabb33d4437667093458f4ca68c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/client.log",
+        "size": 18344,
+        "sha256": "de18acd5d12e22d7fac849fde937cf8a700124cb5c1c6ad59f6d0f8af6544a05"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/command.json",
+        "size": 729,
+        "sha256": "3b6bc3e08b9e74c7d17df1b5bd32b2139c557447f92db5b643bc0fe08358d673"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/command.sh",
+        "size": 560,
+        "sha256": "b9b8529e622b3d7abfa16127d19357ca693d7dbc13a65e8167b7be095167ad21"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/B/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/benchmark.log",
+        "size": 9533,
+        "sha256": "5f9704871304d95db735b6641945f3de8d1c4db6b7f5012f3d18c79ca0970478"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/perf_report.html",
+        "size": 168388,
+        "sha256": "65b7ce5cf0e28ed7d83c604d132c6669733acc5aa0b968f734652840e81cb044"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/performance_summary.txt",
+        "size": 4928,
+        "sha256": "01bc2ad8764da5aba59d4355e212344974c2084dd31524590d5a78247a18f206"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_args.json",
+        "size": 2457,
+        "sha256": "320d964feb047ccea250e670ee3bb71d02ae42f6a4f1eeb0d853b0c3af05e02f"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_data.db",
+        "size": 1806336,
+        "sha256": "d829ae4e4de32e7517b74afd5677ef11070a2ff6be2c00fa3c16fc3efeac6042"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_percentile.json",
+        "size": 3675,
+        "sha256": "d6ff7270e4390f785610d4f3fea62405e3321b4a42d8b7a739cee20a1ef31b84"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_summary.json",
+        "size": 575,
+        "sha256": "4a0100585c5ceeb17f74ec918d5f0e59daed59eea221cefef3fd85b0315ad7b3"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/rate_0.3_number_12/workload_throughput.json",
+        "size": 877,
+        "sha256": "8c9d07aae95e8a67b8b310217ddcb32cf255b4892767063f08d4707f2e94f019"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/20261105_181807/Scenario_C_N1_r0/rate_0.3_number_12/workload_timeline.json",
+        "size": 1941,
+        "sha256": "17cf9c3abfe61515f0cf90212667c72449d9bf6a355eb37a30e8abfd4ecb1b9b"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/client.log",
+        "size": 18418,
+        "sha256": "dc65a306a0c4321f051629e94748d562baaede40d2c171afb0a320d1e29778c4"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/command.json",
+        "size": 777,
+        "sha256": "118acb6d198adb03a19c528be9f82f9cf4351da81414ad0adc6cf9ef7af9ebcf"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/command.sh",
+        "size": 603,
+        "sha256": "31698b4d577477b5382ea1120724f777e7906df4cecbb6bcc14c8c39a55febbd"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/r0/C/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/performance/scenario_a_prompt_bodies.jsonl",
+        "size": 7954092,
+        "sha256": "8f38e0161c2d6163efc4e411faf45f848577e45c7c25b96fcc906a5fde99e9e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/runtime.json",
+        "size": 5140,
+        "sha256": "db1541072574c01bff7c416eb47d2b955f63cd3e11259f9ae7edc980310c283f"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/startup.log",
+        "size": 863,
+        "sha256": "f771138a940ff5df17147c152b3fb06c5d6d79bf92b56733b6520d4e2fc41d8c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point1/strict16k.json",
+        "size": 882,
+        "sha256": "ff66df45d5b15b9d54841e69e5180d0669c2f15534f0af7758f9cf45f6aa95f6"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/A8_HF64.responses.jsonl",
+        "size": 9310,
+        "sha256": "0fe560b0bb8dd16db43b3dcda19a1a452c06b6e31f98905ad59dd175c5489a73"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/A8_HF64.summary.json",
+        "size": 419,
+        "sha256": "9515e133c0ce41a254e298f30a5ad065f512faced90c92547adb36bdcbeb487a"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/C4_HF64.responses.jsonl",
+        "size": 4788,
+        "sha256": "338e29e8794846fa8055a7ae8ab7e0036e47ba194f8fa9fc7f35d5ca7de961ea"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/C4_HF64.summary.json",
+        "size": 420,
+        "sha256": "4b452ba953fb01f7484946ba126b8978139bd360c3b486cfd6598405b0585ea1"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/benchmark.log",
+        "size": 165,
+        "sha256": "1fd5a714d64552cfea6a77666ccd4ea475f36b6141e7bc99cedf4bddfd50b74c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/correctness.json",
+        "size": 54,
+        "sha256": "137c055a89b829020719c2bf388744a4c09f73e83119d82383d0962c6c67c133"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/protocol.json",
+        "size": 465,
+        "sha256": "20d2c73705e38f6bc8f5c4ff666ebf8f0345b49b40a696b2929d5336edf2c8f2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/benchmark.log",
+        "size": 9698,
+        "sha256": "3547f13e84f9babf275dbd1161ebc0cf1f051819c5068d5ce9a8556737c16bd8"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/parallel_32_number_64/benchmark_args.json",
+        "size": 2562,
+        "sha256": "4f0c301288140ea118d3ff0bfd34990eb9bcf93d898650f67119b823aead30ac"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/parallel_32_number_64/benchmark_data.db",
+        "size": 6082560,
+        "sha256": "74eaa905a02a0354e12578abc14ed9fc0ffc2bafe5fe3546888f29ee9e009819"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/parallel_32_number_64/benchmark_percentile.json",
+        "size": 3655,
+        "sha256": "fffd3ecc58fde1993811dcc7dc182fdc2e2aa2e5a3d51d0889647baf188c7a2d"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/parallel_32_number_64/benchmark_summary.json",
+        "size": 574,
+        "sha256": "1368b003bd1b526dace608b9e0e71c4e3a9be2060e42be07a651f237b7b83c91"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/parallel_32_number_64/workload_throughput.json",
+        "size": 872,
+        "sha256": "e56cbd9929cc45b16bd0060a315edbdddb18a13ad415a454a77fb387a5ad437c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/parallel_32_number_64/workload_timeline.json",
+        "size": 10144,
+        "sha256": "153038ba9a8536a3a712b50f19bfee03e9f37db9b392536b60ea935abcefe6f2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/perf_report.html",
+        "size": 175042,
+        "sha256": "199212ed2352c40284051bb02adc41a2229f39dea0cbf890764e69ca75d0e52c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/20261105_182046/Scenario_A_N1_r0/performance_summary.txt",
+        "size": 4889,
+        "sha256": "ff6e4b7dd630172b3c68aab33522f4d1c518eb481614f513a6f3411ac97ac0a4"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/client.log",
+        "size": 17664,
+        "sha256": "e9d866afc1e101ded383ff5f6bb39356304c1e7eda97a9f5ae69676c2fac1724"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/command.json",
+        "size": 899,
+        "sha256": "3a3ac9cac4ed4e1921dd1be9472c489f3021bef9da1508a655a6d15248ddb62c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/command.sh",
+        "size": 720,
+        "sha256": "6b19132e7f4808bb4bb09989a8491f33acd6dee01171459fc2e7ffbb08f03542"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/A/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/benchmark.log",
+        "size": 9347,
+        "sha256": "d1429882990deb62dec84aa14e7317cfc5d36b4ef92a95cf49068cef221c243a"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/parallel_1_number_8/benchmark_args.json",
+        "size": 2419,
+        "sha256": "d6bad310ae68c27e6e4f81ec31c1d35d32b9e00e35a7c4fe69b042d5cc76e371"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/parallel_1_number_8/benchmark_data.db",
+        "size": 692224,
+        "sha256": "d1452f6f50836aecce3a242a026a71e0eaebbe66a00892e970c61c195ac4f0d5"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/parallel_1_number_8/benchmark_percentile.json",
+        "size": 3660,
+        "sha256": "df483ca230620098a005308433fe10c500bcfd87713cb9309e87f3d949edd8d6"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/parallel_1_number_8/benchmark_summary.json",
+        "size": 563,
+        "sha256": "42f6eb1527ecf14d4bc296df361a4f98f81aadbfc1d9409769b3ac4b6eeea089"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/parallel_1_number_8/workload_throughput.json",
+        "size": 872,
+        "sha256": "439b1889fae2ec6526283616fcaa8815527fc83f716ed8baf6a70135519eb580"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/parallel_1_number_8/workload_timeline.json",
+        "size": 1304,
+        "sha256": "ce899f128f554ab3af9b8dc7b046ee83eb78d2555e12b316ab32ea6e6845f187"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/perf_report.html",
+        "size": 167745,
+        "sha256": "f34c4fca56c7be8c53ccb251e07e8dc74665482928042f5fa46974f6ff31d1d1"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/20261105_182137/Scenario_B_N1_r0/performance_summary.txt",
+        "size": 4826,
+        "sha256": "7bdfe70c0352825fd2c6d24531a3273430697aee7ea0b707077e625be1bfcd75"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/client.log",
+        "size": 18350,
+        "sha256": "78ff7eca85377e4799d2dd99194567f48208682b1365b0bf126eb9d66524f60a"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/command.json",
+        "size": 730,
+        "sha256": "c565ec923d41f3d89ea358d4f4a2fe00f9d48604e313a843fcff0fb60fd501f1"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/command.sh",
+        "size": 561,
+        "sha256": "e1c7902c51d4da879dbb79cd6a87b7958802429f26011defd8aef85eb6970204"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/B/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/benchmark.log",
+        "size": 9200,
+        "sha256": "a3a995acdb19f151271cc4dea24d57df1eda6453ae786a5b48e15ce36c89ad76"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/perf_report.html",
+        "size": 168352,
+        "sha256": "38e9a754a6a047b7169106b2231c27d637d8af22840f0ef9a68abfb577d318d2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/performance_summary.txt",
+        "size": 4877,
+        "sha256": "bb26c11db07c32d62d2abc574e96ae932380bd82314396d79a23bc3c28ed4207"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_args.json",
+        "size": 2458,
+        "sha256": "57c2aef353828546d5a96b9267b87c02969a862d9b56862640d6164b323bc6ff"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_data.db",
+        "size": 1806336,
+        "sha256": "9a5bd244daa545872eae1a194fd077f9028372673dcd235d423ab72d4ce59ab7"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_percentile.json",
+        "size": 3675,
+        "sha256": "3917964ce0c844796007eed48cbe0be815a08154f4e34486e5d8ce3cac4e6472"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_summary.json",
+        "size": 572,
+        "sha256": "3d31cea9df046266d11161fe3173f6eeeebfbd325105d6b1cee72d2fa14c27cf"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/rate_0.3_number_12/workload_throughput.json",
+        "size": 875,
+        "sha256": "db6b4b56719235eea18ed81609cbe4dfd2869058aca511ee91ae169b902eca6f"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/20261105_182319/Scenario_C_N1_r0/rate_0.3_number_12/workload_timeline.json",
+        "size": 1943,
+        "sha256": "0a4e7634523831a025cf8e50dee5b62975818c0d18fbe79a95a62d79c4c44e3c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/client.log",
+        "size": 18231,
+        "sha256": "4ee220e69f7e4252abf67463cd5e739cec2ce11e802b9efcc79afd0c2dfd9a9d"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/command.json",
+        "size": 778,
+        "sha256": "080987e2d3480f0b19702b09ee2edefd57abd58e1fad7ef0e32e80ce39890d34"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/command.sh",
+        "size": 604,
+        "sha256": "b7f86fb7b016da5f0826faebd9744bd8f1d677622735d2ce1dac1acede915cd9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/r0/C/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/performance/scenario_a_prompt_bodies.jsonl",
+        "size": 7954092,
+        "sha256": "8f38e0161c2d6163efc4e411faf45f848577e45c7c25b96fcc906a5fde99e9e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/runtime.json",
+        "size": 5141,
+        "sha256": "6dd4f11f196192bebdf5fceb32b264ce9b0783f918c33f8d335723ae96a2bea2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/startup.log",
+        "size": 863,
+        "sha256": "300777a75865685b7ef24bf1361e4937c4708b7d323b27b1f84a38f6a7ea6959"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point12/strict16k.json",
+        "size": 883,
+        "sha256": "3da3be736389e9d1f2cd6c92f1f241a15291a8b54ae2e3309a85238c7fb9dfa7"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/A8_HF64.responses.jsonl",
+        "size": 9313,
+        "sha256": "dea5185acc4a291ac33ca6d33498bd246795fd94061c194857fbed85f412aebc"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/A8_HF64.summary.json",
+        "size": 419,
+        "sha256": "c325e3981e4ead6336925d1bc8addc5e5e4ceb41261bfdb8875019054cccc424"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/C4_HF64.responses.jsonl",
+        "size": 4791,
+        "sha256": "b264bc42607388c4cea4fcdc4b4e0ef405cd84d6e6884ed89d89b8fcf7cf1859"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/C4_HF64.summary.json",
+        "size": 418,
+        "sha256": "116861385bd056e0e489d690eee2be24c8b49eea340f10646dfd4c11fef37805"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/benchmark.log",
+        "size": 166,
+        "sha256": "91302302fde5400e30983b369692d17fa0da2b5abd2227af0b875efc642c3ae1"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/correctness.json",
+        "size": 54,
+        "sha256": "137c055a89b829020719c2bf388744a4c09f73e83119d82383d0962c6c67c133"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/protocol.json",
+        "size": 465,
+        "sha256": "20d2c73705e38f6bc8f5c4ff666ebf8f0345b49b40a696b2929d5336edf2c8f2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/benchmark.log",
+        "size": 9685,
+        "sha256": "a055db0583d3efb16f1f8226fead147b15dd53ffba3834bf527873f78f25205a"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/parallel_32_number_64/benchmark_args.json",
+        "size": 2564,
+        "sha256": "0afd053d51257882ab10ef57c54a2a8a555fe1cc4fc1be02e63fb2206d39c57d"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/parallel_32_number_64/benchmark_data.db",
+        "size": 6094848,
+        "sha256": "6e013044511c644ff4dc934ac9b2b5c1823a013a4881cb57f5731faca8debfa2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/parallel_32_number_64/benchmark_percentile.json",
+        "size": 3658,
+        "sha256": "f09fea43983c2e559392a26d00ff3988d0ac7c994ca970c67241eb3de66b1050"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/parallel_32_number_64/benchmark_summary.json",
+        "size": 575,
+        "sha256": "ef5d1e8a46162831265ddba903b632fbc4e0649acac4b60b7205e243c853f8c2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/parallel_32_number_64/workload_throughput.json",
+        "size": 876,
+        "sha256": "b061c2e9265174a42f0091130e202452f5f18e86d4c3c17780f4c087e7b209ff"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/parallel_32_number_64/workload_timeline.json",
+        "size": 10143,
+        "sha256": "f1b293ab334e1d8b5482b295826b079dd7d62b3ce147ca09054bcef2608d3a27"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/perf_report.html",
+        "size": 175091,
+        "sha256": "bfa7d9e2e351d2c7f6608783360adf5665c795189c8d70427c1c3f98816cbc03"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/20261105_182519/Scenario_A_N1_r0/performance_summary.txt",
+        "size": 4906,
+        "sha256": "e54058406eccef462e8abfaa5ebf14b1d6e7fb45731baaf68936b9783049208b"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/client.log",
+        "size": 17669,
+        "sha256": "514c1e40c8489a84ee0efb8e1760c4c95e49a53bdceaf605103036fc6735df68"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/command.json",
+        "size": 901,
+        "sha256": "fc2cee42caa237e5d278b361eece3cc31604e1fd0e09b550b963b6a51f8c4fa0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/command.sh",
+        "size": 722,
+        "sha256": "f41c7fe604334f7f058ff926597d28c2fd63f279365943b178911d476aba23b0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/A/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/benchmark.log",
+        "size": 9222,
+        "sha256": "743f808a55e212a70764b571fc99f8643ca41be9ccc6632c0809b4bf8c8017e0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/parallel_1_number_8/benchmark_args.json",
+        "size": 2420,
+        "sha256": "b8ec5b9499bfe8250ff362db91c39ec0185f02338ebbddb0d4e0340e628e1f8c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/parallel_1_number_8/benchmark_data.db",
+        "size": 692224,
+        "sha256": "59959fa27c1a18a4c1d5e4af2a8467640f8a2c27941beeec055e80db14849bb2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/parallel_1_number_8/benchmark_percentile.json",
+        "size": 3644,
+        "sha256": "aec8d90c22cb5bbab14351dae0f7d2f5e82a4cf72455fc0d3ecb1d9d34b34fef"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/parallel_1_number_8/benchmark_summary.json",
+        "size": 562,
+        "sha256": "ee94b683d90545a23147f6869861b07b446a1a8bdb2ff8c194ff0e00ac053347"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/parallel_1_number_8/workload_throughput.json",
+        "size": 877,
+        "sha256": "9d1300e5d1bdd45d47c03766646a522c43f61333a5bed8637e2b4d9bfd8d99f9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/parallel_1_number_8/workload_timeline.json",
+        "size": 1300,
+        "sha256": "33457019ea74b41b426f205d83a9c0549a0f8f32ede81cafa7404af0bec4b012"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/perf_report.html",
+        "size": 167679,
+        "sha256": "4d739071b95f48b55c4f295fbfc7ae72d79344a98836a620e00616354d4bd423"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/20261105_182546/Scenario_B_N1_r0/performance_summary.txt",
+        "size": 4838,
+        "sha256": "9c0a7f7fcebdc4f29b7c579edcb509b6e1be3ebadf1ab4f261fc2b724a952a9f"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/client.log",
+        "size": 17931,
+        "sha256": "da962e677b721e558d67b4c6dc981781d458b54247569c4e7ea19d679c1c23d5"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/command.json",
+        "size": 731,
+        "sha256": "ba07b257099c327cf886a99866e2bb0c15acb33840951485a5052ca88d58fe63"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/command.sh",
+        "size": 562,
+        "sha256": "535ab172efbd0d43029c943ea8e95b48e69eb0c659b36b57b47d6584be073ca9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/B/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/benchmark.log",
+        "size": 9262,
+        "sha256": "a59fb498d359e3ecc8ad4907f2834c3213cbdbcd18f9e2d9054d7c611884abfc"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/perf_report.html",
+        "size": 168339,
+        "sha256": "772ac1d81a8b1ba0ac2f1b430f19178bbc00d11da04593b2d886b29e7dafd33b"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/performance_summary.txt",
+        "size": 4848,
+        "sha256": "1d265e22ffb4b36bad9f051d1de8675a9709045433a597e919df88d7214bc1b6"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_args.json",
+        "size": 2459,
+        "sha256": "4d7fde088b857e46a2e832ca7873a9ef1d384ee4cda9170059f75d85d7b04cc3"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_data.db",
+        "size": 1810432,
+        "sha256": "96c7bbc38064d26cbfa574f5216a253347124f7dedf9f0c46f2bec161c26c51f"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_percentile.json",
+        "size": 3670,
+        "sha256": "97793a4610512021f2159ee55c3c0e6ac9fa09615c31b07bbac646634dce1033"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_summary.json",
+        "size": 573,
+        "sha256": "9c0710fbdac87f0439372e4bae41586f3126e130ea146b6757f65c27fe7b5e15"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/rate_0.3_number_12/workload_throughput.json",
+        "size": 879,
+        "sha256": "23775b158cdd90638706e609b3a37227ccbddb081b5bf376b7206988997022e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/20261105_182611/Scenario_C_N1_r0/rate_0.3_number_12/workload_timeline.json",
+        "size": 1941,
+        "sha256": "19daba86790a09f22d406bc53b434cd49c0ff7c1ff6e165922b61bf424470e55"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/client.log",
+        "size": 18265,
+        "sha256": "e0e86a9763a9c269a07dde39f2d99d8d9bdc7eb709d43dc8f05bb79af24f0de5"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/command.json",
+        "size": 779,
+        "sha256": "860c3acf0daa7c72e11432d3b3c12d482d2b5d7667a6413fa966f6362435c178"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/command.sh",
+        "size": 605,
+        "sha256": "88d3ffcb72615c3ee66a127b69ab8d7619d926d39d1018e38e6edf41e4179bf8"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/r0/C/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/performance/scenario_a_prompt_bodies.jsonl",
+        "size": 7954092,
+        "sha256": "8f38e0161c2d6163efc4e411faf45f848577e45c7c25b96fcc906a5fde99e9e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/runtime.json",
+        "size": 5119,
+        "sha256": "1512330d8b48a7231439a1f8cf2ff560e58231f3b29ecdd4c8106871e1596b8a"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/startup.log",
+        "size": 965,
+        "sha256": "7bafc2017c2bba924602848724d73671862aaddbac58f5f5f8412acab415b3a1"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/point123/strict16k.json",
+        "size": 883,
+        "sha256": "2364ec55a36207673807293e120756aa223116011e72b0e0e3b7be753a75de41"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/results.json",
+        "size": 64985,
+        "sha256": "86aec4d73f30dd0f43ef6cf793f7ff0f6287cd267845d0721f61bc0bd06a04e8"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/A8_HF64.responses.jsonl",
+        "size": 9324,
+        "sha256": "868d371df1456d5813dac1d609ecba9680c6cde258e5a07490ea0d5f776f3f09"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/A8_HF64.summary.json",
+        "size": 420,
+        "sha256": "e95f454a6bfcdc55bced626cfdfe923465b8bc9d6c4bd9fb25cd5c566796ee71"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/C4_HF64.responses.jsonl",
+        "size": 4790,
+        "sha256": "f5e6b1f5b4a5488246b40cdc4d2ca4ad63b5067818c3f12ea6ae76489f272174"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/C4_HF64.summary.json",
+        "size": 420,
+        "sha256": "507b96564fe24e88b6d7b19838ce4284aeee507555dd540e168df58303a43b4a"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/benchmark.log",
+        "size": 163,
+        "sha256": "9889ecc96d81dc945048d97350cdcdc1b891f9b19479fa5b9df09b84d8d074d7"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/correctness.json",
+        "size": 54,
+        "sha256": "137c055a89b829020719c2bf388744a4c09f73e83119d82383d0962c6c67c133"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/protocol.json",
+        "size": 465,
+        "sha256": "20d2c73705e38f6bc8f5c4ff666ebf8f0345b49b40a696b2929d5336edf2c8f2"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/benchmark.log",
+        "size": 10088,
+        "sha256": "2c9313c795da75933519c054b5a4b466cbaada007b3f12148dd029f38c648061"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/parallel_32_number_64/benchmark_args.json",
+        "size": 2558,
+        "sha256": "73668a56256d44ace4194b86b2381068e0fe28eedc3f1ebe6f11adc3181bdb53"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/parallel_32_number_64/benchmark_data.db",
+        "size": 6078464,
+        "sha256": "3d06507da586b2f78e55f45f92d46ff32b447e6495fe2412b66ffbd66eb08cc9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/parallel_32_number_64/benchmark_percentile.json",
+        "size": 3664,
+        "sha256": "67b27ddcd2f31fec7491cabf23f38d2fc7238043b598fc1fc637be36297dab3b"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/parallel_32_number_64/benchmark_summary.json",
+        "size": 576,
+        "sha256": "4c1991e106005941b0b8f86384661b85954faa068f3bbfa4b2e88d2f9d04e95f"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/parallel_32_number_64/workload_throughput.json",
+        "size": 876,
+        "sha256": "97d7f16e4bc1ab0e5cf7ee564ca181790614664392d662ed85dc54b3b4658512"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/parallel_32_number_64/workload_timeline.json",
+        "size": 10201,
+        "sha256": "8dbf21f2b6003d409fa67e7a475dc7c02607138e006111917b7bbdb4da2b0dc6"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/perf_report.html",
+        "size": 175131,
+        "sha256": "ee98fb612a4d93c337c47fb3286a51e172baa0d3b0b4fe54aac93001afae8398"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/20261105_180346/Scenario_A_N1_r0/performance_summary.txt",
+        "size": 4945,
+        "sha256": "c4923bcb8bfdbb46a58147ecd4bc398f12872a309962fc9ea0dcaca05ce2aa15"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/client.log",
+        "size": 18725,
+        "sha256": "0529e3b38a722146227c3afdfcc6848814066ba7b0b7a690941ed22e7cac10ce"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/command.json",
+        "size": 895,
+        "sha256": "379ba53d0d36e737043158e74bceece1f7c70e34d81894fd23ca3e782e4c4108"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/command.sh",
+        "size": 716,
+        "sha256": "778886728230fe0134ee7cddc43e2829aff0c0431d51f58ca58196be4c4e7338"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/A/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/benchmark.log",
+        "size": 9337,
+        "sha256": "07d37a4e07fa5d1b0bf166e0c973356b67e548a308785b1bf0cfed1c91318ead"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/parallel_1_number_8/benchmark_args.json",
+        "size": 2417,
+        "sha256": "7998fd3f192c29b0a6bca0cee4c8ee36fc6620c1ed4b5fa43480d2cb278f3ea0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/parallel_1_number_8/benchmark_data.db",
+        "size": 692224,
+        "sha256": "8c406df7c7807a5063367d2433c95e33f9077b90b0ec57c2e98faf7934577793"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/parallel_1_number_8/benchmark_percentile.json",
+        "size": 3656,
+        "sha256": "28f4368d132a644b9df21169d846d0e53ae5198b362eb3f2fab4bc65e476d976"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/parallel_1_number_8/benchmark_summary.json",
+        "size": 565,
+        "sha256": "db784e7dfbe0df4509b7eb3aab24af482591f9a2cff05e84c00c3379655889f0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/parallel_1_number_8/workload_throughput.json",
+        "size": 869,
+        "sha256": "c5679eddd8106996278af7da24dd0cd9969403db5e851124343ff0a877a179cd"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/parallel_1_number_8/workload_timeline.json",
+        "size": 1304,
+        "sha256": "4dc037e2de14302346925253b31fc2e53c0233b174cee5e56c41a8b4ffd49bee"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/perf_report.html",
+        "size": 167739,
+        "sha256": "55d6045ff1bcbda1b0f639282516cdd08f27b67f3e39f8a3d7ad456b2d23e608"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/20261105_180815/Scenario_B_N1_r0/performance_summary.txt",
+        "size": 4826,
+        "sha256": "9a376b5e5aa79b29ae890c9b8212bb8be0dec261518200b556677cf814d735cb"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/client.log",
+        "size": 18336,
+        "sha256": "2c7bae343d5b9938e3cbc148cae7177805a0cb61e8b2333b1c962b95a93eb1e1"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/command.json",
+        "size": 728,
+        "sha256": "d7ea69929762561f61330f866f00453357b36c0e3ab7100d06431deb0c2c6441"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/command.sh",
+        "size": 559,
+        "sha256": "d1064e0b150a49cfbdb78653fe8691f94fd99a1ad1337236dfebfc3a8c311c6b"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/B/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/benchmark.log",
+        "size": 9567,
+        "sha256": "db776a917950394d307a43778623bc91aeae8790c597c3bd7b2589417b977a5d"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/perf_report.html",
+        "size": 168404,
+        "sha256": "083839ee41cac5804d2be6f4b5a02814ec9197253accba18edbaf3ef6b968740"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/performance_summary.txt",
+        "size": 4962,
+        "sha256": "a63b496f43c9824f24f13dce479895d477dc665bf1f6094166f7c21481df68ec"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_args.json",
+        "size": 2456,
+        "sha256": "1fd2d7658a8ab15fe7c95cbf75deff2ab0a2152546f9bbfde013cbdbe73ab4da"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_data.db",
+        "size": 1806336,
+        "sha256": "7f11c9ea6878aaf0345ae6f849ce6431c7d8cacf437a14f5c469f3a6db091f93"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_percentile.json",
+        "size": 3675,
+        "sha256": "ef858a33b27b930e5506ec4af5cbd3050179aa985800d7ebfd613307443af87c"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/rate_0.3_number_12/benchmark_summary.json",
+        "size": 573,
+        "sha256": "11b771d642e22edc9813ef163287f89ec5a35419f605c7ebfd095c94c8734ae0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/rate_0.3_number_12/workload_throughput.json",
+        "size": 879,
+        "sha256": "f88e6b03b6db90ee9fcc23a536e70753b9c50f6238e21e3d5c07a1fbc2f10129"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/20261105_181009/Scenario_C_N1_r0/rate_0.3_number_12/workload_timeline.json",
+        "size": 1942,
+        "sha256": "b4fabdbf5c7c186271717f6159987a4533b0eaec923df6cd749eac466e531dfe"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/client.log",
+        "size": 18208,
+        "sha256": "64805dbbbce416a594602f8b3a544dfde7eff89274c2ed1c011539d36d2e1ed7"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/command.json",
+        "size": 776,
+        "sha256": "10f191355f1c45b3550738fda8647f9475aa1672b297c61eaf8996c4ab876df3"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/command.sh",
+        "size": 602,
+        "sha256": "f701aa965bcb0c7acc56e4188dcc09cd76e39202d00d0ddce4950203eb09abf0"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/r0/C/exit_code",
+        "size": 1,
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/performance/scenario_a_prompt_bodies.jsonl",
+        "size": 7954092,
+        "sha256": "8f38e0161c2d6163efc4e411faf45f848577e45c7c25b96fcc906a5fde99e9e9"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/runtime.json",
+        "size": 5139,
+        "sha256": "8689e8f6f37c372786f20c679f2837d00bcb3b2e69d414ff4d7e00853138d2fe"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/startup.log",
+        "size": 863,
+        "sha256": "30043212b4b6660f30dc55c03fb4b42bf324930b94fb57e6a66671b092b79a99"
+      },
+      {
+        "path": "cumulative_ablation_20261105T180217Z/step0/strict16k.json",
+        "size": 883,
+        "sha256": "3e0361d8bb23cadbec8d707e6a6bbf46edbab92ce33a25f52a8def11e593c0c3"
+      },
+      {
+        "path": "portable-public-validation/C.responses.jsonl",
+        "size": 234523,
+        "sha256": "789f4fcd5aaa2fb737fd630e875b5317935c316f52400127007322496d7f433a"
+      },
+      {
+        "path": "portable-public-validation/C.summary.json",
+        "size": 124,
+        "sha256": "6f0e73a4ffd0fb1cb772ed53b5ef160ad00a3abc13412c21eee35b6f80cd88df"
+      },
+      {
+        "path": "portable-public-validation/acceptance.json",
+        "size": 432,
+        "sha256": "6c808a50af823689837c609ed45dcd7dd4476e6a975ae1e4ebe674885faf4bc9"
+      },
+      {
+        "path": "portable-public-validation/he_atom.jsonl",
+        "size": 609489,
+        "sha256": "2742e27ca047042386a6c023ff691f5c00f30c6ff7f2e6eb4a5d0126261c3223"
+      },
+      {
+        "path": "portable-public-validation/he_summary.json",
+        "size": 136,
+        "sha256": "5f1b5ce6d505eda25d849b6ae9f4011345c7882859a19d3ec946811651ef8088"
+      },
+      {
+        "path": "portable-public-validation/protocol.json",
+        "size": 1355,
+        "sha256": "8d2acffc5f4b2c10b503104e03eb8276357501b4259ce06dd1bbb1ac59b04b0e"
+      },
+      {
+        "path": "portable-public-validation/strict_16k.json",
+        "size": 1527,
+        "sha256": "13788d821ee20b59fc880d9fbd722cf47af9902f6f9c160f1a1ffa9e35924d44"
+      },
+      {
+        "path": "research/global_softmax_operator_validation.json",
+        "size": 3345,
+        "sha256": "50308aeeb52b90beb3b8fb160bf32140af1c7e20f39d6114ee2158066801ec3a"
+      },
+      {
+        "path": "research/pv_tiling_operator_validation.json",
+        "size": 10468,
+        "sha256": "3a98e52629f45cd62bf954453f59420f82dbc03eb31683efa07966e5a931c9ec"
+      },
+      {
+        "path": "research/lane_cache_operator_validation.json",
+        "size": 4203,
+        "sha256": "8359296f867cf34c7b2bfd5031f5a812bedba22c4080255935849c7d5f16a155"
+      },
+      {
+        "path": "research/profile_delivery_candidate_fixed.py",
+        "size": 6329,
+        "sha256": "9a02a07ea9ff7a597b92e85fb0117893c167cadeb5c0d79cca1d3467135a406b"
+      },
+      {
+        "path": "research/run_cumulative_ablation.py",
+        "size": 4740,
+        "sha256": "7a01a8d5d1f274043467023bef63ad988d094f46ee42d79ec460a2920fc2acb8"
+      },
+      {
+        "path": "research/probe_global_softmax.py",
+        "size": 3422,
+        "sha256": "f19a957cd51d3193650175c091ad10e2c9b1e5be20c9bbe88bf90069f45ef9e3"
+      },
+      {
+        "path": "research/probe_pv_tiling.py",
+        "size": 2306,
+        "sha256": "b2b7ae2708be3701f582ab26806a786a49977f1ad32dd734c054b9b058e68241"
+      },
+      {
+        "path": "research/probe_lane_cache.py",
+        "size": 2214,
+        "sha256": "1bd13afe81fa6d3f726b7fb0ed38c45bfcd45c5254a1fbeb58ead1e57966eb81"
+      },
+      {
+        "path": "research/mellum_softmax_lane_cache_candidate.py",
+        "size": 4224,
+        "sha256": "05066b2512646fb155632eb809a540a111fd61e4048086c878e867907bdf0d77"
+      }
+    ],
+    "all_members_match": true
+  }
+]

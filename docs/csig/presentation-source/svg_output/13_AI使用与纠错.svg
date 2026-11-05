@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+  <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">备答｜AI 帮助了什么，也错在哪里</text>
+  <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="32" fill="#B4C5DA">Codex / 词元工坊：读代码、写探针、改算子、分析日志。</text>
+  <text x="60" y="217" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">容易误判的建议</text>
+  <text x="460" y="217" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">发现问题的证据</text>
+  <text x="860" y="217" font-family="Arial, Microsoft YaHei" font-size="32" fill="#7ED8D0">最终决策</text>
+  <line x1="60" y1="241" x2="1220" y2="241" stroke="#294361"/>
+  <text x="60" y="289" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">局部对齐被说成已解决</text>
+  <text x="460" y="283" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">同阶段结果表中，实际快路径</text>
+  <text x="460" y="318" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">仍没有通过完整生成门槛。</text>
+  <text x="860" y="283" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">区分定位、修改与验收；</text>
+  <text x="860" y="318" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">每项结论标明适用范围。</text>
+  <line x1="60" y1="350" x2="1220" y2="350" stroke="#294361"/>
+  <text x="60" y="398" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">喂入参考前缀来比较</text>
+  <text x="460" y="392" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">它可以诊断中间张量，</text>
+  <text x="460" y="427" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">题目验收却要求自由生成。</text>
+  <text x="860" y="392" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">保留为诊断工具；</text>
+  <text x="860" y="427" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">回到原始验收协议。</text>
+  <line x1="60" y1="459" x2="1220" y2="459" stroke="#294361"/>
+  <text x="60" y="507" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">MTP 注意力前提错误</text>
+  <text x="460" y="501" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">对照模型结构与已有实现，</text>
+  <text x="460" y="536" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">发现设计假设不成立。</text>
+  <text x="860" y="501" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">先核实结构再写代码；</text>
+  <text x="860" y="536" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">用 on/off 实验验证修正。</text>
+  <text x="60" y="611" font-family="Arial, Microsoft YaHei" font-size="36" fill="#7ED8D0">我需要掌握目标、baseline 和当前运行版本。</text>
+  <line x1="60" y1="649" x2="1220" y2="649" stroke="#294361"/>
+  <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">来源：AI-USE.md；完整说明保留工具用途、错误建议与个人决策反思。</text>
+  <text x="1220" y="677" text-anchor="end" font-family="Consolas, Microsoft YaHei" font-size="18" fill="#8EA5C1">13 / 16</text>
+</svg>

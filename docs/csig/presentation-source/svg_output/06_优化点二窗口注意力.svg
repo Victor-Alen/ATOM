@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <g id="title">
+    <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+    <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">点二：只计算注意力需要的区域</text>
+    <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">滑动窗口约束与数值等价约束同时满足。</text>
+  </g>
+  <g id="window-matrix">
+    <text x="292" y="207" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">历史键位置 →</text>
+    <path d="M90 231L474 615H90Z" fill="#10243C"/>
+    <path d="M90 231L474 615H410L90 295Z" fill="#0052D9"/>
+    <path d="M90 231H474V615H90Z M154 231V615 M218 231V615 M282 231V615 M346 231V615 M410 231V615 M90 295H474 M90 359H474 M90 423H474 M90 487H474 M90 551H474" fill="none" stroke="#294361" stroke-width="1"/>
+    <path d="M90 231L474 615 M90 295L410 615" fill="none" stroke="#64B5FF" stroke-width="2"/>
+    <text x="119" y="505" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA"><tspan x="119">窗口外确定为零</tspan><tspan x="119" dy="38">可省计算与写回</tspan></text>
+    <text x="333" y="301" font-family="Arial, Microsoft YaHei" font-size="24" fill="#8EA5C1">未来位置</text>
+    <text x="68" y="427" transform="rotate(-90 68 427)" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">← 查询位置</text>
+    <text x="282" y="641" text-anchor="middle" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">1024 滑动窗口示意，不按长度比例绘制</text>
+  </g>
+  <g id="attention-method">
+    <text x="550" y="230" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">21 层滑窗，7 层全注意力</text>
+    <text x="550" y="273" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">窗口 QK → 保序 softmax → 窗口 PV</text>
+    <path d="M550 299H1220" fill="none" stroke="#294361" stroke-width="1"/>
+    <text x="550" y="344" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">保留 BF16 舍入与归约顺序</text>
+    <text x="550" y="387" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">形状族选择参数；不满足布局条件则回退。</text>
+    <text x="550" y="449" font-family="Arial, Microsoft YaHei" font-size="24" fill="#8EA5C1">16K 算子微基准（ms）</text>
+    <text x="550" y="499" font-family="Consolas, Microsoft YaHei" font-size="36" fill="#7ED8D0">PV       12.19 → 2.65</text>
+    <text x="550" y="548" font-family="Consolas, Microsoft YaHei" font-size="36" fill="#7ED8D0">softmax  30.28 → 5.84</text>
+    <text x="550" y="599" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#64B5FF">--attention-opt 0/1</text>
+  </g>
+  <g id="footer">
+    <path d="M60 649H1220" fill="none" stroke="#294361" stroke-width="1"/>
+    <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">证据：pv_operator_validation / window_sparse_validation；同卡微基准，非整模型加速比。</text>
+    <text x="1220" y="677" text-anchor="end" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">06 / 16</text>
+  </g>
+</svg>

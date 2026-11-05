@@ -1,0 +1,12 @@
+{
+  "archive": "delivery-supplemental-evidence.tar.gz",
+  "size": 18246317,
+  "sha256": "734df55ec03367319bfe69e92d141514dfa0aebfffd0c2a3969192342442475f",
+  "contents": [
+    "delivery_profile_20261105T183352Z",
+    "cumulative_ablation_20261105T180217Z",
+    "portable-public-validation",
+    "research"
+  ],
+  "scope": "Current packaged-PYTHONPATH profiler, controlled screening ablation, full portable public validator; candidates are operator-only research."
+}

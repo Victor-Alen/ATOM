@@ -1,0 +1,36 @@
+{
+  "scope": "16k plus 8 generated tokens, diagnostic trace, exact external-id attribution; no input shapes were recorded, so the GEMM role is not inferred from kernel names alone",
+  "trace": "evidence\\supplemental\\delivery_profile_20261105T183352Z\\traces\\rank_0\\Mellum2.1-12B-A2.5B-Thinking_ts_20261105_183442_644.pt.trace.json.gz",
+  "rows": [
+    {
+      "cpu_operation": "aten::mm",
+      "kernel_family": "Cijk_Alik_Bljk_BBS_BH_Bias_HA_S_SAV_UserArgs",
+      "count": 141,
+      "sum_gpu_ms": 199.7832
+    },
+    {
+      "cpu_operation": "aten::bmm",
+      "kernel_family": "Cijk_Alik_Bljk_BBS_BH_Bias_HA_S_SAV_UserArgs",
+      "count": 7,
+      "sum_gpu_ms": 368.532684
+    },
+    {
+      "cpu_operation": "aten::bmm",
+      "kernel_family": "Cijk_Ailk_Bljk_BBS_BH_Bias_HA_S_SAV_UserArgs",
+      "count": 7,
+      "sum_gpu_ms": 86.758328
+    },
+    {
+      "cpu_operation": "not_linked",
+      "kernel_family": "Cijk_Alik_Bljk_BBS_BH_Bias_HA_S_SAV_UserArgs",
+      "count": 232,
+      "sum_gpu_ms": 5.260093000000002
+    },
+    {
+      "cpu_operation": "not_linked",
+      "kernel_family": "Cijk_Alik_Bljk_BBS_BH_UserArgs",
+      "count": 896,
+      "sum_gpu_ms": 11.978362000000027
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "file": "portable-full-evidence-20261106.tar.gz",
+  "bytes": 45863425,
+  "sha256": "3bb31e0113a677b3f5cbe0da0c6ea3924dc77ef188af4117ff62015ed59991ce",
+  "performance": "/workspace/logs/step0_operator_parallel_20261104/fast_full_evaluation_20261105T170206Z",
+  "correctness": "/workspace/logs/step0_operator_parallel_20261104/gates/fast_full_correctness_20261105T165619Z",
+  "scope": "Current portable sparse-window version full correctness and three-round full public performance. No hidden-set claim."
+}

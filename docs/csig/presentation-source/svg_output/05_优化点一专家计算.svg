@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#071323"/>
+  <g id="title">
+    <rect x="60" y="49" width="6" height="48" fill="#0052D9"/>
+    <text x="86" y="89" font-family="Arial, Microsoft YaHei" font-size="48" font-weight="700" fill="#F6F9FF">点一：让 MoE 专家计算回到原生核</text>
+    <text x="60" y="145" font-family="Arial, Microsoft YaHei" font-size="36" fill="#B4C5DA">减少专家权重搬运与碎片化计算。</text>
+    <text x="60" y="205" font-family="Arial, Microsoft YaHei" font-size="32" fill="#64B5FF">64 专家 × top-8 · hidden 2304 · 中间维 896</text>
+  </g>
+  <g id="moe-flow">
+    <rect x="60" y="261" width="250" height="178" fill="#10243C"/>
+    <rect x="363" y="261" width="250" height="178" fill="#10243C"/>
+    <rect x="666" y="261" width="250" height="178" fill="#10243C"/>
+    <rect x="969" y="261" width="251" height="178" fill="#0052D9"/>
+    <text x="84" y="307" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">路由与排序</text>
+    <text x="84" y="360" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">融合权重归一化</text>
+    <text x="84" y="400" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">两阶段复用计划</text>
+    <text x="387" y="307" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">专家第一阶段</text>
+    <text x="387" y="360" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">Gate / Up + SiLU</text>
+    <text x="387" y="400" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">保持中间 BF16 舍入</text>
+    <text x="690" y="307" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">专家第二阶段</text>
+    <text x="690" y="360" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">Down × 路由权重</text>
+    <text x="690" y="400" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">按形状选择 K 顺序</text>
+    <text x="993" y="307" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">独立 slot 输出</text>
+    <text x="993" y="360" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">避免专家输出冲突</text>
+    <text x="993" y="400" font-family="Arial, Microsoft YaHei" font-size="24" fill="#F6F9FF">固定归并后返回</text>
+    <path d="M321 347H346 M624 347H649 M927 347H952" fill="none" stroke="#64B5FF" stroke-width="3"/>
+    <path d="M343 339L355 347L343 355Z M646 339L658 347L646 355Z M949 339L961 347L949 355Z" fill="#64B5FF"/>
+  </g>
+  <g id="constraints-and-gain">
+    <text x="60" y="499" font-family="Arial, Microsoft YaHei" font-size="32" fill="#F6F9FF">按计算形状分派，不按提示内容分派。</text>
+    <text x="60" y="547" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">从原生 CK/AITER 核修改累加与舍入边界；用逐值检查和整模型门槛约束。</text>
+    <rect x="60" y="579" width="1160" height="48" fill="#10243C"/>
+    <text x="80" y="612" font-family="Consolas, Microsoft YaHei" font-size="24" fill="#7ED8D0">--moe-opt 0/1</text>
+    <text x="360" y="612" font-family="Arial, Microsoft YaHei" font-size="24" fill="#B4C5DA">预估依据：MoE 耗时份额；实测贡献：第 8 页累计消融。</text>
+  </g>
+  <g id="footer">
+    <path d="M60 649H1220" fill="none" stroke="#294361" stroke-width="1"/>
+    <text x="60" y="677" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">实现：mellum_native_decode_moe / prefill_stage1 / prefill_down；修改后的 AITER、CK 源码及历史均随仓库交付。</text>
+    <text x="1220" y="677" text-anchor="end" font-family="Arial, Microsoft YaHei" font-size="18" fill="#8EA5C1">05 / 16</text>
+  </g>
+</svg>
