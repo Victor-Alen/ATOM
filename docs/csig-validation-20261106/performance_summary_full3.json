@@ -1,0 +1,129 @@
+{
+  "scope": "FULL_PUBLIC",
+  "num_gpus": 1,
+  "mtp": true,
+  "repeats": 3,
+  "a_source": "all",
+  "all_requests_successful": true,
+  "all_outputs_256": true,
+  "all_requests_streamed": true,
+  "metrics": {
+    "A_output_tokens_per_s_gpu": {
+      "rounds": [
+        680.9046,
+        680.6955,
+        680.5131
+      ],
+      "median": 680.6955
+    },
+    "B_TPOT_p50_ms": {
+      "rounds": [
+        6.2882,
+        6.2951,
+        6.2936
+      ],
+      "median": 6.2936
+    },
+    "C_TPOT_p99_ms": {
+      "rounds": [
+        61.0155,
+        61.021,
+        61.0211
+      ],
+      "median": 61.021
+    },
+    "C_TTFT_p99_ms": {
+      "rounds": [
+        4607.2047,
+        4613.2556,
+        4602.8482
+      ],
+      "median": 4607.2047
+    }
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 680.9046,
+      "TPOT_p50_ms": 43.9084,
+      "TPOT_p99_ms": 58.4653,
+      "TTFT_p99_ms": 7964.3538
+    },
+    {
+      "repeat": 0,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 124.8463,
+      "TPOT_p50_ms": 6.2882,
+      "TPOT_p99_ms": 12.5258,
+      "TTFT_p99_ms": 134.8991
+    },
+    {
+      "repeat": 0,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.6395,
+      "TPOT_p50_ms": 16.853,
+      "TPOT_p99_ms": 61.0155,
+      "TTFT_p99_ms": 4607.2047
+    },
+    {
+      "repeat": 1,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 680.6955,
+      "TPOT_p50_ms": 44.0613,
+      "TPOT_p99_ms": 58.8576,
+      "TTFT_p99_ms": 7929.9497
+    },
+    {
+      "repeat": 1,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 125.0243,
+      "TPOT_p50_ms": 6.2951,
+      "TPOT_p99_ms": 12.5466,
+      "TTFT_p99_ms": 135.4908
+    },
+    {
+      "repeat": 1,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.6389,
+      "TPOT_p50_ms": 16.8757,
+      "TPOT_p99_ms": 61.021,
+      "TTFT_p99_ms": 4613.2556
+    },
+    {
+      "repeat": 2,
+      "scenario": "A",
+      "requests": 512,
+      "output_tokens_per_s_gpu": 680.5131,
+      "TPOT_p50_ms": 44.064,
+      "TPOT_p99_ms": 58.575,
+      "TTFT_p99_ms": 7927.4352
+    },
+    {
+      "repeat": 2,
+      "scenario": "B",
+      "requests": 50,
+      "output_tokens_per_s_gpu": 124.8739,
+      "TPOT_p50_ms": 6.2936,
+      "TPOT_p99_ms": 12.5415,
+      "TTFT_p99_ms": 134.6792
+    },
+    {
+      "repeat": 2,
+      "scenario": "C",
+      "requests": 200,
+      "output_tokens_per_s_gpu": 76.6396,
+      "TPOT_p50_ms": 16.872,
+      "TPOT_p99_ms": 61.0211,
+      "TTFT_p99_ms": 4602.8482
+    }
+  ],
+  "interpretation": "Per-round percentiles followed by median across rounds; screening is not full acceptance. Correctness is validated separately.",
+  "correctness_status": "passed independent full public audit"
+}

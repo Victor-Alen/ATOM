@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "commit": "02a75c2b2fa9b3a4dc2f8876b948f6cde456e2c5",
+  "source_core_commit": "3ea8fc120ada383dc83a19a6ac57f0e8c755b32b",
+  "pid": 1986762,
+  "url": "http://127.0.0.1:8000",
+  "actual_start_script": true,
+  "actual_command_and_environment_verified": true,
+  "short_HF_tokens": 320,
+  "strict16k_exact": true,
+  "mtp": true,
+  "native_loaded_libraries_match_measured": true,
+  "full_public_acceptance": "/workspace/logs/step0_operator_parallel_20261104/startup_delivery/threepoint_full_gpu30_20261106/independent_full_audit.json",
+  "offline_bundled_head": true,
+  "network_download_test": "Not verified; this launch requires no network",
+  "scope": "Portable launcher executed and guarded on GPU after full frozen-core acceptance. Source and loaded native libraries match measured core; no additional performance claim is inferred from startup smoke."
+}

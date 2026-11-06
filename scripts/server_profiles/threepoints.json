@@ -402,7 +402,7 @@
     "${RUNTIME}/runtime/startup_delivery/native_sparse_qk_long_config.json"
   ],
   "evidence": {
-    "scope": "Attention + compile/Graph + MTP K=1. All four rows passed A32/B4/C6 screening; current frozen full validation is in progress. Do not claim full acceptance until its independent audit passes.",
+    "scope": "Attention + compile/Graph + MTP K=1. Four rows passed A32/B4/C6 screening. Final combination completed three full A512/B50/C200 rounds and independent correctness audit; A exceeds baseline, both C latency targets remain unmet. Offline 02a75c2b startup verified. See docs/csig-validation-20261106; no external hidden-set acceptance claim.",
     "source_commit": "3ea8fc120ada383dc83a19a6ac57f0e8c755b32b",
     "small_raw_archive_sha256": "d370f824212aa637ce7fd4f48ad226895f454a616574d47e9268aedb9f2d3142"
   },
