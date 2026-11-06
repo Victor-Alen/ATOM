@@ -58,3 +58,6 @@ online_quant_info_*.json
 # Recreated frozen runtime and local experiment outputs
 /.runtime/
 /results/
+
+# Official model assets are delivered separately, never committed.
+/deployment/model-assets/*.safetensors

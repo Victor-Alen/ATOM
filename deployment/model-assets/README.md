@@ -1,0 +1,1 @@
+Place the separately supplied official model-mtp.safetensors here for offline startup. Its pinned revision, size and SHA256 are in ../mtp-model/official-checkpoint-manifest.json. The startup script verifies the file before use. If missing, the default startup fetches the pinned file into .runtime/model-assets/. No model weights are committed to Git.

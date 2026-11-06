@@ -60,10 +60,8 @@ def prepare_model(repo):
     metadata=repo/'deployment/mtp-model'
     manifest=json.loads((metadata/'manifest.json').read_text())
     base=Path(os.getenv('MODEL_BASE_PATH','/data/models/Mellum2.1-12B-A2.5B-Thinking')).resolve()
-    head=Path(os.getenv('MTP_HEAD_PATH','/workspace/mtp-coordination/checkpoint/model-mtp.safetensors')).resolve()
-    if not head.is_file():
-        raise RuntimeError('MTP head missing; set MTP_HEAD_PATH to the supplied official model-mtp.safetensors; see README-CSIG.md')
-    if sha(head)!=manifest['head_sha256']:raise RuntimeError('MTP head SHA256 differs from measured model')
+    from mtp_asset import resolve_head
+    head=resolve_head(repo,manifest)
     model=repo/'.runtime/model';model.mkdir(parents=True,exist_ok=True)
     for name,digest in manifest['metadata'].items():
         if sha(metadata/name)!=digest:raise RuntimeError('MTP metadata changed: '+name)
@@ -77,6 +75,10 @@ def prepare_model(repo):
         if not source.is_file():raise RuntimeError('Missing supplied model file: '+str(source))
         target=model/name
         if target.is_symlink() or target.exists():
-            if target.resolve()!=source.resolve():raise RuntimeError('Existing model link points elsewhere: '+str(target))
+            if target.resolve()!=source.resolve():
+                # Permit relocation only of a verified identical MTP head.
+                if name=='model-mtp.safetensors' and target.is_symlink() and sha(target)==manifest['head_sha256']:
+                    target.unlink();target.symlink_to(source)
+                else:raise RuntimeError('Existing model link points elsewhere: '+str(target))
         else:target.symlink_to(source)
     return model

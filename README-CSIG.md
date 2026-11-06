@@ -7,8 +7,9 @@
 
 核心源码固定于 `3ea8fc120ada383dc83a19a6ac57f0e8c755b32b`。新启动入口只是移植这套配置，没有更改模型计算代码。
 同一 MI308X / PCI 0000:30:00.0 的四行 A32/B4/C6 小测和每行 832-token 检查已通过。
-当前 A512/B50/C200 各三轮、双臂 C200/16K/HumanEval、762 对原始 token 序列正在验收；在结果完成前，这不是完整验收通过的最终发布。
-`docs/csig/launcher-cpu-verification.json` 只证明开关和参数对应，不代表 GPU 启动成功。
+A512/B50/C200 各三轮已完成：2286 个性能请求全部成功。三轮中位数为 A 680.6955 tokens/s/GPU、B TPOT p50 6.2936 ms、C TPOT p99 61.0210 ms、C TTFT p99 4607.2047 ms。A 超过 baseline；C 两项仍未超过 baseline，不能写为全部达标。
+MTP on/off 两臂各 C200 12800/12800、严格 16K、原版 HumanEval 148/164（与 HF 相同），另有 762 对 256-token 原始 ID 全部一致。独立完整审计通过，完整数据见交付证据目录。HumanEval+ 另行独立复评为两臂和 HF 均 142/164，不能与原版分数混用。
+此前 7ab0eb8a 启动入口已通过实际 GPU 启动及 320-token HF 检查。本分支新增 MTP 资产获取与迁移支持，需单独检查实际入口，不能把此前入口记录当作本次变更的验证。
 
 ## 一条命令启动
 
@@ -28,9 +29,10 @@ bash scripts/start_server.sh
 
 冻结环境必须已有 `/opt/venv/bin/python3`、MI308X/gfx942 依赖和提供的基础模型。
 基础模型默认 `/data/models/Mellum2.1-12B-A2.5B-Thinking`，可通过 `MODEL_BASE_PATH` 指定。
-MTP 头默认 `/workspace/mtp-coordination/checkpoint/model-mtp.safetensors`，可通过 `MTP_HEAD_PATH` 指定已有文件。
+MTP 头优先使用显式 `MTP_HEAD_PATH`，其次为仓库 `deployment/model-assets/model-mtp.safetensors`，再使用 `.runtime/model-assets/` 缓存。首次缺失时，启动命令自动从 Hugging Face 固定 revision 获取；连接失败可尝试 hf-mirror.com 的同一 revision，两者均强制校验相同长度和 SHA256。可用 `MTP_DOWNLOAD_BASE_URL` 指定 HTTPS 传输源。
+离线验收时，将随交付提供的头文件放入 `deployment/model-assets/`；`MTP_DOWNLOAD=0 bash scripts/start_server.sh` 可禁止联网。脚本不依赖开发者的 `/workspace/mtp-coordination/` 目录。
 头来自官方 `JetBrains/Mellum2.1-12B-A2.5B-Thinking-MTP` 的固定 revision `d55846102dd1c047e95d4841070f88290227c3b7`，SHA256 为 `89a2f2454b185b97b809eef2b2a2c32300c6cf550fdbde6430a1c2e8290e025c`。
-仓库包含对应配置与索引，不包含 24GB 基础权重或 857MB MTP 头；缺少权重会给出明确错误，不静默降级成 MTP 关闭。
+Git 包含对应配置、索引和固定版本获取脚本，不包含 24GB 基础权重或 857MB MTP 头。基础权重由题目环境提供；MTP 头随本地交付另附，或按上述方式自动获取。不静默降级成 MTP 关闭。
 入口在 `.runtime/model/` 建立模型视图，基础权重及 tokenizer 使用符号链接，不修改提供的权重。
 冻结原生运行库和修改来源位于 `deployment/`，解包与 SHA256 检查由入口执行，不升级 ATOM、AITER、ROCm、PyTorch 或 Transformers。
 
