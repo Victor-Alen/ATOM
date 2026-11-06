@@ -1,0 +1,12 @@
+705b8871b0ee4543cc1ad1850dad2420b3513313	2026-11-05T00:11:44+00:00	Codex	fix: preserve HF direct-division SiLU at extreme negative inputs
+d7d175dd1c94efc7a426258c378d72ba3fe29dbb	2026-11-05T00:04:08+00:00	Codex	fix: extend native prefill K traversal to all captured layers
+546cc6ba453e04d0fea483e9efee8b0172c3b976	2026-11-04T17:03:01+00:00	Codex	fix: match prefill HF split and stagger K traversal classes
+670f060b9b5d2e4999b9d28e463acedf95cd2ca7	2026-11-04T16:55:37+00:00	Codex	fix: preserve per-row-tile HF K traversal in native prefill
+045467ce08ac704570d7825232e80f5939815c06	2026-11-04T16:50:34+00:00	Codex	fix: select native prefill LSU2 and LSU4 per expert
+756cb8723b7b02ed05a93150a51f59b0ea4937d1	2026-11-04T16:40:29+00:00	Codex	fix: match HF LSU4 prefill accumulation and tail K grouping
+5082d415da55210da52bb482c4f204efd3733220	2026-11-03T15:37:31+00:00	Qoder	perf: apply CK K-order profile metadata only to prefill
+2a17cee0cf2d2f3c9d46de5fab265cf5aecd1ee7	2026-11-03T15:17:25+00:00	Qoder	fix: select BF16 stage1 K grouping per HF expert GEMM profile
+80f4da5708e343b0b2e27ca3ec1ad3d638f38a65	2026-11-03T14:55:09+00:00	Qoder	experiment: isolate BF16 stage1 HF K grouping in V3
+14e5a45589c8fbded83ac9fccce59fa317d240b3	2026-11-03T07:22:21+00:00	Qoder	fix: merge BF16 V3 up-projection chunks in FP64
+d6e03ebd9ef7dfbbf083885ad77c227584ccfdb4	2026-11-03T05:38:09+00:00	Qoder	Add opt-in BF16 down rounding before routed weight multiply
+78a912528164b54d470a916b437d52a302fb1171	2026-11-03T05:33:53+00:00	Qoder	Add opt-in Mellum BF16 stage1 rounding and diagnostic outputs

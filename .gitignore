@@ -54,3 +54,7 @@ aiter_logs
 *.log
 online_quant_info_*.json
 .claude/plan/
+
+# Recreated frozen runtime and local experiment outputs
+/.runtime/
+/results/

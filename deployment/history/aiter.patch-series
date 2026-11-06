@@ -1,0 +1,3568 @@
+From 6415d5862d7b6ee9fcb78453311e9c356d127d5b Mon Sep 17 00:00:00 2001
+From: Alexios Lyrakis <alex_gfd@hotmail.com>
+Date: Thu, 21 May 2026 13:56:44 +0100
+Subject: [PATCH 1/8] mla: add fp8 qh32 seqlen=1 persistent kernel support on
+ gfx950
+
+Add the mla_a8w8_qh32_qseqlen1_gqaratio32_ps kernel for gfx950 (MI350X).
+This covers the decode case with gqa_ratio=32, fp8 Q/KV, and seqlen_q=1.
+
+- asm_mla.cu: add seqlen=1 dispatch branch for gqa_ratio=32 fp8/fp8
+  (sub_Q=32); update error message to reflect supported seqlens 1/2/4
+- v1_2_device.cuh: add seqlen=1 to natively_supported conditions for
+  gfx950 nhead=32 fp8
+- mla.py: add gfx950/nhead=32/fp8/seqlen=1 to the native-path selector
+- mla_asm.csv: register new .co entry for qh32 seqlen=1 persistent kernel
+- mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co: compiled kernel binary
+- test_mla.py, test_mla_persistent.py: enable nhead=32 fp8 seqlen=1 test paths
+---
+ aiter/mla.py                                    |   7 +++++++
+ csrc/kernels/mla/metadata/v1_2_device.cuh       |   2 ++
+ csrc/py_itfs_cu/asm_mla.cu                      |   7 +++++--
+ .../mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co | Bin 0 -> 73488 bytes
+ hsa/gfx950/mla/mla_asm.csv                      |   1 +
+ op_tests/test_mla.py                            |   2 +-
+ op_tests/test_mla_persistent.py                 |   7 +++++++
+ 7 files changed, 23 insertions(+), 3 deletions(-)
+ create mode 100644 hsa/gfx950/mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co
+
+diff --git a/aiter/mla.py b/aiter/mla.py
+index 2b97c9bfa..926b4a517 100644
+--- a/aiter/mla.py
++++ b/aiter/mla.py
+@@ -395,6 +395,13 @@ def mla_decode_fwd(
+                 and kv_buffer.dtype == dtypes.fp8
+                 and max_seqlen_q == 1
+             )
++            or (
++                get_gfx() == "gfx950"
++                and nhead == 32
++                and q.dtype == dtypes.fp8
++                and kv_buffer.dtype == dtypes.fp8
++                and max_seqlen_q == 1
++            )
+             or (
+                 get_gfx() == "gfx950"
+                 and q.dtype == dtypes.bf16
+diff --git a/csrc/kernels/mla/metadata/v1_2_device.cuh b/csrc/kernels/mla/metadata/v1_2_device.cuh
+index e4cdde80e..1b70b704a 100644
+--- a/csrc/kernels/mla/metadata/v1_2_device.cuh
++++ b/csrc/kernels/mla/metadata/v1_2_device.cuh
+@@ -508,6 +508,8 @@ void get_mla_metadata_v1_2_device(const torch::Tensor& seqlens_qo_indptr, // [ba
+ 
+     const bool natively_supported =
+         (num_heads == 16) ||
++        ((arch_id == "gfx950") && (num_heads == 32) && q_is_fp8 && kv_is_fp8 &&
++         (max_seqlen_qo == 1)) ||
+         ((arch_id == "gfx950") && (num_heads == 32) && q_is_fp8 && kv_is_fp8 &&
+          (max_seqlen_qo == 2)) ||
+         ((arch_id == "gfx950") && (num_heads == 32) && q_is_fp8 && kv_is_fp8 &&
+diff --git a/csrc/py_itfs_cu/asm_mla.cu b/csrc/py_itfs_cu/asm_mla.cu
+index 8733f8971..ff2d9b845 100644
+--- a/csrc/py_itfs_cu/asm_mla.cu
++++ b/csrc/py_itfs_cu/asm_mla.cu
+@@ -328,9 +328,12 @@ void mla_decode_stage1_asm_fwd(
+             } else if((max_seqlen_q == 2) && persistent){
+                 config_max_seqlen_q = 2;
+                 sub_Q = 128;
++            } else if((max_seqlen_q == 1) && persistent){
++                config_max_seqlen_q = 1;
++                sub_Q = 32;
+             } else {
+-                AITER_CHECK(false, __func__, 
+-                    ": fp8/fp8 with gqa_ratio=32 only supports decode_qlen=2,4 in persistent mode");
++                AITER_CHECK(false, __func__,
++                    ": fp8/fp8 with gqa_ratio=32 only supports decode_qlen=1,2,4 in persistent mode");
+             }
+         }
+     } else if (gqa_ratio == 64){
+diff --git a/hsa/gfx950/mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co b/hsa/gfx950/mla/mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co
+new file mode 100644
+index 0000000000000000000000000000000000000000..3ff1ad2fbe7f261535a4d86cd5a727ca5df2b1ad
+GIT binary patch
+literal 73488
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/hsa/gfx950/mla/mla_asm.csv b/hsa/gfx950/mla/mla_asm.csv
+index 6c2717592..99005f1cd 100644
+--- a/hsa/gfx950/mla/mla_asm.csv
++++ b/hsa/gfx950/mla/mla_asm.csv
+@@ -16,6 +16,7 @@ fp8,fp8,16,0,1,0,0,0,_ZN5aiter33mla_a8w8_qh16_qseqlen1_gqaratio16E,mla_a8w8_qh16
+ fp8,fp8,16,0,2,0,0,0,_ZN5aiter33mla_a8w8_qh16_qseqlen2_gqaratio16E,mla_a8w8_qh16_qseqlen2_gqaratio16.co
+ fp8,fp8,16,0,4,0,0,0,_ZN5aiter33mla_a8w8_qh64_qseqlen4_gqaratio16E,mla_a8w8_qh64_qseqlen4_gqaratio16.co
+ fp8,fp8,32,1,4,0,0,0,_ZN5aiter36mla_a8w8_qh32_qseqlen4_gqaratio32_psE,mla_a8w8_qh32_qseqlen4_gqaratio32_ps.co
++fp8,fp8,32,1,1,0,0,0,_ZN5aiter36mla_a8w8_qh32_qseqlen1_gqaratio32_psE,mla_a8w8_qh32_qseqlen1_gqaratio32_ps.co
+ fp8,fp8,32,1,2,0,0,0,_ZN5aiter39mla_a8w8_qh32_qseqlen2_gqaratio32_v3_psE,mla_a8w8_qh32_qseqlen2_gqaratio32_v3_ps.co
+ fp8,fp8,32,1,2,0,0,1,_ZN5aiter43mla_a8w8_qh32_qseqlen2_gqaratio32_lse_v3_psE,mla_a8w8_qh32_qseqlen2_gqaratio32_lse_v3_ps.co
+ fp8,fp8,128,0,0,0,0,0,_ZN5aiter31mla_a8w8_qh128_m32x4_n16x2_msk1E,mla_a8w8_qh128_m32x4_n16x2_msk1.co
+diff --git a/op_tests/test_mla.py b/op_tests/test_mla.py
+index f53e62418..d05f55b09 100644
+--- a/op_tests/test_mla.py
++++ b/op_tests/test_mla.py
+@@ -570,7 +570,7 @@ def test_mla(
+         128,
+     ]:
+         err, us_asm_decode = test_absorb_decode_bf16()
+-    elif kvtype == dtypes.fp8 and nhead in [8, 16, 128]:
++    elif kvtype == dtypes.fp8 and nhead in [8, 16, 32, 128]:
+         err, us_asm_decode = test_absorb_decode_fp8()
+ 
+     ret["decode:err"] = err
+diff --git a/op_tests/test_mla_persistent.py b/op_tests/test_mla_persistent.py
+index c42449f3b..25799dee6 100644
+--- a/op_tests/test_mla_persistent.py
++++ b/op_tests/test_mla_persistent.py
+@@ -490,6 +490,13 @@ def torch_mla_extend_split_kv(
+             and is_fp8_kvc
+             and max_seqlen_q == 2
+         )
++        or (
++            get_gfx() == "gfx950"
++            and nheads == 32
++            and is_fp8_q
++            and is_fp8_kvc
++            and max_seqlen_q == 1
++        )
+         or (
+             get_gfx() == "gfx950"
+             and nheads == 8
+-- 
+2.43.0
+
+
+From 8ddfc7510536d61f4e1863e9cf91c495be1f8c2c Mon Sep 17 00:00:00 2001
+From: Peng Sun <pengsun@amd.com>
+Date: Fri, 29 May 2026 21:47:26 +0000
+Subject: [PATCH 2/8] ci(release): install flydsl from AMD mirror + fix
+ install_triton.sh dpkg/pipefail
+
+- workflow: replace flydsl-drop with install from rocm.frameworks-devreleases.amd.com whl-staging
+  (v0.1.15 setup.py:start_aot now imports aiter.aot.flydsl.gemm at build time)
+- install_triton.sh: guard dpkg | awk pipeline with || true to survive pipefail on
+  non-Debian / no-rocm-core containers (pytorch/manylinux2_28-builder)
+---
+ .github/scripts/install_triton.sh    |  2 +-
+ .github/workflows/aiter-release.yaml | 14 ++++++--------
+ 2 files changed, 7 insertions(+), 9 deletions(-)
+
+diff --git a/.github/scripts/install_triton.sh b/.github/scripts/install_triton.sh
+index 6e763e943..d7fb524ff 100755
+--- a/.github/scripts/install_triton.sh
++++ b/.github/scripts/install_triton.sh
+@@ -30,7 +30,7 @@ install_triton_from_wheelhouse() {
+ }
+ 
+ TRITON_INDEX_URL="https://pypi.amd.com/triton/release_/rocm-7.0.0/simple/"
+-ROCM_VERSION=$(dpkg -l rocm-core 2>/dev/null | awk '/^ii/{print $3}')
++ROCM_VERSION=$(dpkg -l rocm-core 2>/dev/null | awk '/^ii/{print $3}' || true)
+ if [[ -n "$ROCM_VERSION" ]]; then
+     ROCM_MAJOR_MINOR=$(echo "$ROCM_VERSION" | cut -d. -f1,2)
+     TRITON_INDEX_URL="https://pypi.amd.com/triton/release_/rocm-${ROCM_MAJOR_MINOR}.0/simple/"
+diff --git a/.github/workflows/aiter-release.yaml b/.github/workflows/aiter-release.yaml
+index 09a9b9cda..0469be2ac 100644
+--- a/.github/workflows/aiter-release.yaml
++++ b/.github/workflows/aiter-release.yaml
+@@ -349,14 +349,12 @@ jobs:
+               set -e
+               ${PYBIN}/pip install --upgrade --timeout=60 --retries=10 pip
+               ${PYBIN}/pip install --timeout=60 --retries=10 --index-url "${TORCH_INDEX}" "${TORCH_SPEC}"
+-              # flydsl publishes only manylinux_2_35 wheels which cannot install
+-              # on AlmaLinux 8 (glibc 2.28). FlyDSL AOT pre-compilation in
+-              # setup.py is wrapped in try/except and is skipped gracefully when
+-              # flydsl is missing, so we drop it here. The resulting wheel still
+-              # contains all CK-free + Triton kernels; only the optional
+-              # FlyDSL AOT cache is omitted (kernels JIT on first use).
+-              grep -v "^flydsl" requirements.txt > /tmp/requirements-no-flydsl.txt
+-              ${PYBIN}/pip install --timeout=60 --retries=10 -r /tmp/requirements-no-flydsl.txt
++              # flydsl 0.1.9.dev599+ ships manylinux_2_28 wheels via AMD mirror
++              # (see ROCm/FlyDSL#527 backport). Required at build time since
++              # v0.1.15 setup.py imports aiter.aot.flydsl.gemm during start_aot().
++              ${PYBIN}/pip install --timeout=60 --retries=10 \
++                --extra-index-url https://rocm.frameworks-devreleases.amd.com/whl-staging/gfx942-gfx950/ \
++                -r requirements.txt
+               ${PYBIN}/pip install --timeout=60 --retries=10 "setuptools_scm<10" ninja auditwheel patchelf
+             '
+ 
+-- 
+2.43.0
+
+
+From 9d4907d8d48640887264559bc01f8703a360c705 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 10:06:14 +0000
+Subject: [PATCH 3/8] fix: match HF BF16 RMSNorm residual and weight rounding
+
+---
+ csrc/kernels/rmsnorm_quant_kernels.cu | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/csrc/kernels/rmsnorm_quant_kernels.cu b/csrc/kernels/rmsnorm_quant_kernels.cu
+index dbc4c5c23..c8c0788d6 100644
+--- a/csrc/kernels/rmsnorm_quant_kernels.cu
++++ b/csrc/kernels/rmsnorm_quant_kernels.cu
+@@ -97,6 +97,12 @@ __global__ void add_rmsnorm_quant_kernel(
+                 for(int i = 0; i < thread_data_size; i++)
+                 {
+                     thread_data_float[i] = static_cast<float>(thread_data_i[i]) + static_cast<float>(thread_data_residual_in[i]);
++                    if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++                    {
++                        // HF materializes the residual sum in BF16 before RMS reduction.
++                        thread_data_float[i] = opus::bf16_to_fp32(
++                            opus::fp32_to_bf16<0>(thread_data_float[i]));
++                    }
+                 }
+ 
+                 if constexpr(use_prefetch)
+@@ -158,6 +164,13 @@ __global__ void add_rmsnorm_quant_kernel(
+ #endif
+             }
+             
++            if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++            {
++                // HF rounds the normalized value before multiplying the BF16 weight.
++                for(int i = 0; i < thread_data_size; ++i)
++                    thread_data_float[i] = opus::bf16_to_fp32(
++                        opus::fp32_to_bf16<0>(thread_data_float[i]));
++            }
+             float* thread_data_weight2 = reinterpret_cast<float*>(&thread_data_weight);
+             for(int i = 0; i < thread_data_size / 2; i++)
+             {
+@@ -196,6 +209,14 @@ __global__ void add_rmsnorm_quant_kernel(
+ #endif
+             }
+ 
++            if constexpr(std::is_same_v<DTYPE_I, opus::bf16_t> && !FUSE_QUANT)
++            {
++                // Explicit RNE keeps nonquantized BF16 independent of Opus defaults.
++                for(int i = 0; i < thread_data_size; ++i)
++                    thread_data_float[i] = opus::bf16_to_fp32(
++                        opus::fp32_to_bf16<0>(thread_data_float[i]));
++            }
++
+             if constexpr(FUSE_QUANT)
+             {
+                 float thread_max = 1e-10f;
+-- 
+2.43.0
+
+
+From 8f34513759f8a8efdb73bb609e53a3a2a773bf84 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 11:18:14 +0000
+Subject: [PATCH 4/8] fix: optionally initialize Mellum RoPE inverse
+ frequencies on CPU
+
+---
+ aiter/rotary_embedding.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/aiter/rotary_embedding.py b/aiter/rotary_embedding.py
+index 5aff6a9c1..f5dfcc79e 100644
+--- a/aiter/rotary_embedding.py
++++ b/aiter/rotary_embedding.py
+@@ -124,7 +124,8 @@ class RotaryEmbedding(nn.Module):
+         inv_freq = 1.0 / (
+             base
+             ** (
+-                torch.arange(0, self.rotary_dim, 2, dtype=dtypes.fp32) / self.rotary_dim
++                torch.arange(0, self.rotary_dim, 2, dtype=dtypes.fp32,
++                    device="cpu" if os.getenv("AITER_MELLUM_HF_ROPE_INV_FREQ")=="1" else None) / self.rotary_dim
+             )
+         )
+         return inv_freq
+@@ -134,7 +135,7 @@ class RotaryEmbedding(nn.Module):
+         inv_freq = self._compute_inv_freq(self.base)
+         t = torch.arange(self.max_position_embeddings, dtype=dtypes.fp32)
+ 
+-        freqs = torch.einsum("i,j -> ij", t, inv_freq)
++        freqs = torch.einsum("i,j -> ij", t, inv_freq.to(t.device))
+         cos = freqs.cos().unsqueeze(-2).unsqueeze(-2)
+         sin = freqs.sin().unsqueeze(-2).unsqueeze(-2)
+         return cos, sin
+-- 
+2.43.0
+
+
+From 31a878c64ef49b5dff21a67f1c9649dc494ba5da Mon Sep 17 00:00:00 2001
+From: Codex <codex@localhost>
+Date: Wed, 4 Nov 2026 13:02:30 +0000
+Subject: [PATCH 5/8] Fix fused HIP RMSNorm request-wise BF16 rounding and
+ reduction order
+
+---
+ aiter/ops/rmsnorm.py                    |   4 +
+ csrc/include/rmsnorm_quant.h            |   4 +-
+ csrc/include/rocm_ops.hpp               |   4 +-
+ csrc/kernels/rmsnorm_quant_kernels.cu   | 148 +++++++++++++++++++++++-
+ op_tests/test_rmsnorm_request_groups.py |  78 +++++++++++++
+ 5 files changed, 230 insertions(+), 8 deletions(-)
+ create mode 100644 op_tests/test_rmsnorm_request_groups.py
+
+diff --git a/aiter/ops/rmsnorm.py b/aiter/ops/rmsnorm.py
+index e52e448bf..170b92ecf 100644
+--- a/aiter/ops/rmsnorm.py
++++ b/aiter/ops/rmsnorm.py
+@@ -251,6 +251,8 @@ def add_rmsnorm(
+     residual_out: Tensor,
+     weight: Tensor,
+     epsilon: float,
++    hf_row_offsets: Optional[Tensor] = None,
++    hf_max_rows: int = 0,
+ ) -> None: ...
+ 
+ 
+@@ -272,4 +274,6 @@ def rmsnorm(
+     input: Tensor,
+     weight: Tensor,
+     epsilon: float,
++    hf_row_offsets: Optional[Tensor] = None,
++    hf_max_rows: int = 0,
+ ) -> None: ...
+diff --git a/csrc/include/rmsnorm_quant.h b/csrc/include/rmsnorm_quant.h
+index 68cf3ccf1..8e1849b23 100644
+--- a/csrc/include/rmsnorm_quant.h
++++ b/csrc/include/rmsnorm_quant.h
+@@ -21,7 +21,7 @@ void add_rmsnorm(torch::Tensor& out,
+                  torch::Tensor& residual_in,
+                  torch::Tensor& residual_out,
+                  torch::Tensor& weight,
+-                 double epsilon);
++                 double epsilon, std::optional<torch::Tensor> hf_row_offsets = std::nullopt, int64_t hf_max_rows = 0);
+ 
+ void rmsnorm_quant(torch::Tensor& out,
+                    torch::Tensor& input,
+@@ -31,6 +31,6 @@ void rmsnorm_quant(torch::Tensor& out,
+                    int group_size     = 0,
+                    bool shuffle_scale = false);
+ 
+-void rmsnorm(torch::Tensor& out, torch::Tensor& input, torch::Tensor& weight, double epsilon);
++void rmsnorm(torch::Tensor& out, torch::Tensor& input, torch::Tensor& weight, double epsilon, std::optional<torch::Tensor> hf_row_offsets = std::nullopt, int64_t hf_max_rows = 0);
+ 
+ } // namespace aiter
+diff --git a/csrc/include/rocm_ops.hpp b/csrc/include/rocm_ops.hpp
+index 9eb656caa..67bdca59d 100644
+--- a/csrc/include/rocm_ops.hpp
++++ b/csrc/include/rocm_ops.hpp
+@@ -1989,7 +1989,7 @@ namespace py = pybind11;
+           py::arg("residual_in"),            \
+           py::arg("residual_out"),           \
+           py::arg("weight"),                 \
+-          py::arg("epsilon"));               \
++          py::arg("epsilon"), py::arg("hf_row_offsets") = py::none(), py::arg("hf_max_rows") = 0);               \
+     m.def("rmsnorm_quant",                   \
+           &aiter::rmsnorm_quant,             \
+           py::arg("out"),                    \
+@@ -2004,7 +2004,7 @@ namespace py = pybind11;
+           py::arg("out"),                    \
+           py::arg("input"),                  \
+           py::arg("weight"),                 \
+-          py::arg("epsilon"));
++          py::arg("epsilon"), py::arg("hf_row_offsets") = py::none(), py::arg("hf_max_rows") = 0);
+ 
+ #define GATED_RMSNORM_QUANT_PYBIND                             \
+     m.def("gated_rmsnorm_fp8_group_quant",                     \
+diff --git a/csrc/kernels/rmsnorm_quant_kernels.cu b/csrc/kernels/rmsnorm_quant_kernels.cu
+index c8c0788d6..f47f31f3f 100644
+--- a/csrc/kernels/rmsnorm_quant_kernels.cu
++++ b/csrc/kernels/rmsnorm_quant_kernels.cu
+@@ -12,7 +12,15 @@
+ 
+ namespace aiter {
+ 
+-template <typename DTYPE_I, typename DTYPE_O, int BlockSize, int thread_data_size, bool ADD_RESIDUAL=true, bool FUSE_QUANT=true, bool interleave = false, int num_row = 1>
++__device__ __forceinline__ float hf_add(float a, float b) {
++    float out; asm volatile("v_add_f32 %0, %1, %2" : "=v"(out) : "v"(a), "v"(b)); return out;
++}
++__device__ __forceinline__ float hf_mul(float a, float b) {
++    float out; asm volatile("v_mul_f32 %0, %1, %2" : "=v"(out) : "v"(a), "v"(b)); return out;
++}
++
++
++template <typename DTYPE_I, typename DTYPE_O, int BlockSize, int thread_data_size, bool ADD_RESIDUAL=true, bool FUSE_QUANT=true, bool interleave = false, int num_row = 1, bool HF_ORDER = false>
+ __global__ void add_rmsnorm_quant_kernel(
+     DTYPE_O* out,
+     DTYPE_I* residual_out,
+@@ -28,8 +36,84 @@ __global__ void add_rmsnorm_quant_kernel(
+     int residual_out_stride,
+     int out_stride,
+     int group_size,
+-    bool shuffle_scale=false)
++    bool shuffle_scale=false, const int32_t* hf_row_offsets=nullptr)
+     {
++        if constexpr(HF_ORDER)
++        {
++            // Match ATen Reduce.cuh per-request layout while batching requests.
++            const int begin = hf_row_offsets[blockIdx.y];
++            const int rows = hf_row_offsets[blockIdx.y + 1] - begin;
++            int width = 32;
++            if(n == 2304)
++                width = rows >= 8 ? 64 : rows >= 4 ? 128 : rows >= 2 ? 256 : 512;
++            const int rows_per_block = 512 / width;
++            const int row_base = blockIdx.x * rows_per_block;
++            if(row_base >= rows) return;
++            const int lane = threadIdx.x % width;
++            const int local_row = row_base + threadIdx.x / width;
++            const int64_t row = begin + local_row;
++            const bool valid_row = local_row < rows;
++            float acc[4] = {0.f, 0.f, 0.f, 0.f};
++            for(int col = lane * 4; col < n; col += width * 4)
++            {
++                #pragma unroll
++                for(int j = 0; j < 4; ++j)
++                {
++                    float x = valid_row ? static_cast<float>(input[row * input_stride + col + j]) : 0.f;
++                    if constexpr(ADD_RESIDUAL)
++                    {
++                        float r = valid_row ? static_cast<float>(residual_in[row * residual_in_stride + col + j]) : 0.f;
++                        x = opus::bf16_to_fp32(opus::fp32_to_bf16<0>(hf_add(x, r)));
++                    }
++                    acc[j] = hf_add(acc[j], hf_mul(x, x));
++                }
++            }
++            float total = hf_add(hf_add(hf_add(acc[0], acc[1]), acc[2]), acc[3]);
++            __shared__ float partial[512];
++            partial[threadIdx.x] = total;
++            __syncthreads();
++            for(int offset = width / 2; offset >= 64; offset /= 2)
++            {
++                if(lane < offset)
++                    partial[threadIdx.x] = hf_add(partial[threadIdx.x], partial[threadIdx.x + offset]);
++                __syncthreads();
++            }
++            total = partial[threadIdx.x];
++            const int warp_width = width < 64 ? width : 64;
++            for(int offset = 1; offset < warp_width; offset *= 2)
++                total = hf_add(total, __shfl_down(total, offset, warp_width));
++            if(lane == 0)
++            {
++                const float mean = hf_mul(total, static_cast<float>(1.0 / static_cast<double>(n)));
++                const float variance = hf_add(mean, static_cast<float>(epsilon));
++                partial[threadIdx.x] = static_cast<float>(rsqrt(static_cast<double>(variance)));
++            }
++            __syncthreads();
++            const float inverse = partial[threadIdx.x - lane];
++            if(valid_row)
++            {
++                for(int col = lane * 4; col < n; col += width * 4)
++                {
++                    #pragma unroll
++                    for(int j = 0; j < 4; ++j)
++                    {
++                        float x = static_cast<float>(input[row * input_stride + col + j]);
++                        if constexpr(ADD_RESIDUAL)
++                        {
++                            const float r = static_cast<float>(residual_in[row * residual_in_stride + col + j]);
++                            auto summed = opus::fp32_to_bf16<0>(hf_add(x, r));
++                            x = opus::bf16_to_fp32(summed);
++                            residual_out[row * residual_out_stride + col + j] = summed;
++                        }
++                        const float normalized = opus::bf16_to_fp32(opus::fp32_to_bf16<0>(hf_mul(x, inverse)));
++                        out[row * out_stride + col + j] = opus::fp32_to_bf16<0>(
++                            hf_mul(normalized, static_cast<float>(weight[col + j])));
++                    }
++                }
++            }
++            return;
++        }
++
+         static constexpr int32_t load_chunk_bytes = sizeof(DTYPE_I) * thread_data_size % 16 == 0 ? 16 : 8;
+         static_assert(thread_data_size * sizeof(DTYPE_I) % load_chunk_bytes == 0, "thread_data_size * sizeof(DTYPE_I) must be a multiple of load_chunk_bytes");
+         static constexpr int32_t load_vec_size = load_chunk_bytes / sizeof(DTYPE_I);
+@@ -508,9 +592,37 @@ __global__ void add_rmsnorm_quant_kernel(
+         torch::Tensor& residual_in,
+         torch::Tensor& residual_out,
+         torch::Tensor& weight,
+-        double epsilon
++        double epsilon,
++        std::optional<torch::Tensor> hf_row_offsets,
++        int64_t hf_max_rows
+     )
+     {
++
++        if(hf_row_offsets.has_value())
++        {
++            const int n = input.size(1);
++            const int m = input.size(0);
++            const auto& offsets = hf_row_offsets.value();
++            TORCH_CHECK(input.scalar_type() == torch::kBFloat16 && out.scalar_type() == torch::kBFloat16,
++                        "HF-order RMSNorm requires BF16 input and output");
++            TORCH_CHECK(n == 128 || n == 2304, "HF-order RMSNorm supports N128/N2304");
++            TORCH_CHECK(input.stride(1) == 1 && out.stride(1) == 1 && weight.is_contiguous(), "Invalid inner stride");
++            TORCH_CHECK(offsets.is_cuda() && offsets.scalar_type() == torch::kInt32 && offsets.is_contiguous()
++                        && offsets.dim() == 1 && offsets.numel() >= 2 && offsets.device() == input.device(), "Invalid request offsets");
++            TORCH_CHECK(hf_max_rows > 0 && hf_max_rows <= m, "Invalid request maximum rows");
++            const at::hip::OptionalHIPGuardMasqueradingAsCUDA device_guard(device_of(input));
++            const hipStream_t stream = at::hip::getCurrentHIPStream();
++            const int rows_per_block = n == 128 ? 16 : 8;
++            const int blocks = (hf_max_rows + rows_per_block - 1) / rows_per_block;
++            const dim3 grid(n == 2304 ? std::max(2, blocks) : blocks, offsets.numel() - 1);
++            add_rmsnorm_quant_kernel<opus::bf16_t, opus::bf16_t, 512, 16, true, false, false, 1, true>
++                <<<grid, 512, 0, stream>>>(reinterpret_cast<opus::bf16_t*>(out.data_ptr()), reinterpret_cast<opus::bf16_t*>(residual_out.data_ptr()), nullptr,
++                    reinterpret_cast<opus::bf16_t*>(input.data_ptr()), reinterpret_cast<opus::bf16_t*>(residual_in.data_ptr()),
++                    reinterpret_cast<opus::bf16_t*>(weight.data_ptr()), epsilon, m, n,
++                    input.stride(0), residual_in.stride(0), residual_out.stride(0), out.stride(0), 0, false,
++                    offsets.data_ptr<int32_t>());
++            return;
++        }
+         torch::Tensor scale = torch::empty({0}, torch::TensorOptions().dtype(torch::kFloat32).device(input.device()));
+ 
+         int n = input.size(1);
+@@ -561,9 +673,37 @@ __global__ void add_rmsnorm_quant_kernel(
+         torch::Tensor& out,
+         torch::Tensor& input,
+         torch::Tensor& weight,
+-        double epsilon
++        double epsilon,
++        std::optional<torch::Tensor> hf_row_offsets,
++        int64_t hf_max_rows
+     )
+     {
++
++        if(hf_row_offsets.has_value())
++        {
++            const int n = input.size(1);
++            const int m = input.size(0);
++            const auto& offsets = hf_row_offsets.value();
++            TORCH_CHECK(input.scalar_type() == torch::kBFloat16 && out.scalar_type() == torch::kBFloat16,
++                        "HF-order RMSNorm requires BF16 input and output");
++            TORCH_CHECK(n == 128 || n == 2304, "HF-order RMSNorm supports N128/N2304");
++            TORCH_CHECK(input.stride(1) == 1 && out.stride(1) == 1 && weight.is_contiguous(), "Invalid inner stride");
++            TORCH_CHECK(offsets.is_cuda() && offsets.scalar_type() == torch::kInt32 && offsets.is_contiguous()
++                        && offsets.dim() == 1 && offsets.numel() >= 2 && offsets.device() == input.device(), "Invalid request offsets");
++            TORCH_CHECK(hf_max_rows > 0 && hf_max_rows <= m, "Invalid request maximum rows");
++            const at::hip::OptionalHIPGuardMasqueradingAsCUDA device_guard(device_of(input));
++            const hipStream_t stream = at::hip::getCurrentHIPStream();
++            const int rows_per_block = n == 128 ? 16 : 8;
++            const int blocks = (hf_max_rows + rows_per_block - 1) / rows_per_block;
++            const dim3 grid(n == 2304 ? std::max(2, blocks) : blocks, offsets.numel() - 1);
++            add_rmsnorm_quant_kernel<opus::bf16_t, opus::bf16_t, 512, 16, false, false, false, 1, true>
++                <<<grid, 512, 0, stream>>>(reinterpret_cast<opus::bf16_t*>(out.data_ptr()), nullptr, nullptr,
++                    reinterpret_cast<opus::bf16_t*>(input.data_ptr()), nullptr,
++                    reinterpret_cast<opus::bf16_t*>(weight.data_ptr()), epsilon, m, n,
++                    input.stride(0), 0, 0, out.stride(0), 0, false,
++                    offsets.data_ptr<int32_t>());
++            return;
++        }
+         torch::Tensor scale = torch::empty({0}, torch::TensorOptions().dtype(torch::kFloat32).device(input.device()));
+         torch::Tensor residual_in = torch::empty({0}, torch::TensorOptions().dtype(input.dtype()).device(input.device()));
+         torch::Tensor residual_out = torch::empty({0}, torch::TensorOptions().dtype(input.dtype()).device(input.device()));
+diff --git a/op_tests/test_rmsnorm_request_groups.py b/op_tests/test_rmsnorm_request_groups.py
+new file mode 100644
+index 000000000..402847b5f
+--- /dev/null
++++ b/op_tests/test_rmsnorm_request_groups.py
+@@ -0,0 +1,78 @@
++"""Exact BF16 regression for request-grouped original HIP RMSNorm.
++
++Run with the target AITER checkout on PYTHONPATH and an isolated AITER_JIT_DIR.
++"""
++
++import itertools
++import unittest
++
++import aiter
++import torch
++
++
++@unittest.skipUnless(torch.cuda.is_available(), "requires a ROCm GPU")
++class TestRequestGroupedRMSNorm(unittest.TestCase):
++    @torch.inference_mode()
++    def test_reference_rounding_and_request_shapes(self):
++        torch.manual_seed(20261104)
++        group_sets = [[n] for n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 990, 1024, 16384)]
++        group_sets += [[1] * 32, [1, 2, 3, 4, 7, 8, 32, 990]]
++        for width in (128, 2304):
++            for groups in group_sets:
++                for add in (False, True):
++                    with self.subTest(width=width, groups=groups, residual=add):
++                        rows = sum(groups)
++                        offsets = [0]
++                        for size in groups:
++                            offsets.append(offsets[-1] + size)
++                        gpu_offsets = torch.tensor(
++                            offsets, device="cuda", dtype=torch.int32
++                        )
++                        # Noncompact strides catch kernels assuming contiguous rows.
++                        x = torch.randn(
++                            rows, width + 16, device="cuda", dtype=torch.bfloat16
++                        )[:, :width]
++                        residual = torch.randn(
++                            rows, width + 8, device="cuda", dtype=torch.bfloat16
++                        )[:, :width]
++                        weight = torch.randn(width, device="cuda", dtype=torch.bfloat16)
++                        summed = x + residual if add else x
++                        expected = []
++                        for start, stop in itertools.pairwise(offsets):
++                            value = summed[start:stop].float()
++                            variance = value.square().mean(-1, keepdim=True)
++                            normalized = (value * torch.rsqrt(variance + 1e-6)).to(
++                                torch.bfloat16
++                            )
++                            expected.append(weight * normalized)
++                        expected = torch.cat(expected)
++                        # Poison outputs: missing tail writes must never pass via reused memory.
++                        output = torch.full(
++                            (rows, width),
++                            float("nan"),
++                            device="cuda",
++                            dtype=torch.bfloat16,
++                        )
++                        residual_output = torch.full_like(output, float("nan"))
++                        kwargs = {
++                            "hf_row_offsets": gpu_offsets,
++                            "hf_max_rows": max(groups),
++                        }
++                        if add:
++                            aiter.add_rmsnorm(
++                                output,
++                                x,
++                                residual,
++                                residual_output,
++                                weight,
++                                1e-6,
++                                **kwargs
++                            )
++                            self.assertTrue(torch.equal(residual_output, summed))
++                        else:
++                            aiter.rmsnorm(output, x, weight, 1e-6, **kwargs)
++                        self.assertTrue(torch.equal(output, expected))
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=2)
+-- 
+2.43.0
+
+
+From ab76bbc57a902e7e8dd36e745d7f73fb8a6fa719 Mon Sep 17 00:00:00 2001
+From: Codex <codex@local>
+Date: Wed, 4 Nov 2026 15:47:35 +0000
+Subject: [PATCH 6/8] fix-HF-BF16-order-native-paged-decode
+
+---
+ aiter/configs/mellum_hf_attention_gfx942.json | 1036 +++++++++++++++++
+ aiter/ops/triton/gluon/pa_decode_gluon.py     |  847 +++++++++-----
+ op_tests/mellum_hf_attention.md               |   34 +
+ op_tests/test_mellum_hf_paged_attention.py    |   72 ++
+ 4 files changed, 1684 insertions(+), 305 deletions(-)
+ create mode 100644 aiter/configs/mellum_hf_attention_gfx942.json
+ create mode 100644 op_tests/mellum_hf_attention.md
+ create mode 100644 op_tests/test_mellum_hf_paged_attention.py
+
+diff --git a/aiter/configs/mellum_hf_attention_gfx942.json b/aiter/configs/mellum_hf_attention_gfx942.json
+new file mode 100644
+index 000000000..38629ea5a
+--- /dev/null
++++ b/aiter/configs/mellum_hf_attention_gfx942.json
+@@ -0,0 +1,1036 @@
++{
++  "torch": "2.10.0+rocm7.2.4.git3d3aa833",
++  "arch": "gfx942:sramecc+:xnack-",
++  "classes": [
++    2,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    2,
++    2,
++    2,
++    2,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    5,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    4,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    1,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2,
++    2
++  ],
++  "seeds": 9,
++  "head_dim": 128,
++  "query_heads": 32,
++  "kv_heads": 4,
++  "rule": "Actual hipBLASLt LocalSplitU LDS K stride below128 requires split64; DepthU above128 uses tail MFMA k_width4, otherwise8"
++}
+\ No newline at end of file
+diff --git a/aiter/ops/triton/gluon/pa_decode_gluon.py b/aiter/ops/triton/gluon/pa_decode_gluon.py
+index 915bd14fb..3c4fb1af6 100644
+--- a/aiter/ops/triton/gluon/pa_decode_gluon.py
++++ b/aiter/ops/triton/gluon/pa_decode_gluon.py
+@@ -11,6 +11,21 @@ import triton
+ import triton.language as tl
+ from triton.language.extra.hip import libdevice as hip_libdevice
+ 
++_MELLUM_ATTN_DEBUG = None
++
++@lru_cache(maxsize=8)
++def _mellum_qk_profile_tensor(path, device):
++    if not path:
++        return None
++    import json
++    from pathlib import Path
++    profile = json.loads(Path(path).read_text())
++    assert profile['torch'] == torch.__version__
++    assert profile['arch'] == torch.cuda.get_device_properties(device).gcnArchName
++    assert len(profile['classes']) == 1025
++    return torch.tensor(profile['classes'], device=torch.device('cuda', device), dtype=torch.int32)
++
++
+ CXX_PS_REDUCE_AVAILABLE = True
+ try:
+     from csrc.cpp_itfs.pa.pa_ps import (
+@@ -2163,6 +2178,33 @@ def paged_attention_decode_sliding_window_head_1(
+ #     ],
+ #     cache_results=True,
+ # )
++@gluon.jit
++def _mellum_hf_take_exp(e, index, valid, BLOCK: gl.constexpr):
++    sampled = gl.gather(e, gl.minimum(gl.maximum(index, 0), BLOCK - 1), axis=1)
++    return gl.where(valid & (index >= 0) & (index < BLOCK), sampled, 0.0)
++
++
++@gluon.jit
++def _mellum_hf_large_sum(acc, e, base, n, heads, lanes, BLOCK: gl.constexpr):
++    # Installed ATen SoftMax.cu: alignment prefix, vector-four bulk, scalar tail.
++    shift = (heads * n) % 4
++    start = gl.where(shift > 0, 512 - shift, 0)
++    bulk = gl.where(n % 4 == 0, gl.cdiv(n, 2048) * 2048, ((n - start) // 2048) * 2048)
++    prefix = lanes[None, :] - shift[:, None]
++    acc += _mellum_hf_take_exp(e, prefix - base, (shift[:, None] > 0) & (prefix >= 0) & (prefix < n), BLOCK)
++    block0 = (base - start) // 2048
++    for step in gl.static_range(2):
++        block = block0 + step
++        for j in gl.static_range(4):
++            pos = start[:, None] + block[:, None] * 2048 + lanes[None, :] * 4 + j
++            valid = (block[:, None] >= 0) & (block[:, None] * 2048 < bulk[:, None]) & (pos < n)
++            acc += _mellum_hf_take_exp(e, pos - base, valid, BLOCK)
++    for j in gl.static_range(4):
++        pos = start[:, None] + bulk[:, None] + lanes[None, :] + j * 512
++        acc += _mellum_hf_take_exp(e, pos - base, pos < n, BLOCK)
++    return acc
++
++
+ @gluon.jit
+ def paged_attention_decode_sliding_window(
+     exp_sums_ptr,  # [num_seqs, num_kv_heads, max_parts, q_group_size]
+@@ -2221,6 +2263,15 @@ def paged_attention_decode_sliding_window(
+     SLIDING_WINDOW: gl.constexpr = 0,
+     CDNA_VERSION: gl.constexpr = 3,
+     ONE_SHOT: gl.constexpr = False,
++    HF_BF16_MODE: gl.constexpr = 0,
++    hf_qk_ptr=None,
++    hf_scores_ptr=None,
++    hf_probs_ptr=None,
++    hf_qk_profile_ptr=None,
++    HF_DEBUG_N: gl.constexpr = 0,
++    HF_QK_K_WIDTH: gl.constexpr = 8,
++    HF_QK_SPLIT: gl.constexpr = False,
++    HF_PV_K_WIDTH: gl.constexpr = 8,
+ ):
+     """
+     Paged Attention Decode Kernel with FP8/BF16 support for AMD GPUs.
+@@ -2350,10 +2401,10 @@ def paged_attention_decode_sliding_window(
+         warps_per_cta=[1, 4],
+     )
+     qk_lhs_operand_layout: gl.constexpr = gl.DotOperandLayout(
+-        operand_index=0, parent=qk_mfma_layout, k_width=KV_16B_ELEMENT_COUNT
++        operand_index=0, parent=qk_mfma_layout, k_width=(HF_QK_K_WIDTH if HF_BF16_MODE > 0 else KV_16B_ELEMENT_COUNT)
+     )
+     qk_rhs_operand_layout: gl.constexpr = gl.DotOperandLayout(
+-        operand_index=1, parent=qk_mfma_layout, k_width=KV_16B_ELEMENT_COUNT
++        operand_index=1, parent=qk_mfma_layout, k_width=(HF_QK_K_WIDTH if HF_BF16_MODE > 0 else KV_16B_ELEMENT_COUNT)
+     )
+ 
+     qk_linear_layout: gl.constexpr = define_layout(
+@@ -2427,10 +2478,10 @@ def paged_attention_decode_sliding_window(
+         warps_per_cta=[1, 4],
+     )
+     pv_lhs_operand_layout: gl.constexpr = gl.DotOperandLayout(
+-        operand_index=0, parent=pv_mfma_layout, k_width=KV_16B_ELEMENT_COUNT
++        operand_index=0, parent=pv_mfma_layout, k_width=(HF_PV_K_WIDTH if HF_BF16_MODE > 0 else KV_16B_ELEMENT_COUNT)
+     )
+     pv_rhs_operand_layout: gl.constexpr = gl.DotOperandLayout(
+-        operand_index=1, parent=pv_mfma_layout, k_width=KV_16B_ELEMENT_COUNT
++        operand_index=1, parent=pv_mfma_layout, k_width=(HF_PV_K_WIDTH if HF_BF16_MODE > 0 else KV_16B_ELEMENT_COUNT)
+     )
+ 
+     # ==================== LAYOUT SLICE DEFINITIONS ====================
+@@ -2728,352 +2779,524 @@ def paged_attention_decode_sliding_window(
+ 
+     query_shared.store(mtp_query_tensor)
+ 
+-    page_offset = (
+-        kv_block_start_idx % CONTEXT_PARTITION_SIZE_PER_BLOCK
+-    ) * CONTEXT_PARTITION_SIZE
+-
+-    kv_block_numbers = kv_block_numbers.to(gl.int64)
+-    key_block_offsets = (
+-        kv_block_numbers[:, None, None, None] * stride_key_block
+-        + kv_head_idx * stride_key_head
+-        + head_size_split_offsets[None, :, None, None] * stride_key_head_split
+-        # Use runtime stride for KV block element (may be padded for large blocks).
+-        + (page_offset + block_element_offsets)[None, None, :, None]
+-        * stride_key_block_elem
+-        + contiguous_kv_element_offsets[None, None, None, :]
+-    )
+-    key_tensor = gl.load(key_cache_ptr + key_block_offsets, cache_modifier=".cg")
+-    query_converted = query_shared.load(qk_lhs_operand_layout)
+-    for sequence_partition_idx in range(
+-        sequence_partition_start_idx,
+-        sequence_partition_end_idx,
+-        CONTEXT_PARTITION_SIZE_PER_BLOCK,
+-    ):
+-
+-        # ==================== KEY LOADING AND PROCESSING ====================
+-        # Calculate key cache offsets and load keys
+-        kv_block_start_idx2 = (
+-            kv_block_start_idx
+-            + MAX_NUM_KV_BLOCKS_PER_COMPUTE * CONTEXT_PARTITION_SIZE_PER_BLOCK
+-        )
+-        kv_block_numbers2 = gl.amd.cdna3.buffer_load(
+-            ptr=block_tables_ptr
+-            + sequence_idx * stride_block_table_seq
+-            + kv_block_start_idx2 // CONTEXT_PARTITION_SIZE_PER_BLOCK,
+-            offsets=block_indices,
+-            mask=block_indices < (max_num_kv_blocks - kv_block_start_idx2),
+-            cache=".cg",
+-        )
+-
+-        page_offset2 = (
+-            kv_block_start_idx2 % CONTEXT_PARTITION_SIZE_PER_BLOCK
++    HF_PV_PASS: gl.constexpr = 2 if HF_BF16_MODE >= 5 else 1
++    hf_softmax_layout: gl.constexpr = gl.BlockedLayout([1, 1], [1, 64], [4, 1], [1, 0])
++    hf_cols = gl.arange(0, 64, layout=gl.SliceLayout(0, hf_softmax_layout))
++    hf_rows = gl.arange(0, QUERY_GROUP_SIZE_POW2, layout=gl.SliceLayout(1, hf_softmax_layout))
++    hf_lane_sums = gl.zeros((QUERY_GROUP_SIZE_POW2, 64), gl.float32, hf_softmax_layout)
++    if SLIDING_WINDOW > 0:
++        hf_first_token = gl.maximum(0, context_length - SLIDING_WINDOW)
++    else:
++        hf_first_token = 0
++    hf_source_cols = hf_cols if HF_BF16_MODE >= 7 else (hf_cols + hf_first_token) % 64
++    hf_large_cols = gl.arange(0, 512, layout=gl.SliceLayout(0, hf_softmax_layout))
++    hf_large_sums = gl.zeros((QUERY_GROUP_SIZE_POW2, 512), gl.float32, hf_softmax_layout)
++    hf_large_heads = kv_head_idx * query_group_size + hf_rows
++
++    hf_pv_second = gl.zeros((QUERY_GROUP_SIZE_POW2, HEAD_SIZE_POW2), gl.float32, pv_mfma_layout)
++    hf_window_length = context_length - hf_first_token
++    if hf_qk_profile_ptr is not None:
++        gl.static_assert(HEAD_SIZE_POW2 == 128 and ONE_QUERY_GROUP_SIZE_POW2 == 8)
++        hf_qk_class = gl.load(hf_qk_profile_ptr + gl.minimum(hf_window_length, 1024))
++        hf_qk_class = gl.where(hf_window_length > 1024, 2, hf_qk_class)
++
++    # hipBLASLt GSU coalesced partitions complete DepthU=64 tiles, remainder
++    # assigned to the earlier split; final K tail belongs to the last split.
++    hf_pv_split = gl.where(hf_window_length < 384, hf_window_length, ((hf_window_length // 64 + 1) // 2) * 64)
++    initial_kv_block_start_idx = kv_block_start_idx
++    initial_kv_block_numbers = kv_block_numbers
++    if HF_BF16_MODE >= 3:
++        gl.static_assert(sinks_ptr is None)
++    for hf_pass in gl.static_range(3 if HF_BF16_MODE >= 5 else (2 if HF_BF16_MODE >= 3 else 1)):
++        kv_block_start_idx = initial_kv_block_start_idx
++        kv_block_numbers = initial_kv_block_numbers
++        page_offset = (
++            kv_block_start_idx % CONTEXT_PARTITION_SIZE_PER_BLOCK
+         ) * CONTEXT_PARTITION_SIZE
+ 
+-        # kv_block_numbers2_i32 = gl.where(valid_block_mask, kv_block_numbers2_i32, 0)
+-        kv_block_numbers2 = kv_block_numbers2.to(gl.int64)
+-        key_block_offsets2 = (
+-            kv_block_numbers2[:, None, None, None] * stride_key_block
++        kv_block_numbers = kv_block_numbers.to(gl.int64)
++        key_block_offsets = (
++            kv_block_numbers[:, None, None, None] * stride_key_block
+             + kv_head_idx * stride_key_head
+             + head_size_split_offsets[None, :, None, None] * stride_key_head_split
+             # Use runtime stride for KV block element (may be padded for large blocks).
+-            + (page_offset2 + block_element_offsets)[None, None, :, None]
++            + (page_offset + block_element_offsets)[None, None, :, None]
+             * stride_key_block_elem
+             + contiguous_kv_element_offsets[None, None, None, :]
+         )
++        key_tensor = gl.load(key_cache_ptr + key_block_offsets, cache_modifier=".cg")
++        query_converted = query_shared.load(qk_lhs_operand_layout)
++        for sequence_partition_idx in range(
++            sequence_partition_start_idx,
++            sequence_partition_end_idx,
++            CONTEXT_PARTITION_SIZE_PER_BLOCK,
++        ):
+ 
+-        # Prepare QK MFMA while key loads (these don't depend on key data)
+-        qk_accumulator = gl.zeros(
+-            (QUERY_GROUP_SIZE_POW2, CONTEXT_PARTITION_SIZE),
+-            dtype=gl.float32,
+-            layout=qk_mfma_layout,
+-        )
+-        # Load key quantization scales if needed (overlaps with key tensor load)
+-        if KV_QUANT_MODE == 1:
+-            # Per-token quantization - prepare offsets while key loads
+-            key_scale_offsets = (
+-                kv_block_numbers[:, None, None, None] * kv_scale_stride_0
+-                + kv_head_idx * kv_scale_stride_1
+-                + (page_offset + block_element_offsets)[None, None, :, None]
+-            )
+-            # Optimize: Load both scales with VMEM scheduling, overlap with key reshape
+-            if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
+-                kv_token_global = (
+-                    kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE + block_element_offsets
+-                )
+-                kv_in_window_mask = kv_token_global >= sequence_start_idx
+-
+-                key_scale_value_blocked = gl.load(
+-                    key_scale + key_scale_offsets,
+-                    mask=kv_in_window_mask[None, None, :, None],
+-                    other=0.0,
+-                )
+-                value_scale_value_blocked = gl.load(
+-                    value_scale + key_scale_offsets,
+-                    mask=kv_in_window_mask[None, None, :, None],
+-                    other=0.0,
+-                )
+-            else:
+-                key_scale_value_blocked = gl.load(key_scale + key_scale_offsets)
+-                value_scale_value_blocked = gl.load(value_scale + key_scale_offsets)
+-
+-            # Convert to required distributed layout for computation
+-            key_scale_value_blocked = gl.reshape(
+-                key_scale_value_blocked, [CONTEXT_PARTITION_SIZE]
++            # ==================== KEY LOADING AND PROCESSING ====================
++            # Calculate key cache offsets and load keys
++            kv_block_start_idx2 = (
++                kv_block_start_idx
++                + MAX_NUM_KV_BLOCKS_PER_COMPUTE * CONTEXT_PARTITION_SIZE_PER_BLOCK
+             )
+-            key_scale_value = gl.convert_layout(
+-                key_scale_value_blocked, layout=gl.SliceLayout(0, qk_linear_layout)
+-            )
+-            key_scale_value = key_scale_value[None, :]
+-            value_scale_value_blocked = gl.reshape(
+-                value_scale_value_blocked, [CONTEXT_PARTITION_SIZE]
+-            )
+-            value_scale_value = gl.convert_layout(
+-                value_scale_value_blocked,
+-                layout=gl.SliceLayout(0, qk_linear_layout),
++            kv_block_numbers2 = gl.amd.cdna3.buffer_load(
++                ptr=block_tables_ptr
++                + sequence_idx * stride_block_table_seq
++                + kv_block_start_idx2 // CONTEXT_PARTITION_SIZE_PER_BLOCK,
++                offsets=block_indices,
++                mask=block_indices < (max_num_kv_blocks - kv_block_start_idx2),
++                cache=".cg",
+             )
+ 
+-        # Reshape key tensor for matrix multiplication
+-        key_converted = gl.permute(key_tensor, [1, 3, 0, 2])
+-        key_converted = gl.reshape(
+-            key_converted, [HEAD_SIZE_POW2, CONTEXT_PARTITION_SIZE]
+-        )
++            page_offset2 = (
++                kv_block_start_idx2 % CONTEXT_PARTITION_SIZE_PER_BLOCK
++            ) * CONTEXT_PARTITION_SIZE
+ 
+-        # ==================== VALUE LOADING WITH QK MFMA OVERLAP ====================
+-        # Convert key layout for MFMA (query_converted and qk_accumulator already prepared above)
+-        key_converted = gl.convert_layout(key_converted, layout=qk_rhs_operand_layout)
+-        key_converted = key_converted.to(COMPUTE_TYPE)
+-        if VALUE_TRANSPOSED:
+-            # Load values from transposed cache layout
+-            kv_block_numbers_reshaped = gl.convert_layout(
+-                kv_block_numbers,
+-                layout=gl.SliceLayout(
+-                    1, gl.SliceLayout(2, gl.SliceLayout(3, blocked_value_layout))
+-                ),
++            # kv_block_numbers2_i32 = gl.where(valid_block_mask, kv_block_numbers2_i32, 0)
++            kv_block_numbers2 = kv_block_numbers2.to(gl.int64)
++            key_block_offsets2 = (
++                kv_block_numbers2[:, None, None, None] * stride_key_block
++                + kv_head_idx * stride_key_head
++                + head_size_split_offsets[None, :, None, None] * stride_key_head_split
++                # Use runtime stride for KV block element (may be padded for large blocks).
++                + (page_offset2 + block_element_offsets)[None, None, :, None]
++                * stride_key_block_elem
++                + contiguous_kv_element_offsets[None, None, None, :]
+             )
+ 
+-            value_block_offsets = (
+-                kv_block_numbers_reshaped[:, None, None, None] * stride_value_block
+-                + kv_head_idx * stride_value_head
+-                + (page_offset // KV_16B_ELEMENT_COUNT + value_dim1_offsets)[
+-                    None, :, None, None
+-                ]
+-                * stride_value_head_size
+-                + value_dim2_offsets[None, None, :, None] * KV_16B_ELEMENT_COUNT
+-                + value_dim3_offsets[None, None, None, :]
++            # Prepare QK MFMA while key loads (these don't depend on key data)
++            qk_accumulator = gl.zeros(
++                (QUERY_GROUP_SIZE_POW2, CONTEXT_PARTITION_SIZE),
++                dtype=gl.float32,
++                layout=qk_mfma_layout,
+             )
+-            if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
+-                value_token_global = (
+-                    kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE
+-                    + value_dim1_offsets[None, :, None, None] * KV_16B_ELEMENT_COUNT
+-                    + value_dim3_offsets[None, None, None, :]
++            # Load key quantization scales if needed (overlaps with key tensor load)
++            if KV_QUANT_MODE == 1:
++                # Per-token quantization - prepare offsets while key loads
++                key_scale_offsets = (
++                    kv_block_numbers[:, None, None, None] * kv_scale_stride_0
++                    + kv_head_idx * kv_scale_stride_1
++                    + (page_offset + block_element_offsets)[None, None, :, None]
+                 )
+-                value_in_window_mask = value_token_global >= sequence_start_idx
++                # Optimize: Load both scales with VMEM scheduling, overlap with key reshape
++                if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
++                    kv_token_global = (
++                        kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE + block_element_offsets
++                    )
++                    kv_in_window_mask = kv_token_global >= sequence_start_idx
+ 
+-                value_tensor = gl.load(
+-                    value_cache_ptr + value_block_offsets,
+-                    cache_modifier=".cg",
++                    key_scale_value_blocked = gl.load(
++                        key_scale + key_scale_offsets,
++                        mask=kv_in_window_mask[None, None, :, None],
++                        other=0.0,
++                    )
++                    value_scale_value_blocked = gl.load(
++                        value_scale + key_scale_offsets,
++                        mask=kv_in_window_mask[None, None, :, None],
++                        other=0.0,
++                    )
++                else:
++                    key_scale_value_blocked = gl.load(key_scale + key_scale_offsets)
++                    value_scale_value_blocked = gl.load(value_scale + key_scale_offsets)
++
++                # Convert to required distributed layout for computation
++                key_scale_value_blocked = gl.reshape(
++                    key_scale_value_blocked, [CONTEXT_PARTITION_SIZE]
+                 )
+-                value_tensor = gl.where(value_in_window_mask, value_tensor, 0.0)
+-            else:
+-                value_tensor = gl.load(
+-                    value_cache_ptr + value_block_offsets, cache_modifier=".cg"
++                key_scale_value = gl.convert_layout(
++                    key_scale_value_blocked, layout=gl.SliceLayout(0, qk_linear_layout)
++                )
++                key_scale_value = key_scale_value[None, :]
++                value_scale_value_blocked = gl.reshape(
++                    value_scale_value_blocked, [CONTEXT_PARTITION_SIZE]
++                )
++                value_scale_value = gl.convert_layout(
++                    value_scale_value_blocked,
++                    layout=gl.SliceLayout(0, qk_linear_layout),
+                 )
+ 
+-            # Permute and reshape for matrix multiplication
+-            value_tensor = gl.permute(value_tensor, [0, 1, 3, 2])
+-        else:
+-            # Load values from standard cache layout
+-            kv_block_numbers_reshaped = gl.convert_layout(
+-                kv_block_numbers,
+-                layout=gl.SliceLayout(1, gl.SliceLayout(2, blocked_value_layout)),
+-            )
+-
+-            value_block_offsets = (
+-                kv_block_numbers_reshaped[:, None, None] * stride_value_block
+-                + kv_head_idx * stride_value_head
+-                + value_dim1_offsets[None, :, None] * stride_value_head_size
+-                + (page_offset + value_dim2_offsets)[None, None, :]
++            # Reshape key tensor for matrix multiplication
++            key_converted = gl.permute(key_tensor, [1, 3, 0, 2])
++            key_converted = gl.reshape(
++                key_converted, [HEAD_SIZE_POW2, CONTEXT_PARTITION_SIZE]
+             )
+ 
+-            # Schedule: Start value VMEM load, then QK MFMA
+-            if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
+-                value_token_global = (
+-                    kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE + value_dim2_offsets
+-                )
+-                value_in_window_mask = value_token_global >= sequence_start_idx
+-                value_tensor = gl.load(
+-                    value_cache_ptr + value_block_offsets,
+-                    cache_modifier=".cg",
++            # ==================== VALUE LOADING WITH QK MFMA OVERLAP ====================
++            # Convert key layout for MFMA (query_converted and qk_accumulator already prepared above)
++            if HF_BF16_MODE >= 7:
++                hf_load_layout: gl.constexpr = gl.BlockedLayout([8, 1], [4, 16], [1, 4], [0, 1])
++                hf_d = gl.arange(0, HEAD_SIZE_POW2, layout=gl.SliceLayout(1, hf_load_layout))
++                hf_t = gl.arange(0, CONTEXT_PARTITION_SIZE, layout=gl.SliceLayout(0, hf_load_layout))
++                hf_base = hf_first_token + (sequence_partition_idx - sequence_partition_start_idx) * CONTEXT_PARTITION_SIZE
++                hf_pos = hf_base + hf_t
++                hf_blocks = gl.load(block_tables_ptr + sequence_idx * stride_block_table_seq + hf_pos // KV_BLOCK_SIZE, hf_pos < context_length, other=0).to(gl.int64)
++                hf_key_offsets = hf_blocks[None,:] * stride_key_block + kv_head_idx * stride_key_head + (hf_d[:,None] // KV_16B_ELEMENT_COUNT) * stride_key_head_split + (hf_pos[None,:] % KV_BLOCK_SIZE) * stride_key_block_elem + hf_d[:,None] % KV_16B_ELEMENT_COUNT
++                key_converted = gl.load(key_cache_ptr + hf_key_offsets, (hf_pos[None,:] < context_length) & (hf_d[:,None] < head_size), other=0)
++            hf_key_unconverted = key_converted
++            if HF_QK_SPLIT:
++                gl.static_assert(HF_BF16_MODE >= 7)
++                hf_qk_first_key = gl.convert_layout(gl.where(hf_d[:,None] < 64, key_converted, 0.0).to(COMPUTE_TYPE), qk_rhs_operand_layout)
++                hf_qk_second_key = gl.convert_layout(gl.where(hf_d[:,None] >= 64, key_converted, 0.0).to(COMPUTE_TYPE), qk_rhs_operand_layout)
++            key_converted = gl.convert_layout(key_converted, layout=qk_rhs_operand_layout)
++            key_converted = key_converted.to(COMPUTE_TYPE)
++            if VALUE_TRANSPOSED:
++                # Load values from transposed cache layout
++                kv_block_numbers_reshaped = gl.convert_layout(
++                    kv_block_numbers,
++                    layout=gl.SliceLayout(
++                        1, gl.SliceLayout(2, gl.SliceLayout(3, blocked_value_layout))
++                    ),
+                 )
+-                value_tensor = gl.where(
+-                    value_in_window_mask[None, None, :], value_tensor, 0.0
++
++                value_block_offsets = (
++                    kv_block_numbers_reshaped[:, None, None, None] * stride_value_block
++                    + kv_head_idx * stride_value_head
++                    + (page_offset // KV_16B_ELEMENT_COUNT + value_dim1_offsets)[
++                        None, :, None, None
++                    ]
++                    * stride_value_head_size
++                    + value_dim2_offsets[None, None, :, None] * KV_16B_ELEMENT_COUNT
++                    + value_dim3_offsets[None, None, None, :]
+                 )
++                if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
++                    value_token_global = (
++                        kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE
++                        + value_dim1_offsets[None, :, None, None] * KV_16B_ELEMENT_COUNT
++                        + value_dim3_offsets[None, None, None, :]
++                    )
++                    value_in_window_mask = value_token_global >= sequence_start_idx
++
++                    value_tensor = gl.load(
++                        value_cache_ptr + value_block_offsets,
++                        cache_modifier=".cg",
++                    )
++                    value_tensor = gl.where(value_in_window_mask, value_tensor, 0.0)
++                else:
++                    value_tensor = gl.load(
++                        value_cache_ptr + value_block_offsets, cache_modifier=".cg"
++                    )
++
++                # Permute and reshape for matrix multiplication
++                value_tensor = gl.permute(value_tensor, [0, 1, 3, 2])
+             else:
+-                value_tensor = gl.load(
+-                    value_cache_ptr + value_block_offsets, cache_modifier=".cg"
++                # Load values from standard cache layout
++                kv_block_numbers_reshaped = gl.convert_layout(
++                    kv_block_numbers,
++                    layout=gl.SliceLayout(1, gl.SliceLayout(2, blocked_value_layout)),
+                 )
+ 
+-            # Permute and resape for matrix multiplication
+-            value_tensor = gl.permute(value_tensor, [0, 2, 1])
+-
+-        # Compute QK attention scores using MFMA (overlaps with value load)
+-        attention_scores = gl.amd.cdna3.mfma(
+-            query_converted, key_converted, qk_accumulator
+-        )
+-        value_tensor = gl.reshape(
+-            value_tensor, [CONTEXT_PARTITION_SIZE, HEAD_SIZE_POW2]
+-        )
++                value_block_offsets = (
++                    kv_block_numbers_reshaped[:, None, None] * stride_value_block
++                    + kv_head_idx * stride_value_head
++                    + value_dim1_offsets[None, :, None] * stride_value_head_size
++                    + (page_offset + value_dim2_offsets)[None, None, :]
++                )
+ 
+-        attention_scores = gl.reshape(
+-            attention_scores, [QUERY_GROUP_SIZE_POW2, CONTEXT_PARTITION_SIZE]
+-        )
++                # Schedule: Start value VMEM load, then QK MFMA
++                if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
++                    value_token_global = (
++                        kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE + value_dim2_offsets
++                    )
++                    value_in_window_mask = value_token_global >= sequence_start_idx
++                    value_tensor = gl.load(
++                        value_cache_ptr + value_block_offsets,
++                        cache_modifier=".cg",
++                    )
++                    value_tensor = gl.where(
++                        value_in_window_mask[None, None, :], value_tensor, 0.0
++                    )
++                else:
++                    value_tensor = gl.load(
++                        value_cache_ptr + value_block_offsets, cache_modifier=".cg"
++                    )
+ 
+-        # Apply quantization scaling to attention scores
+-        if KV_QUANT_MODE >= 0:
+-            if QUERY_QUANT_MODE >= 0:
+-                qk_scale_value = softmax_scale * query_scale_value * key_scale_value
++                # Permute and resape for matrix multiplication
++                value_tensor = gl.permute(value_tensor, [0, 2, 1])
++
++            # Compute QK attention scores using MFMA (overlaps with value load)
++            if hf_qk_profile_ptr is not None:
++                if hf_qk_class == 2:
++                    attention_scores = gl.amd.cdna3.mfma(query_converted,key_converted,qk_accumulator)
++                elif hf_qk_class == 5:
++                    hf_k0 = gl.convert_layout(gl.where(hf_d[:,None] < 64,hf_key_unconverted,0.0).to(COMPUTE_TYPE),qk_rhs_operand_layout)
++                    hf_k1 = gl.convert_layout(gl.where(hf_d[:,None] >= 64,hf_key_unconverted,0.0).to(COMPUTE_TYPE),qk_rhs_operand_layout)
++                    attention_scores = gl.amd.cdna3.mfma(query_converted,hf_k0,qk_accumulator) + gl.amd.cdna3.mfma(query_converted,hf_k1,qk_accumulator)
++                else:
++                    hf_q4_layout: gl.constexpr = gl.DotOperandLayout(0,qk_mfma_layout,k_width=4)
++                    hf_k4_layout: gl.constexpr = gl.DotOperandLayout(1,qk_mfma_layout,k_width=4)
++                    hf_q4 = query_shared.load(hf_q4_layout)
++                    if hf_qk_class == 4:
++                        hf_k0 = gl.convert_layout(gl.where(hf_d[:,None] < 64,hf_key_unconverted,0.0).to(COMPUTE_TYPE),hf_k4_layout)
++                        hf_k1 = gl.convert_layout(gl.where(hf_d[:,None] >= 64,hf_key_unconverted,0.0).to(COMPUTE_TYPE),hf_k4_layout)
++                        attention_scores = gl.amd.cdna3.mfma(hf_q4,hf_k0,qk_accumulator) + gl.amd.cdna3.mfma(hf_q4,hf_k1,qk_accumulator)
++                    else:
++                        attention_scores = gl.amd.cdna3.mfma(hf_q4,gl.convert_layout(hf_key_unconverted,hf_k4_layout),qk_accumulator)
++            elif HF_QK_SPLIT:
++                hf_qk_first = gl.amd.cdna3.mfma(query_converted, hf_qk_first_key, qk_accumulator)
++                hf_qk_second = gl.amd.cdna3.mfma(query_converted, hf_qk_second_key, qk_accumulator)
++                attention_scores = hf_qk_first + hf_qk_second
+             else:
+-                qk_scale_value = softmax_scale * key_scale_value
+-        else:
+-            if QUERY_QUANT_MODE >= 0:
+-                qk_scale_value = softmax_scale * query_scale_value
++                attention_scores = gl.amd.cdna3.mfma(query_converted, key_converted, qk_accumulator)
++            value_tensor = gl.reshape(
++                value_tensor, [CONTEXT_PARTITION_SIZE, HEAD_SIZE_POW2]
++            )
++
++            if HF_BF16_MODE >= 7:
++                hf_value_load_layout: gl.constexpr = gl.BlockedLayout([1, 8], [16, 4], [4, 1], [1, 0])
++                hf_vd = gl.arange(0, HEAD_SIZE_POW2, layout=gl.SliceLayout(1, hf_value_load_layout))
++                hf_vt = gl.arange(0, CONTEXT_PARTITION_SIZE, layout=gl.SliceLayout(0, hf_value_load_layout))
++                hf_vpos = hf_base + hf_vt
++                hf_vblocks = gl.load(block_tables_ptr + sequence_idx * stride_block_table_seq + hf_vpos // KV_BLOCK_SIZE, hf_vpos < context_length, other=0).to(gl.int64)
++                if VALUE_TRANSPOSED:
++                    hf_value_offsets = hf_vblocks[None,:] * stride_value_block + kv_head_idx * stride_value_head + ((hf_vpos[None,:] % KV_BLOCK_SIZE) // KV_16B_ELEMENT_COUNT) * stride_value_head_size + hf_vd[:,None] * KV_16B_ELEMENT_COUNT + hf_vpos[None,:] % KV_16B_ELEMENT_COUNT
++                else:
++                    hf_value_offsets = hf_vblocks[None,:] * stride_value_block + kv_head_idx * stride_value_head + hf_vd[:,None] * stride_value_head_size + hf_vpos[None,:] % KV_BLOCK_SIZE
++                hf_values = gl.load(value_cache_ptr + hf_value_offsets, (hf_vpos[None,:] < context_length) & (hf_vd[:,None] < head_size), other=0)
++                value_tensor = gl.permute(hf_values, [1,0])
++            attention_scores = gl.reshape(
++                attention_scores, [QUERY_GROUP_SIZE_POW2, CONTEXT_PARTITION_SIZE]
++            )
++
++            # Apply quantization scaling to attention scores
++            if KV_QUANT_MODE >= 0:
++                if QUERY_QUANT_MODE >= 0:
++                    qk_scale_value = softmax_scale * query_scale_value * key_scale_value
++                else:
++                    qk_scale_value = softmax_scale * key_scale_value
+             else:
+-                qk_scale_value = softmax_scale
++                if QUERY_QUANT_MODE >= 0:
++                    qk_scale_value = softmax_scale * query_scale_value
++                else:
++                    qk_scale_value = softmax_scale
+ 
+-        # ==================== ATTENTION MASKING ====================
+-        # Compute query token index (0 to query_seq_len-1)
+-        query_token_idx = qk_row_offsets // ONE_QUERY_GROUP_SIZE_POW2
+-        qk_column_offsets = kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE + gl.arange(
+-            0, CONTEXT_PARTITION_SIZE, layout=gl.SliceLayout(0, qk_linear_layout)
+-        )
+-        # Apply causal masking if required
+-        if IS_CAUSAL:
+-            # Compute causal mask based on sequence positions
+-            sequence_position_extension = query_seq_len - 1 - query_token_idx
+-            causal_mask = (
+-                sequence_position_extension[:, None] + qk_column_offsets[None, :]
+-                < sequence_end_idx
++            # ==================== ATTENTION MASKING ====================
++            # Compute query token index (0 to query_seq_len-1)
++            query_token_idx = qk_row_offsets // ONE_QUERY_GROUP_SIZE_POW2
++            qk_column_offsets = kv_block_start_idx * KV_COMPUTE_BLOCK_SIZE + gl.arange(
++                0, CONTEXT_PARTITION_SIZE, layout=gl.SliceLayout(0, qk_linear_layout)
+             )
+-            if SLIDING_WINDOW > 0:
+-                causal_mask = causal_mask & (
++            if HF_BF16_MODE >= 7:
++                qk_column_offsets = hf_base + gl.arange(0, CONTEXT_PARTITION_SIZE, layout=gl.SliceLayout(0, qk_linear_layout))
++            # Apply causal masking if required
++            if IS_CAUSAL:
++                # Compute causal mask based on sequence positions
++                sequence_position_extension = query_seq_len - 1 - query_token_idx
++                causal_mask = (
+                     sequence_position_extension[:, None] + qk_column_offsets[None, :]
+-                    >= sequence_start_idx + query_seq_len
++                    < sequence_end_idx
+                 )
++                if SLIDING_WINDOW > 0:
++                    causal_mask = causal_mask & (
++                        sequence_position_extension[:, None] + qk_column_offsets[None, :]
++                        >= sequence_start_idx + query_seq_len - (1 if HF_BF16_MODE >= 2 else 0)
++                    )
++                else:
++                    causal_mask = causal_mask & (
++                        sequence_position_extension[:, None] + qk_column_offsets[None, :]
++                        >= sequence_start_idx
++                    )
+             else:
+-                causal_mask = causal_mask & (
+-                    sequence_position_extension[:, None] + qk_column_offsets[None, :]
+-                    >= sequence_start_idx
+-                )
+-        else:
+-            causal_mask = qk_column_offsets[None, :] < sequence_end_idx
+-            if SLIDING_WINDOW > 0:
+-                causal_mask = causal_mask & (
+-                    qk_column_offsets[None, :]
+-                    >= sequence_start_idx + query_token_idx[:, None] + 1
+-                )
++                causal_mask = qk_column_offsets[None, :] < sequence_end_idx
++                if SLIDING_WINDOW > 0:
++                    causal_mask = causal_mask & (
++                        qk_column_offsets[None, :]
++                        >= sequence_start_idx + query_token_idx[:, None] + (0 if HF_BF16_MODE >= 2 else 1)
++                    )
++                else:
++                    causal_mask = causal_mask & (
++                        qk_column_offsets[None, :] >= sequence_start_idx
++                    )
++
++            boundary_mask = qk_row_mask[:, None] & causal_mask
++            attention_scores = gl.convert_layout(attention_scores, layout=qk_linear_layout)
++            if HF_DEBUG_N > 0:
++                hf_debug_cols = qk_column_offsets - hf_first_token
++                hf_debug_heads = kv_head_idx * query_group_size + qk_row_offsets
++                hf_debug_offsets = (sequence_idx.to(gl.int64) * gl.num_programs(1) * query_group_size + hf_debug_heads[:, None]) * HF_DEBUG_N + hf_debug_cols[None, :]
++                hf_debug_mask = qk_row_mask[:, None] & (hf_debug_cols[None, :] >= 0) & (hf_debug_cols[None, :] < HF_DEBUG_N)
++                if hf_qk_ptr is not None and hf_pass == 0:
++                    gl.store(hf_qk_ptr + hf_debug_offsets, attention_scores, hf_debug_mask)
++            if HF_BF16_MODE > 0:
++                gl.static_assert(QUERY_QUANT_MODE < 0 and KV_QUANT_MODE < 0)
++                gl.static_assert(ONE_SHOT and QUERY_SEQ_LEN_POW2 == 1)
++                attention_scores = attention_scores.to(gl.bfloat16).to(gl.float32)
++            attention_scores = qk_scale_value * attention_scores
++            if HF_BF16_MODE > 0:
++                attention_scores = attention_scores.to(gl.bfloat16).to(gl.float32)
++            # Apply masking to attention scores (if [0, CONTEXT_PARTITION_SIZE) are all -inf, the result will be NaN, so we use -3.4e38 other than -inf)
++            attention_scores = gl.where(boundary_mask, attention_scores, float(-3.4e38))
++
++            if hf_scores_ptr is not None and hf_pass == 0:
++                gl.store(hf_scores_ptr + hf_debug_offsets, attention_scores, hf_debug_mask)
++            # ==================== SOFTMAX COMPUTATION ====================
++            if HF_BF16_MODE >= 5:
++                accumulator_scale = max_logits * 0.0 + 1.0
++                if hf_pass == 0:
++                    new_max_logits = gl.maximum(max_logits, gl.max(attention_scores, axis=1))
++                    attention_probs = attention_scores * 0.0
++                else:
++                    new_max_logits = max_logits
++                    if HF_BF16_MODE >= 8 and SLIDING_WINDOW <= 0 and hf_window_length > 2048:
++                        attention_probs = tl.exp(attention_scores - max_logits[:, None])
++                    else:
++                        attention_probs = hip_libdevice.exp(attention_scores - max_logits[:, None])
++                    if hf_pass == 1:
++                        hf_exp = gl.convert_layout(attention_probs, hf_softmax_layout)
++                        if HF_BF16_MODE >= 8 and SLIDING_WINDOW <= 0 and hf_window_length > 2048:
++                            hf_large_sums = _mellum_hf_large_sum(hf_large_sums, hf_exp, hf_base - hf_first_token, hf_window_length, hf_large_heads, hf_large_cols, CONTEXT_PARTITION_SIZE)
++                        else:
++                            for hf_chunk in gl.static_range(CONTEXT_PARTITION_SIZE // 64):
++                                hf_indices = hf_rows[:, None] * 0 + hf_source_cols[None, :] + hf_chunk * 64
++                                hf_lane_sums += gl.gather(hf_exp, hf_indices, axis=1)
++                    else:
++                        if HF_BF16_MODE >= 8 and SLIDING_WINDOW <= 0 and hf_window_length > 2048:
++                            attention_probs *= gl.div_rn(1.0, exp_sums[:, None])
++                        else:
++                            attention_probs = gl.div_rn(attention_probs, exp_sums[:, None])
+             else:
+-                causal_mask = causal_mask & (
+-                    qk_column_offsets[None, :] >= sequence_start_idx
++                if HF_BF16_MODE >= 3 and hf_pass == HF_PV_PASS:
++                    # HF rounds normalized probabilities, not unnormalized exponentials.
++                    new_max_logits = max_logits
++                    accumulator_scale = max_logits * 0.0 + 1.0
++                    attention_probs = hip_libdevice.exp(attention_scores - max_logits[:, None])
++                    attention_probs = attention_probs / exp_sums[:, None]
++                else:
++                    current_max_logits = gl.max(attention_scores, axis=1)
++                    new_max_logits = gl.maximum(max_logits, current_max_logits)
++                    if HF_BF16_MODE >= 3:
++                        accumulator_scale = hip_libdevice.exp(max_logits - new_max_logits)
++                        attention_probs = hip_libdevice.exp(attention_scores - new_max_logits[:, None])
++                    else:
++                        accumulator_scale = tl.math.exp2((max_logits - new_max_logits) * LOG2_E)
++                        attention_probs = tl.math.exp2((attention_scores - new_max_logits[:, None]) * LOG2_E)
++                    exp_sums = accumulator_scale * exp_sums + gl.sum(attention_probs, axis=1)
++            # ==================== VALUE ACCUMULATION ====================
++            if HF_BF16_MODE < 3 or hf_pass == HF_PV_PASS:
++                # Handle value quantization scaling for FP8
++                if KV_QUANT_MODE >= 0:
++                    if KV_QUANT_MODE == 1:
++                        # Per-token quantization scaling
++                        # Create mask for valid tokens
++                        valid_token_mask = qk_column_offsets < context_length
++                        # Mask out value_scale of invalid tokens
++                        value_scale_value = gl.where(
++                            valid_token_mask, value_scale_value, float(0.0)
++                        )
++                        value_scale_max = gl.max(value_scale_value, axis=0)
++                        # Scale the maximum value of value_scale to FP8_MAX_VALUE to improve the precision of P * V
++                        # Optimization: compute reciprocal once and reuse, use multiply instead of divide for FP8_MAX_VALUE
++                        inv_value_scale_max = 1.0 / (value_scale_max + 1e-8)
++                        value_scale_value = (
++                            value_scale_value * float(FP8_MAX_VALUE) * inv_value_scale_max
++                        )
++                        attention_probs = value_scale_value[None, :] * attention_probs
++                        # Use multiply by reciprocal instead of divide (precomputed 1/FP8_MAX_VALUE)
++                        probability_scale = value_scale_max * (1.0 / float(FP8_MAX_VALUE))
++                    elif KV_QUANT_MODE == 0:
++                        # Per-tensor quantization scaling
++                        probability_scale = value_scale_value
++                    else:
++                        raise ValueError(f"Invalid KV_QUANT_MODE: {KV_QUANT_MODE}")
++
++                # Convert attention probabilities to compute type for MFMA operation
++                # Convert layouts for PV MFMA operation
++                if hf_probs_ptr is not None:
++                    gl.store(hf_probs_ptr + hf_debug_offsets, attention_probs, hf_debug_mask)
++                attention_probs = attention_probs.to(COMPUTE_TYPE)
++                probs_shared.store(attention_probs)
++                values_converted = value_tensor.to(COMPUTE_TYPE)
++                values_converted = gl.convert_layout(
++                    values_converted, layout=pv_rhs_operand_layout
+                 )
+ 
+-        boundary_mask = qk_row_mask[:, None] & causal_mask
+-        attention_scores = gl.convert_layout(attention_scores, layout=qk_linear_layout)
+-        attention_scores = qk_scale_value * attention_scores
+-        # Apply masking to attention scores (if [0, CONTEXT_PARTITION_SIZE) are all -inf, the result will be NaN, so we use -3.4e38 other than -inf)
+-        attention_scores = gl.where(boundary_mask, attention_scores, float(-3.4e38))
++                accumulator_scale_expanded = gl.convert_layout(
++                    accumulator_scale[:, None], layout=pv_mfma_layout
++                )
++                attention_accumulator *= accumulator_scale_expanded
+ 
+-        # ==================== SOFTMAX COMPUTATION ====================
+-        # Update running maximum for numerical stability
+-        current_max_logits = gl.max(attention_scores, axis=1)
+-        new_max_logits = gl.maximum(max_logits, current_max_logits)
++                pv_accumulator = gl.zeros(
++                    (QUERY_GROUP_SIZE_POW2, HEAD_SIZE_POW2),
++                    dtype=gl.float32,
++                    layout=pv_mfma_layout,
++                )
++                probs_converted = probs_shared.load(pv_lhs_operand_layout)
++            if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
++                kv_token_global2 = (
++                    kv_block_start_idx2 * KV_COMPUTE_BLOCK_SIZE + block_element_offsets
++                )
++                kv_in_window_mask2 = kv_token_global2 >= sequence_start_idx
+ 
+-        accumulator_scale = tl.math.exp2((max_logits - new_max_logits) * LOG2_E)
+-        # Compute attention probabilities
+-        attention_probs = tl.math.exp2(
+-            (attention_scores - new_max_logits[:, None]) * LOG2_E
+-        )
++                key_tensor2 = gl.load(
++                    key_cache_ptr + key_block_offsets2,
++                    mask=kv_in_window_mask2[None, None, :, None],
++                    other=0.0,
++                    cache_modifier=".cg",
++                )
++            else:
++                key_tensor2 = gl.load(
++                    key_cache_ptr + key_block_offsets2, cache_modifier=".cg"
++                )
+ 
+-        exp_sums = accumulator_scale * exp_sums + gl.sum(attention_probs, axis=1)
+-        # ==================== VALUE ACCUMULATION ====================
+-        # Handle value quantization scaling for FP8
+-        if KV_QUANT_MODE >= 0:
+-            if KV_QUANT_MODE == 1:
+-                # Per-token quantization scaling
+-                # Create mask for valid tokens
+-                valid_token_mask = qk_column_offsets < context_length
+-                # Mask out value_scale of invalid tokens
+-                value_scale_value = gl.where(
+-                    valid_token_mask, value_scale_value, float(0.0)
++            if HF_BF16_MODE >= 9 and hf_pass == HF_PV_PASS and hf_window_length % 64 != 0 and hf_base + CONTEXT_PARTITION_SIZE > hf_first_token + (hf_window_length // 64) * 64:
++                hf_tail_start = (hf_window_length // 64) * 64
++                hf_logical_col = qk_column_offsets - hf_first_token
++                hf_main_first = gl.where((hf_logical_col[None,:] < hf_pv_split) & (hf_logical_col[None,:] < hf_tail_start), attention_probs, 0.0).to(COMPUTE_TYPE)
++                hf_main_second = gl.where((hf_logical_col[None,:] >= hf_pv_split) & (hf_logical_col[None,:] < hf_tail_start), attention_probs, 0.0).to(COMPUTE_TYPE)
++                attention_accumulator = gl.amd.cdna3.mfma(gl.convert_layout(hf_main_first,pv_lhs_operand_layout),values_converted,attention_accumulator)
++                hf_pv_second = gl.amd.cdna3.mfma(gl.convert_layout(hf_main_second,pv_lhs_operand_layout),values_converted,hf_pv_second)
++                hf_tail_lhs_layout: gl.constexpr = gl.DotOperandLayout(0,pv_mfma_layout,k_width=4)
++                hf_tail_rhs_layout: gl.constexpr = gl.DotOperandLayout(1,pv_mfma_layout,k_width=4)
++                hf_tail_values = gl.convert_layout(value_tensor.to(COMPUTE_TYPE),hf_tail_rhs_layout)
++                hf_tail_first = gl.where((hf_logical_col[None,:] < hf_pv_split) & (hf_logical_col[None,:] >= hf_tail_start), attention_probs, 0.0).to(COMPUTE_TYPE)
++                hf_tail_second = gl.where((hf_logical_col[None,:] >= hf_pv_split) & (hf_logical_col[None,:] >= hf_tail_start), attention_probs, 0.0).to(COMPUTE_TYPE)
++                attention_accumulator = gl.amd.cdna3.mfma(gl.convert_layout(hf_tail_first,hf_tail_lhs_layout),hf_tail_values,attention_accumulator)
++                hf_pv_second = gl.amd.cdna3.mfma(gl.convert_layout(hf_tail_second,hf_tail_lhs_layout),hf_tail_values,hf_pv_second)
++            elif HF_BF16_MODE >= 6 and hf_pass == HF_PV_PASS:
++                hf_first_probs = gl.where((qk_column_offsets - hf_first_token)[None, :] < hf_pv_split, attention_probs, 0.0).to(COMPUTE_TYPE)
++                hf_second_probs = gl.where((qk_column_offsets - hf_first_token)[None, :] >= hf_pv_split, attention_probs, 0.0).to(COMPUTE_TYPE)
++                hf_first_converted = gl.convert_layout(hf_first_probs, pv_lhs_operand_layout)
++                hf_second_converted = gl.convert_layout(hf_second_probs, pv_lhs_operand_layout)
++                attention_accumulator = gl.amd.cdna3.mfma(hf_first_converted, values_converted, attention_accumulator)
++                hf_pv_second = gl.amd.cdna3.mfma(hf_second_converted, values_converted, hf_pv_second)
++            elif HF_BF16_MODE >= 4 and hf_pass == HF_PV_PASS:
++                attention_accumulator = gl.amd.cdna3.mfma(
++                    probs_converted, values_converted, attention_accumulator
+                 )
+-                value_scale_max = gl.max(value_scale_value, axis=0)
+-                # Scale the maximum value of value_scale to FP8_MAX_VALUE to improve the precision of P * V
+-                # Optimization: compute reciprocal once and reuse, use multiply instead of divide for FP8_MAX_VALUE
+-                inv_value_scale_max = 1.0 / (value_scale_max + 1e-8)
+-                value_scale_value = (
+-                    value_scale_value * float(FP8_MAX_VALUE) * inv_value_scale_max
++            elif HF_BF16_MODE < 3 or hf_pass == HF_PV_PASS:
++                attention_output = gl.amd.cdna3.mfma(
++                    probs_converted, values_converted, pv_accumulator
+                 )
+-                attention_probs = value_scale_value[None, :] * attention_probs
+-                # Use multiply by reciprocal instead of divide (precomputed 1/FP8_MAX_VALUE)
+-                probability_scale = value_scale_max * (1.0 / float(FP8_MAX_VALUE))
+-            elif KV_QUANT_MODE == 0:
+-                # Per-tensor quantization scaling
+-                probability_scale = value_scale_value
++                if KV_QUANT_MODE >= 0:
++                    attention_accumulator += probability_scale * attention_output
++                else:
++                    attention_accumulator += attention_output
++            max_logits = new_max_logits
++            if (
++                sequence_partition_idx + CONTEXT_PARTITION_SIZE_PER_BLOCK
++                < sequence_partition_end_idx
++            ):
++                kv_block_numbers = kv_block_numbers2
++                key_tensor = key_tensor2
++                kv_block_start_idx = kv_block_start_idx2
++                page_offset = page_offset2
++
++        if HF_BF16_MODE >= 5 and hf_pass == 1:
++            if HF_BF16_MODE >= 8 and SLIDING_WINDOW <= 0 and hf_window_length > 2048:
++                for hf_shift in gl.static_range(6):
++                    source = hf_large_cols // 64 * 64 + gl.minimum(hf_large_cols % 64 + (32 >> hf_shift), 63)
++                    hf_large_sums += gl.gather(hf_large_sums, hf_rows[:,None] * 0 + source[None,:], axis=1)
++                source = gl.minimum(hf_large_cols, 7) * 64
++                hf_warps = gl.gather(hf_large_sums, hf_rows[:,None] * 0 + source[None,:], axis=1)
++                hf_warps = gl.where(hf_large_cols[None,:] < 8, hf_warps, 0.0)
++                for hf_shift in gl.static_range(6):
++                    source = gl.minimum(hf_large_cols + (32 >> hf_shift), 63)
++                    hf_warps += gl.gather(hf_warps, hf_rows[:,None] * 0 + source[None,:], axis=1)
++                hf_denominator = gl.sum(gl.where(hf_large_cols[None,:] == 0, hf_warps, 0.0), axis=1)
+             else:
+-                raise ValueError(f"Invalid KV_QUANT_MODE: {KV_QUANT_MODE}")
+-
+-        # Convert attention probabilities to compute type for MFMA operation
+-        # Convert layouts for PV MFMA operation
+-        attention_probs = attention_probs.to(COMPUTE_TYPE)
+-        probs_shared.store(attention_probs)
+-        values_converted = value_tensor.to(COMPUTE_TYPE)
+-        values_converted = gl.convert_layout(
+-            values_converted, layout=pv_rhs_operand_layout
+-        )
+-
+-        accumulator_scale_expanded = gl.convert_layout(
+-            accumulator_scale[:, None], layout=pv_mfma_layout
+-        )
+-        attention_accumulator *= accumulator_scale_expanded
+-
+-        pv_accumulator = gl.zeros(
+-            (QUERY_GROUP_SIZE_POW2, HEAD_SIZE_POW2),
+-            dtype=gl.float32,
+-            layout=pv_mfma_layout,
+-        )
+-        probs_converted = probs_shared.load(pv_lhs_operand_layout)
+-        if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE and SLIDING_WINDOW > 0:
+-            kv_token_global2 = (
+-                kv_block_start_idx2 * KV_COMPUTE_BLOCK_SIZE + block_element_offsets
+-            )
+-            kv_in_window_mask2 = kv_token_global2 >= sequence_start_idx
+-
+-            key_tensor2 = gl.load(
+-                key_cache_ptr + key_block_offsets2,
+-                mask=kv_in_window_mask2[None, None, :, None],
+-                other=0.0,
+-                cache_modifier=".cg",
+-            )
+-        else:
+-            key_tensor2 = gl.load(
+-                key_cache_ptr + key_block_offsets2, cache_modifier=".cg"
+-            )
+-
+-        attention_output = gl.amd.cdna3.mfma(
+-            probs_converted, values_converted, pv_accumulator
+-        )
+-        if KV_QUANT_MODE >= 0:
+-            attention_accumulator += probability_scale * attention_output
+-        else:
+-            attention_accumulator += attention_output
+-        max_logits = new_max_logits
+-        if (
+-            sequence_partition_idx + CONTEXT_PARTITION_SIZE_PER_BLOCK
+-            < sequence_partition_end_idx
+-        ):
+-            kv_block_numbers = kv_block_numbers2
+-            key_tensor = key_tensor2
+-            kv_block_start_idx = kv_block_start_idx2
+-            page_offset = page_offset2
++                for hf_shift in gl.static_range(6):
++                    hf_indices = hf_rows[:, None] * 0 + (hf_cols[None, :] ^ (32 >> hf_shift))
++                    hf_lane_sums += gl.gather(hf_lane_sums, hf_indices, axis=1)
++                hf_denominator = gl.sum(gl.where(hf_cols[None, :] == 0, hf_lane_sums, 0.0), axis=1)
++            exp_sums = gl.convert_layout(hf_denominator, gl.SliceLayout(1, qk_linear_layout))
+ 
+     # ==================== SINKS HANDLING ====================
+     # Add sinks contribution to exp_sums (does not contribute to attention output)
+@@ -3088,8 +3311,11 @@ def paged_attention_decode_sliding_window(
+     exp_sums_reciprocal_cvt = gl.convert_layout(
+         exp_sums_reciprocal[:, None], layout=pv_mfma_layout
+     )
+-    attention_accumulator = attention_accumulator * exp_sums_reciprocal_cvt
++    if HF_BF16_MODE < 3:
++        attention_accumulator = attention_accumulator * exp_sums_reciprocal_cvt
+ 
++    if HF_BF16_MODE >= 6:
++        attention_accumulator += hf_pv_second
+     attention_accumulator = attention_accumulator.to(OUTPUT_DTYPE)
+ 
+     if not ONE_SHOT:
+@@ -4355,6 +4581,9 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+     # This is required for KV_BLOCK_SIZE==1024 support in PS mode.
+     if PS and not (SLIDING_WINDOW > 0 and KV_BLOCK_SIZE == 1024):
+         ONE_SHOT = num_splits <= 1
++        hf_bf16_mode = int(__import__("os").environ.get("AITER_MELLUM_HF_ATTN_MODE", "0"))
++        if 5 <= hf_bf16_mode < 8 and SLIDING_WINDOW <= 0:
++            hf_bf16_mode = 3  # Full attention needs ATen's large-row reduction next.
+         if num_kv_heads == 1:
+             paged_attention_kernel = paged_attention_decode_sliding_window_head_1
+             if ONE_QUERY_GROUP_SIZE_POW2 >= 16:
+@@ -4426,6 +4655,14 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+             SLIDING_WINDOW=SLIDING_WINDOW,
+             CDNA_VERSION=CDNA_VERSION,
+             ONE_SHOT=ONE_SHOT,
++            **({"HF_BF16_MODE": hf_bf16_mode,
++                "hf_qk_profile_ptr": _mellum_qk_profile_tensor(__import__("os").environ.get("AITER_MELLUM_QK_PROFILE", ""), query_ptr.device.index),
++                "HF_QK_K_WIDTH": int(__import__("os").environ.get("AITER_MELLUM_QK_K_WIDTH", "8")),
++                "HF_QK_SPLIT": __import__("os").environ.get("AITER_MELLUM_QK_SPLIT") == "1",
++                "HF_PV_K_WIDTH": int(__import__("os").environ.get("AITER_MELLUM_PV_K_WIDTH", "8"))}
++               if num_kv_heads > 1 else {}),
++            **(_MELLUM_ATTN_DEBUG or {}),
++            enable_fp_fusion=(hf_bf16_mode == 0),
+         )
+         return
+ 
+diff --git a/op_tests/mellum_hf_attention.md b/op_tests/mellum_hf_attention.md
+new file mode 100644
+index 000000000..97e8fbed2
+--- /dev/null
++++ b/op_tests/mellum_hf_attention.md
+@@ -0,0 +1,34 @@
++# Mellum HF-order paged decode (gfx942)
++
++This opt-in mode extends the existing Gluon paged-attention kernel. The default
++mode remains unchanged. It retains paged K/V and batches requests on the GPU.
++
++For the validated Torch/ROCm build in the configuration, set:
++
++```bash
++export AITER_MELLUM_HF_ATTN_MODE=10
++export AITER_MELLUM_QK_PROFILE="$PWD/aiter/configs/mellum_hf_attention_gfx942.json"
++python op_tests/test_mellum_hf_paged_attention.py
++```
++
++The profile checks the Torch version and GPU architecture. It covers query
++head dimension 128, 32 query heads, 4 KV heads, BF16, and single-token decode.
++It selects MFMA accumulation order, not alternate model/reference outputs.
++Modes 1–9 and the QK/PV width controls are diagnostic ablations; the validated
++configuration uses mode 10 with the QK profile and default width controls.
++
++The implementation preserves BF16 score/scaling/probability boundaries, ATen
++softmax reduction order, coalesced PV GlobalSplitU, PV tail MFMA order, and
++shape-dependent QK LocalSplitU. Logical window offsets and SHUFFLE V-cache
++layout must be supplied correctly by the caller. `_MELLUM_ATTN_DEBUG` exposes
++intermediate tensors only for fixed-input diagnostics; it is unset in service.
++
++Validation on the target single GPU: 18 portable cases, the 1–1024 QK-length
++profile across 9 input sets, captured real model failures, A32/C4 token checks,
++full C200 (12800/12800 tokens), and a 16384-token input (64/64 outputs). These
++operator/model checks do not establish final HumanEval or overall Step0
++acceptance. Model-level final validation remains separate.
++
++The current service integration applies this mode to decode. Prefill still
++uses its existing correctness path. Performance work and final combined
++validation are ongoing; exceeding the performance baseline is not claimed.
+\ No newline at end of file
+diff --git a/op_tests/test_mellum_hf_paged_attention.py b/op_tests/test_mellum_hf_paged_attention.py
+new file mode 100644
+index 000000000..167558a66
+--- /dev/null
++++ b/op_tests/test_mellum_hf_paged_attention.py
+@@ -0,0 +1,72 @@
++"""Check original paged Gluon HF mode against independent BF16 PyTorch attention.
++
++Run on the validated gfx942/Torch build with AITER imported from this checkout.
++This is an operator regression test, not a model Step0 or performance result.
++"""
++import json
++import os
++from pathlib import Path
++
++import torch
++import aiter
++
++
++def reference(q, kc, vc, table, length, window, shuffle):
++    batch, heads, dim = q.shape
++    first = max(0, length - window) if window > 0 else 0
++    count = length - first
++    results = []
++    for b in range(batch):
++        blocks = table[b].long()
++        key = kc.index_select(0, blocks).permute(0, 3, 1, 2, 4).reshape(-1, 4, dim)[first:length]
++        value = vc.index_select(0, blocks)
++        if shuffle:
++            value = value.view(len(blocks), 4, 2, dim, 8).permute(0, 2, 4, 1, 3).reshape(-1, 4, dim)
++        else:
++            value = value.permute(0, 3, 1, 2).reshape(-1, 4, dim)
++        value = value[first:length]
++        key = key.transpose(0, 1)[None, :, None].expand(1, 4, 8, count, dim).reshape(1, heads, count, dim)
++        value = value.transpose(0, 1)[None, :, None].expand(1, 4, 8, count, dim).reshape(1, heads, count, dim)
++        scores = (q[b:b + 1, :, None, :] @ key.transpose(2, 3)) * (dim ** -0.5)
++        probabilities = torch.softmax(scores, -1, dtype=torch.float32).to(torch.bfloat16)
++        results.append((probabilities @ value).reshape(1, heads, dim))
++    return torch.cat(results)
++
++
++def test_native_mellum_attention():
++    config = Path(__file__).resolve().parents[1] / 'aiter/configs/mellum_hf_attention_gfx942.json'
++    os.environ['AITER_MELLUM_HF_ATTN_MODE'] = '10'
++    os.environ['AITER_MELLUM_QK_PROFILE'] = str(config)
++    for name in ['AITER_MELLUM_QK_K_WIDTH', 'AITER_MELLUM_QK_SPLIT', 'AITER_MELLUM_PV_K_WIDTH']:
++        os.environ.pop(name, None)
++    cases = [(1,127,1024,False), (4,257,1024,False), (4,1025,1024,False),
++             (1,2049,0,False), (1,12588,0,True), (4,4097,0,True)]
++    failures = []
++    with torch.inference_mode():
++        for seed, scale in enumerate([1.0, 0.17, 3.3]):
++            torch.manual_seed(20261111 + seed)
++            for batch, length, window, shuffle in cases:
++                slots = (length + 15) // 16
++                blocks = batch * slots
++                kc = (torch.randn(blocks,4,16,16,8,device='cuda') * scale).to(torch.bfloat16)
++                vc = torch.randn(blocks,4,128,16,device='cuda',dtype=torch.bfloat16)
++                q = (torch.randn(batch,32,128,device='cuda') * scale).to(torch.bfloat16)
++                table = torch.randperm(blocks,device='cuda',dtype=torch.int32).reshape(batch,slots)
++                lengths = torch.full((batch,),length,device='cuda',dtype=torch.int32)
++                out = torch.full_like(q,float('nan'))
++                native_v = vc.view(blocks,4,2,128,8) if shuffle else vc
++                aiter.pa_decode_gluon(out,q,kc,native_v,lengths,table,128**-0.5,1,1,128,
++                                     torch.bfloat16,sliding_window=window,ps=True)
++                expected = reference(q,kc,vc,table,length,window,shuffle)
++                mismatch = int((out != expected).sum())
++                row = dict(seed=seed,batch=batch,length=length,window=window,
++                           shuffle=shuffle,mismatches=mismatch,elements=out.numel())
++                print(json.dumps(row),flush=True)
++                if mismatch:
++                    failures.append(row)
++    assert not failures, failures
++
++
++if __name__ == '__main__':
++    test_native_mellum_attention()
++    print('ALL_18_CASES_EXACT',flush=True)
+\ No newline at end of file
+-- 
+2.43.0
+
+
+From 1c1c8a3e425127deb87e322e983a1b96ae5dea0c Mon Sep 17 00:00:00 2001
+From: Codex <codex@local>
+Date: Thu, 5 Nov 2026 03:53:26 +0000
+Subject: [PATCH 7/8] Add opt-in Gluon head splitting and HF-order LDS
+ sliding-window cache
+
+---
+ aiter/ops/triton/gluon/pa_decode_gluon.py | 86 +++++++++++++++++++----
+ 1 file changed, 74 insertions(+), 12 deletions(-)
+
+diff --git a/aiter/ops/triton/gluon/pa_decode_gluon.py b/aiter/ops/triton/gluon/pa_decode_gluon.py
+index 3c4fb1af6..2110e92e4 100644
+--- a/aiter/ops/triton/gluon/pa_decode_gluon.py
++++ b/aiter/ops/triton/gluon/pa_decode_gluon.py
+@@ -2205,6 +2205,13 @@ def _mellum_hf_large_sum(acc, e, base, n, heads, lanes, BLOCK: gl.constexpr):
+     return acc
+ 
+ 
++@gluon.jit
++def _mellum_concat_columns(a, b):
++    joined = gl.join(a, b)
++    transposed = gl.permute(joined, [0, 2, 1])
++    return gl.reshape(transposed, [a.shape[0], a.shape[1] * 2])
++
++
+ @gluon.jit
+ def paged_attention_decode_sliding_window(
+     exp_sums_ptr,  # [num_seqs, num_kv_heads, max_parts, q_group_size]
+@@ -2264,6 +2271,8 @@ def paged_attention_decode_sliding_window(
+     CDNA_VERSION: gl.constexpr = 3,
+     ONE_SHOT: gl.constexpr = False,
+     HF_BF16_MODE: gl.constexpr = 0,
++    HF_HEAD_SPLITS: gl.constexpr = 1,
++    HF_LDS_WINDOW: gl.constexpr = False,
+     hf_qk_ptr=None,
+     hf_scores_ptr=None,
+     hf_probs_ptr=None,
+@@ -2324,7 +2333,9 @@ def paged_attention_decode_sliding_window(
+         gl.static_assert(key_scale.dtype.element_ty == gl.float32)
+         gl.static_assert(value_scale.dtype.element_ty == gl.float32)
+     sequence_idx = gl.program_id(0)
+-    kv_head_idx = gl.program_id(1)
++    kv_head_idx = gl.program_id(1) // HF_HEAD_SPLITS
++    hf_group_offset = (gl.program_id(1) % HF_HEAD_SPLITS) * query_group_size
++    gl.static_assert(HF_HEAD_SPLITS == 1 or (HF_BF16_MODE == 10 and ONE_SHOT and QUERY_SEQ_LEN_POW2 == 1))
+     split_idx = gl.program_id(2)
+ 
+     # ==================== CONSTANTS AND CONFIGURATION ====================
+@@ -2574,7 +2585,7 @@ def paged_attention_decode_sliding_window(
+         sequence_idx * stride_query_bs
+         + mtp_query_len_offsets[:, None, None] * stride_query_qlen
+         + kv_head_idx * stride_query_kv_head
+-        + mtp_query_group_size_offsets[None, :, None] * stride_query_group_size
++        + (mtp_query_group_size_offsets[None, :, None] + hf_group_offset) * stride_query_group_size
+         + mtp_head_size_offsets[None, None, :]
+     )
+     mtp_query_mask = (
+@@ -2655,7 +2666,7 @@ def paged_attention_decode_sliding_window(
+             sequence_idx * stride_output_bs
+             + mtp_query_len_offsets[:, None, None] * stride_output_len
+             + kv_head_idx * stride_output_kv_head
+-            + mtp_query_group_size_offsets[None, :, None] * stride_output_group_size
++            + (mtp_query_group_size_offsets[None, :, None] + hf_group_offset) * stride_output_group_size
+             + mtp_head_size_offsets[None, None, :]
+         )
+     else:
+@@ -2729,7 +2740,7 @@ def paged_attention_decode_sliding_window(
+             sequence_idx * stride_query_scale_bs
+             + mtp_query_len_offsets[:, None, None] * stride_query_scale_qlen
+             + kv_head_idx * stride_query_scale_kv_head
+-            + mtp_query_group_size_offsets[None, :, None]
++            + mtp_query_group_size_offsets[None, :, None] + hf_group_offset
+         )
+         query_scale_mask = (mtp_query_len_offsets[:, None, None] < query_seq_len) & (
+             mtp_query_group_size_offsets[None, :, None] < query_group_size
+@@ -2751,7 +2762,7 @@ def paged_attention_decode_sliding_window(
+         # num_query_heads = num_kv_heads * query_group_size.
+         # It is shared across query positions (query_seq_len).
+         sinks_values = gl.load(
+-            sinks_ptr + kv_head_idx * query_group_size + max_logits_group_idx_in_len,
++            sinks_ptr + kv_head_idx * query_group_size * HF_HEAD_SPLITS + hf_group_offset + max_logits_group_idx_in_len,
+             mask=qk_row_mask,
+             other=float("-inf"),
+             cache_modifier=".cg",
+@@ -2779,7 +2790,7 @@ def paged_attention_decode_sliding_window(
+ 
+     query_shared.store(mtp_query_tensor)
+ 
+-    HF_PV_PASS: gl.constexpr = 2 if HF_BF16_MODE >= 5 else 1
++    HF_PV_PASS: gl.constexpr = 1 if HF_LDS_WINDOW else (2 if HF_BF16_MODE >= 5 else 1)
+     hf_softmax_layout: gl.constexpr = gl.BlockedLayout([1, 1], [1, 64], [4, 1], [1, 0])
+     hf_cols = gl.arange(0, 64, layout=gl.SliceLayout(0, hf_softmax_layout))
+     hf_rows = gl.arange(0, QUERY_GROUP_SIZE_POW2, layout=gl.SliceLayout(1, hf_softmax_layout))
+@@ -2791,23 +2802,32 @@ def paged_attention_decode_sliding_window(
+     hf_source_cols = hf_cols if HF_BF16_MODE >= 7 else (hf_cols + hf_first_token) % 64
+     hf_large_cols = gl.arange(0, 512, layout=gl.SliceLayout(0, hf_softmax_layout))
+     hf_large_sums = gl.zeros((QUERY_GROUP_SIZE_POW2, 512), gl.float32, hf_softmax_layout)
+-    hf_large_heads = kv_head_idx * query_group_size + hf_rows
++    hf_large_heads = kv_head_idx * query_group_size * HF_HEAD_SPLITS + hf_group_offset + hf_rows
+ 
+     hf_pv_second = gl.zeros((QUERY_GROUP_SIZE_POW2, HEAD_SIZE_POW2), gl.float32, pv_mfma_layout)
+     hf_window_length = context_length - hf_first_token
+     if hf_qk_profile_ptr is not None:
+-        gl.static_assert(HEAD_SIZE_POW2 == 128 and ONE_QUERY_GROUP_SIZE_POW2 == 8)
++        gl.static_assert(HEAD_SIZE_POW2 == 128 and ONE_QUERY_GROUP_SIZE_POW2 * HF_HEAD_SPLITS == 8)
+         hf_qk_class = gl.load(hf_qk_profile_ptr + gl.minimum(hf_window_length, 1024))
+         hf_qk_class = gl.where(hf_window_length > 1024, 2, hf_qk_class)
+ 
+     # hipBLASLt GSU coalesced partitions complete DepthU=64 tiles, remainder
+     # assigned to the earlier split; final K tail belongs to the last split.
+     hf_pv_split = gl.where(hf_window_length < 384, hf_window_length, ((hf_window_length // 64 + 1) // 2) * 64)
++    if HF_LDS_WINDOW:
++        gl.static_assert(HF_BF16_MODE == 10 and SLIDING_WINDOW == 1024 and CONTEXT_PARTITION_SIZE == 128)
++        # Retain original 128-position QK/PV tiles; store only BF16 scores/probs.
++        hf_window_shared_layout: gl.constexpr = gl.SwizzledSharedLayout(8, 1, 8, order=[1, 0])
++        hf_window_load_layout: gl.constexpr = gl.BlockedLayout([1, 1], [1, 64], [4, 1], [1, 0])
++        hf_window_shared = gl.allocate_shared_memory(gl.bfloat16, [8, QUERY_GROUP_SIZE_POW2, 128], hf_window_shared_layout)
++        for hf_init in gl.static_range(8):
++            hf_window_shared.index(hf_init).store(gl.full([QUERY_GROUP_SIZE_POW2, 128], float('-inf'), gl.bfloat16, qk_linear_layout))
++        sequence_partition_end_idx = sequence_partition_start_idx + gl.cdiv(hf_window_length, 128)
+     initial_kv_block_start_idx = kv_block_start_idx
+     initial_kv_block_numbers = kv_block_numbers
+     if HF_BF16_MODE >= 3:
+         gl.static_assert(sinks_ptr is None)
+-    for hf_pass in gl.static_range(3 if HF_BF16_MODE >= 5 else (2 if HF_BF16_MODE >= 3 else 1)):
++    for hf_pass in gl.static_range(2 if HF_LDS_WINDOW else (3 if HF_BF16_MODE >= 5 else (2 if HF_BF16_MODE >= 3 else 1))):
+         kv_block_start_idx = initial_kv_block_start_idx
+         kv_block_numbers = initial_kv_block_numbers
+         page_offset = (
+@@ -3110,7 +3130,7 @@ def paged_attention_decode_sliding_window(
+             attention_scores = gl.convert_layout(attention_scores, layout=qk_linear_layout)
+             if HF_DEBUG_N > 0:
+                 hf_debug_cols = qk_column_offsets - hf_first_token
+-                hf_debug_heads = kv_head_idx * query_group_size + qk_row_offsets
++                hf_debug_heads = kv_head_idx * query_group_size * HF_HEAD_SPLITS + hf_group_offset + qk_row_offsets
+                 hf_debug_offsets = (sequence_idx.to(gl.int64) * gl.num_programs(1) * query_group_size + hf_debug_heads[:, None]) * HF_DEBUG_N + hf_debug_cols[None, :]
+                 hf_debug_mask = qk_row_mask[:, None] & (hf_debug_cols[None, :] >= 0) & (hf_debug_cols[None, :] < HF_DEBUG_N)
+                 if hf_qk_ptr is not None and hf_pass == 0:
+@@ -3128,7 +3148,16 @@ def paged_attention_decode_sliding_window(
+             if hf_scores_ptr is not None and hf_pass == 0:
+                 gl.store(hf_scores_ptr + hf_debug_offsets, attention_scores, hf_debug_mask)
+             # ==================== SOFTMAX COMPUTATION ====================
+-            if HF_BF16_MODE >= 5:
++            if HF_LDS_WINDOW:
++                accumulator_scale = max_logits * 0.0 + 1.0
++                if hf_pass == 0:
++                    new_max_logits = gl.maximum(max_logits, gl.max(attention_scores, axis=1))
++                    hf_window_shared.index(sequence_partition_idx - sequence_partition_start_idx).store(attention_scores.to(gl.bfloat16))
++                    attention_probs = attention_scores * 0.0
++                else:
++                    new_max_logits = max_logits
++                    attention_probs = hf_window_shared.index(sequence_partition_idx - sequence_partition_start_idx).load(qk_linear_layout).to(gl.float32)
++            elif HF_BF16_MODE >= 5:
+                 accumulator_scale = max_logits * 0.0 + 1.0
+                 if hf_pass == 0:
+                     new_max_logits = gl.maximum(max_logits, gl.max(attention_scores, axis=1))
+@@ -3279,7 +3308,24 @@ def paged_attention_decode_sliding_window(
+                 kv_block_start_idx = kv_block_start_idx2
+                 page_offset = page_offset2
+ 
+-        if HF_BF16_MODE >= 5 and hf_pass == 1:
++        if HF_LDS_WINDOW and hf_pass == 0:
++            hf_full_scores = _mellum_concat_columns(_mellum_concat_columns(_mellum_concat_columns(hf_window_shared.index(0).load(hf_softmax_layout), hf_window_shared.index(1).load(hf_softmax_layout)), _mellum_concat_columns(hf_window_shared.index(2).load(hf_softmax_layout), hf_window_shared.index(3).load(hf_softmax_layout))), _mellum_concat_columns(_mellum_concat_columns(hf_window_shared.index(4).load(hf_softmax_layout), hf_window_shared.index(5).load(hf_softmax_layout)), _mellum_concat_columns(hf_window_shared.index(6).load(hf_softmax_layout), hf_window_shared.index(7).load(hf_softmax_layout)))).to(gl.float32)
++            hf_full_scores = gl.convert_layout(hf_full_scores, hf_softmax_layout)
++            hf_full_max = gl.convert_layout(max_logits, gl.SliceLayout(1, hf_softmax_layout))
++            hf_full_exp = hip_libdevice.exp(hf_full_scores - hf_full_max[:, None])
++            for hf_chunk in gl.static_range(16):
++                hf_indices = hf_rows[:, None] * 0 + hf_cols[None, :] + hf_chunk * 64
++                hf_lane_sums += gl.gather(hf_full_exp, hf_indices, axis=1)
++            for hf_shift in gl.static_range(6):
++                hf_indices = hf_rows[:, None] * 0 + (hf_cols[None, :] ^ (32 >> hf_shift))
++                hf_lane_sums += gl.gather(hf_lane_sums, hf_indices, axis=1)
++            hf_denominator = gl.sum(gl.where(hf_cols[None, :] == 0, hf_lane_sums, 0.0), axis=1)
++            hf_full_probs = gl.div_rn(hf_full_exp, hf_denominator[:, None]).to(gl.bfloat16)
++            hf_save_cols = gl.arange(0, 128, layout=gl.SliceLayout(0, hf_softmax_layout))
++            for hf_save in gl.static_range(8):
++                hf_save_idx = hf_rows[:, None] * 0 + hf_save_cols[None, :] + hf_save * 128
++                hf_window_shared.index(hf_save).store(gl.gather(hf_full_probs, hf_save_idx, axis=1))
++        if not HF_LDS_WINDOW and HF_BF16_MODE >= 5 and hf_pass == 1:
+             if HF_BF16_MODE >= 8 and SLIDING_WINDOW <= 0 and hf_window_length > 2048:
+                 for hf_shift in gl.static_range(6):
+                     source = hf_large_cols // 64 * 64 + gl.minimum(hf_large_cols % 64 + (32 >> hf_shift), 63)
+@@ -4584,6 +4630,20 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+         hf_bf16_mode = int(__import__("os").environ.get("AITER_MELLUM_HF_ATTN_MODE", "0"))
+         if 5 <= hf_bf16_mode < 8 and SLIDING_WINDOW <= 0:
+             hf_bf16_mode = 3  # Full attention needs ATen's large-row reduction next.
++        hf_lds_window = __import__("os").environ.get("AITER_MELLUM_HF_LDS_WINDOW") == "1" and SLIDING_WINDOW == 1024
++        if hf_lds_window:
++            if not (hf_bf16_mode == 10 and ONE_SHOT and query_seq_len == 1 and num_kv_heads == 4 and query_group_size == 8 and QUERY_QUANT_MODE < 0 and KV_QUANT_MODE < 0):
++                raise ValueError("LDS window requires BF16 Mellum single-query mode10")
++            CONTEXT_PARTITION_SIZE = 128
++        hf_head_splits = int(__import__("os").environ.get("AITER_MELLUM_HF_HEAD_SPLITS", "1")) if hf_bf16_mode == 10 else 1
++        if hf_head_splits not in (1, 2):
++            raise ValueError("HF head splits currently supports only 1 or 2")
++        if hf_head_splits != 1:
++            if not (ONE_SHOT and query_seq_len == 1 and query_group_size == 8 and num_kv_heads == 4 and QUERY_QUANT_MODE < 0 and KV_QUANT_MODE < 0):
++                raise ValueError("HF head splits requires BF16 Mellum decode, 4 KV heads, GQA=8, and one-shot mode")
++            query_group_size //= hf_head_splits
++            ONE_QUERY_GROUP_SIZE_POW2 //= hf_head_splits
++            grid = (num_sequences, num_kv_heads * hf_head_splits, num_splits)
+         if num_kv_heads == 1:
+             paged_attention_kernel = paged_attention_decode_sliding_window_head_1
+             if ONE_QUERY_GROUP_SIZE_POW2 >= 16:
+@@ -4656,6 +4716,8 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+             CDNA_VERSION=CDNA_VERSION,
+             ONE_SHOT=ONE_SHOT,
+             **({"HF_BF16_MODE": hf_bf16_mode,
++                "HF_HEAD_SPLITS": hf_head_splits,
++                "HF_LDS_WINDOW": hf_lds_window,
+                 "hf_qk_profile_ptr": _mellum_qk_profile_tensor(__import__("os").environ.get("AITER_MELLUM_QK_PROFILE", ""), query_ptr.device.index),
+                 "HF_QK_K_WIDTH": int(__import__("os").environ.get("AITER_MELLUM_QK_K_WIDTH", "8")),
+                 "HF_QK_SPLIT": __import__("os").environ.get("AITER_MELLUM_QK_SPLIT") == "1",
+-- 
+2.43.0
+
+
+From 269546baff9c6350a9f93ea954c16404bd009fd5 Mon Sep 17 00:00:00 2001
+From: Codex <codex@local>
+Date: Thu, 5 Nov 2026 04:32:00 +0000
+Subject: [PATCH 8/8] Add opt-in HF-order staged full decode attention with
+ reusable GPU workspace
+
+---
+ aiter/ops/triton/gluon/pa_decode_gluon.py | 256 ++++++++++++++++------
+ 1 file changed, 185 insertions(+), 71 deletions(-)
+
+diff --git a/aiter/ops/triton/gluon/pa_decode_gluon.py b/aiter/ops/triton/gluon/pa_decode_gluon.py
+index 2110e92e4..1fbc72370 100644
+--- a/aiter/ops/triton/gluon/pa_decode_gluon.py
++++ b/aiter/ops/triton/gluon/pa_decode_gluon.py
+@@ -2205,6 +2205,78 @@ def _mellum_hf_large_sum(acc, e, base, n, heads, lanes, BLOCK: gl.constexpr):
+     return acc
+ 
+ 
++@lru_cache(maxsize=32)
++def _mellum_gmem_workspace(device, seqs, heads, capacity):
++    shape = (seqs, heads, capacity)
++    return (torch.empty(shape, device=torch.device('cuda', device), dtype=torch.bfloat16),
++            torch.empty(shape, device=torch.device('cuda', device), dtype=torch.bfloat16))
++
++
++@gluon.jit
++def _mellum_gmem_softmax(scores, probs, lengths, CAPACITY):
++    seq = gl.program_id(0)
++    head = gl.program_id(1)
++    n = gl.load(lengths + seq)
++    offset = (seq * 32 + head).to(gl.int64) * CAPACITY
++    if n <= 2048:
++        lanes = gl.arange(0, 64, layout=gl.BlockedLayout([1], [64], [8], [0]))
++        local_max = gl.full([64], float('-inf'), gl.float32, gl.BlockedLayout([1], [64], [8], [0]))
++        for block in range(gl.cdiv(n, 64)):
++            pos = block * 64 + lanes
++            x = gl.load(scores + offset + pos, pos < n, other=float('-inf')).to(gl.float32)
++            local_max = gl.maximum(local_max, x)
++        mx = gl.max(local_max, 0)
++        acc = gl.full([64], 0.0, gl.float32, gl.BlockedLayout([1], [64], [8], [0]))
++        for block in range(gl.cdiv(n, 64)):
++            pos = block * 64 + lanes
++            x = gl.load(scores + offset + pos, pos < n, other=float('-inf')).to(gl.float32)
++            acc += hip_libdevice.exp(x - mx)
++        for step in gl.static_range(6):
++            acc += gl.gather(acc, lanes ^ (32 >> step), 0)
++        denom = gl.sum(gl.where(lanes == 0, acc, 0.0), 0)
++        for block in range(gl.cdiv(n, 64)):
++            pos = block * 64 + lanes
++            x = gl.load(scores + offset + pos, pos < n, other=float('-inf')).to(gl.float32)
++            p = gl.div_rn(hip_libdevice.exp(x - mx), denom)
++            gl.store(probs + offset + pos, p.to(gl.bfloat16), pos < n)
++    else:
++        large_lanes = gl.arange(0, 512, layout=gl.BlockedLayout([1], [64], [8], [0]))
++        large_local_max = gl.full([512], float('-inf'), gl.float32, gl.BlockedLayout([1], [64], [8], [0]))
++        for large_block in range(gl.cdiv(n, 512)):
++            large_pos = large_block * 512 + large_lanes
++            large_x = gl.load(scores + offset + large_pos, large_pos < n, other=float('-inf')).to(gl.float32)
++            large_local_max = gl.maximum(large_local_max, large_x)
++        large_mx = gl.max(large_local_max, 0)
++        large_shift = (head * n) % 4
++        large_start = gl.where(large_shift > 0, 512 - large_shift, 0)
++        large_bulk = gl.where(n % 4 == 0, gl.cdiv(n, 2048) * 2048, ((n - large_start) // 2048) * 2048)
++        large_prefix = large_lanes - large_shift
++        large_x = gl.load(scores + offset + large_prefix, (large_shift > 0) & (large_prefix >= 0) & (large_prefix < n), other=float('-inf')).to(gl.float32)
++        large_acc = tl.exp(large_x - large_mx)
++        for large_block in range(gl.cdiv(n, 2048)):
++            for large_j in gl.static_range(4):
++                large_pos = large_start + large_block * 2048 + large_lanes * 4 + large_j
++                large_x = gl.load(scores + offset + large_pos, (large_block * 2048 < large_bulk) & (large_pos < n), other=float('-inf')).to(gl.float32)
++                large_acc += tl.exp(large_x - large_mx)
++        for large_j in gl.static_range(4):
++            large_pos = large_start + large_bulk + large_lanes + large_j * 512
++            large_x = gl.load(scores + offset + large_pos, large_pos < n, other=float('-inf')).to(gl.float32)
++            large_acc += tl.exp(large_x - large_mx)
++        for large_step in gl.static_range(6):
++            large_src = large_lanes // 64 * 64 + gl.minimum(large_lanes % 64 + (32 >> large_step), 63)
++            large_acc += gl.gather(large_acc, large_src, 0)
++        large_warp_sums = gl.gather(large_acc, gl.minimum(large_lanes, 7) * 64, 0)
++        large_warp_sums = gl.where(large_lanes < 8, large_warp_sums, 0.0)
++        for large_step in gl.static_range(6):
++            large_warp_sums += gl.gather(large_warp_sums, gl.minimum(large_lanes + (32 >> large_step), 63), 0)
++        large_denom = gl.sum(gl.where(large_lanes == 0, large_warp_sums, 0.0), 0)
++        large_inv = gl.div_rn(1.0, large_denom)
++        for large_block in range(gl.cdiv(n, 512)):
++            large_pos = large_block * 512 + large_lanes
++            large_x = gl.load(scores + offset + large_pos, large_pos < n, other=float('-inf')).to(gl.float32)
++            gl.store(probs + offset + large_pos, (tl.exp(large_x - large_mx) * large_inv).to(gl.bfloat16), large_pos < n)
++
++
+ @gluon.jit
+ def _mellum_concat_columns(a, b):
+     joined = gl.join(a, b)
+@@ -2273,6 +2345,9 @@ def paged_attention_decode_sliding_window(
+     HF_BF16_MODE: gl.constexpr = 0,
+     HF_HEAD_SPLITS: gl.constexpr = 1,
+     HF_LDS_WINDOW: gl.constexpr = False,
++    HF_CACHE_STAGE: gl.constexpr = 0,
++    hf_cache_ptr=None,
++    HF_CACHE_N = 0,
+     hf_qk_ptr=None,
+     hf_scores_ptr=None,
+     hf_probs_ptr=None,
+@@ -2790,7 +2865,7 @@ def paged_attention_decode_sliding_window(
+ 
+     query_shared.store(mtp_query_tensor)
+ 
+-    HF_PV_PASS: gl.constexpr = 1 if HF_LDS_WINDOW else (2 if HF_BF16_MODE >= 5 else 1)
++    HF_PV_PASS: gl.constexpr = (99 if HF_CACHE_STAGE == 1 else 0) if HF_CACHE_STAGE != 0 else (1 if HF_LDS_WINDOW else (2 if HF_BF16_MODE >= 5 else 1))
+     hf_softmax_layout: gl.constexpr = gl.BlockedLayout([1, 1], [1, 64], [4, 1], [1, 0])
+     hf_cols = gl.arange(0, 64, layout=gl.SliceLayout(0, hf_softmax_layout))
+     hf_rows = gl.arange(0, QUERY_GROUP_SIZE_POW2, layout=gl.SliceLayout(1, hf_softmax_layout))
+@@ -2827,7 +2902,7 @@ def paged_attention_decode_sliding_window(
+     initial_kv_block_numbers = kv_block_numbers
+     if HF_BF16_MODE >= 3:
+         gl.static_assert(sinks_ptr is None)
+-    for hf_pass in gl.static_range(2 if HF_LDS_WINDOW else (3 if HF_BF16_MODE >= 5 else (2 if HF_BF16_MODE >= 3 else 1))):
++    for hf_pass in gl.static_range(1 if HF_CACHE_STAGE != 0 else (2 if HF_LDS_WINDOW else (3 if HF_BF16_MODE >= 5 else (2 if HF_BF16_MODE >= 3 else 1)))):
+         kv_block_start_idx = initial_kv_block_start_idx
+         kv_block_numbers = initial_kv_block_numbers
+         page_offset = (
+@@ -3148,7 +3223,19 @@ def paged_attention_decode_sliding_window(
+             if hf_scores_ptr is not None and hf_pass == 0:
+                 gl.store(hf_scores_ptr + hf_debug_offsets, attention_scores, hf_debug_mask)
+             # ==================== SOFTMAX COMPUTATION ====================
+-            if HF_LDS_WINDOW:
++            if HF_CACHE_STAGE != 0:
++                gl.static_assert(HF_BF16_MODE == 10 and SLIDING_WINDOW <= 0 and HF_HEAD_SPLITS == 1)
++                hf_cache_heads = kv_head_idx * query_group_size + qk_row_offsets
++                hf_cache_offsets = (sequence_idx.to(gl.int64) * 32 + hf_cache_heads[:, None]) * HF_CACHE_N + qk_column_offsets[None, :]
++                hf_cache_mask = qk_row_mask[:, None] & (qk_column_offsets[None, :] < context_length)
++                accumulator_scale = gl.full((QUERY_GROUP_SIZE_POW2,), 1.0, gl.float32, gl.SliceLayout(1, qk_linear_layout))
++                new_max_logits = max_logits
++                if HF_CACHE_STAGE == 1:
++                    gl.store(hf_cache_ptr + hf_cache_offsets, attention_scores.to(gl.bfloat16), hf_cache_mask)
++                    attention_probs = attention_scores * 0.0
++                else:
++                    attention_probs = gl.load(hf_cache_ptr + hf_cache_offsets, hf_cache_mask, other=0.0).to(gl.float32)
++            elif HF_LDS_WINDOW:
+                 accumulator_scale = max_logits * 0.0 + 1.0
+                 if hf_pass == 0:
+                     new_max_logits = gl.maximum(max_logits, gl.max(attention_scores, axis=1))
+@@ -3344,6 +3431,9 @@ def paged_attention_decode_sliding_window(
+                 hf_denominator = gl.sum(gl.where(hf_cols[None, :] == 0, hf_lane_sums, 0.0), axis=1)
+             exp_sums = gl.convert_layout(hf_denominator, gl.SliceLayout(1, qk_linear_layout))
+ 
++    if HF_CACHE_STAGE == 1:
++        return
++
+     # ==================== SINKS HANDLING ====================
+     # Add sinks contribution to exp_sums (does not contribute to attention output)
+     if ONE_SHOT and sinks_ptr is not None:
+@@ -4658,74 +4748,98 @@ def _paged_attention_decode_v2_with_dot_kernel_reshape_wrapper(
+                 QUERY_SEQ_LEN_POW2 = triton.cdiv(QUERY_SEQ_LEN_POW2, mtp_splits)
+         else:
+             paged_attention_kernel = paged_attention_decode_sliding_window
+-        paged_attention_kernel[grid](
+-            exp_sums_ptr,
+-            max_logits_ptr,
+-            output_ptr,
+-            query_ptr,
+-            key_cache_ptr,
+-            value_cache_ptr,
+-            block_tables_ptr,
+-            context_lengths_ptr,
+-            softmax_scale,
+-            query_scale,
+-            key_scale,
+-            value_scale,
+-            sinks_ptr if ONE_SHOT else None,
+-            stride_max_logits_seq,
+-            stride_max_logits_head,
+-            stride_max_logits_part,
+-            # 5D output strides: [batch_size, query_length, num_kv_heads, query_group_size, head_size]
+-            stride_output_seq,  # stride_output_bs
+-            stride_output_head,  # stride_output_len
+-            stride_output_part,  # stride_output_kv_head
+-            stride_output_group,  # stride_output_group_size
+-            # 5D query strides
+-            stride_query_bs,
+-            stride_query_qlen,
+-            stride_query_kv_head,
+-            stride_query_group_size,
+-            stride_key_block,
+-            stride_key_head,
+-            stride_key_head_split,
+-            stride_key_block_elem,
+-            stride_value_block,
+-            stride_value_head_size,
+-            stride_value_block_elem,
+-            stride_block_table_seq,
+-            stride_query_scale_bs,
+-            stride_query_scale_qlen,
+-            stride_query_scale_kv_head,
+-            kv_scale_stride_0,
+-            kv_scale_stride_1,
+-            query_seq_len=query_seq_len,
+-            query_group_size=query_group_size,
+-            head_size=HEAD_SIZE,
+-            COMPUTE_TYPE=COMPUTE_TYPE,
+-            QUERY_SEQ_LEN_POW2=QUERY_SEQ_LEN_POW2,
+-            ONE_QUERY_GROUP_SIZE_POW2=ONE_QUERY_GROUP_SIZE_POW2,
+-            HEAD_SIZE_POW2=HEAD_SIZE_POW2,
+-            KV_BLOCK_SIZE=KV_BLOCK_SIZE,
+-            CONTEXT_PARTITION_SIZE=CONTEXT_PARTITION_SIZE,
+-            QUERY_QUANT_MODE=QUERY_QUANT_MODE,
+-            KV_QUANT_MODE=KV_QUANT_MODE,
+-            VALUE_TRANSPOSED=VALUE_TRANSPOSED,
+-            IS_CAUSAL=IS_CAUSAL,
+-            FP8_MAX_VALUE=FP8_MAX_VALUE,
+-            SLIDING_WINDOW=SLIDING_WINDOW,
+-            CDNA_VERSION=CDNA_VERSION,
+-            ONE_SHOT=ONE_SHOT,
+-            **({"HF_BF16_MODE": hf_bf16_mode,
+-                "HF_HEAD_SPLITS": hf_head_splits,
+-                "HF_LDS_WINDOW": hf_lds_window,
+-                "hf_qk_profile_ptr": _mellum_qk_profile_tensor(__import__("os").environ.get("AITER_MELLUM_QK_PROFILE", ""), query_ptr.device.index),
+-                "HF_QK_K_WIDTH": int(__import__("os").environ.get("AITER_MELLUM_QK_K_WIDTH", "8")),
+-                "HF_QK_SPLIT": __import__("os").environ.get("AITER_MELLUM_QK_SPLIT") == "1",
+-                "HF_PV_K_WIDTH": int(__import__("os").environ.get("AITER_MELLUM_PV_K_WIDTH", "8"))}
+-               if num_kv_heads > 1 else {}),
+-            **(_MELLUM_ATTN_DEBUG or {}),
+-            enable_fp_fusion=(hf_bf16_mode == 0),
+-        )
++        hf_gmem = __import__("os").environ.get("AITER_MELLUM_HF_GMEM_PIPELINE") == "1" and SLIDING_WINDOW <= 0
++        workspace_scores = workspace_probs = None
++        workspace_capacity = 0
++        if hf_gmem:
++            if not (hf_bf16_mode == 10 and ONE_SHOT and query_seq_len == 1 and num_kv_heads == 4 and query_group_size == 8 and hf_head_splits == 1 and QUERY_QUANT_MODE < 0 and KV_QUANT_MODE < 0):
++                raise ValueError("GMEM pipeline requires BF16 Mellum single-query mode10 with unsplit heads")
++            workspace_capacity = block_tables_ptr.shape[1] * KV_BLOCK_SIZE
++            workspace_scores, workspace_probs = _mellum_gmem_workspace(query_ptr.device.index, num_sequences, 32, workspace_capacity)
++        def launch(stage, stage_grid):
++            debug_kwargs = dict(_MELLUM_ATTN_DEBUG or {})
++            if stage == 1:
++                debug_kwargs.pop("hf_probs_ptr", None)
++            elif stage == 2:
++                debug_kwargs.pop("hf_qk_ptr", None)
++                debug_kwargs.pop("hf_scores_ptr", None)
++            paged_attention_kernel[stage_grid](
++                exp_sums_ptr,
++                max_logits_ptr,
++                output_ptr,
++                query_ptr,
++                key_cache_ptr,
++                value_cache_ptr,
++                block_tables_ptr,
++                context_lengths_ptr,
++                softmax_scale,
++                query_scale,
++                key_scale,
++                value_scale,
++                sinks_ptr if ONE_SHOT else None,
++                stride_max_logits_seq,
++                stride_max_logits_head,
++                stride_max_logits_part,
++                # 5D output strides: [batch_size, query_length, num_kv_heads, query_group_size, head_size]
++                stride_output_seq,  # stride_output_bs
++                stride_output_head,  # stride_output_len
++                stride_output_part,  # stride_output_kv_head
++                stride_output_group,  # stride_output_group_size
++                # 5D query strides
++                stride_query_bs,
++                stride_query_qlen,
++                stride_query_kv_head,
++                stride_query_group_size,
++                stride_key_block,
++                stride_key_head,
++                stride_key_head_split,
++                stride_key_block_elem,
++                stride_value_block,
++                stride_value_head_size,
++                stride_value_block_elem,
++                stride_block_table_seq,
++                stride_query_scale_bs,
++                stride_query_scale_qlen,
++                stride_query_scale_kv_head,
++                kv_scale_stride_0,
++                kv_scale_stride_1,
++                query_seq_len=query_seq_len,
++                query_group_size=query_group_size,
++                head_size=HEAD_SIZE,
++                COMPUTE_TYPE=COMPUTE_TYPE,
++                QUERY_SEQ_LEN_POW2=QUERY_SEQ_LEN_POW2,
++                ONE_QUERY_GROUP_SIZE_POW2=ONE_QUERY_GROUP_SIZE_POW2,
++                HEAD_SIZE_POW2=HEAD_SIZE_POW2,
++                KV_BLOCK_SIZE=KV_BLOCK_SIZE,
++                CONTEXT_PARTITION_SIZE=CONTEXT_PARTITION_SIZE,
++                QUERY_QUANT_MODE=QUERY_QUANT_MODE,
++                KV_QUANT_MODE=KV_QUANT_MODE,
++                VALUE_TRANSPOSED=VALUE_TRANSPOSED,
++                IS_CAUSAL=IS_CAUSAL,
++                FP8_MAX_VALUE=FP8_MAX_VALUE,
++                SLIDING_WINDOW=SLIDING_WINDOW,
++                CDNA_VERSION=CDNA_VERSION,
++                ONE_SHOT=ONE_SHOT,
++                **({"HF_BF16_MODE": hf_bf16_mode,
++                    "HF_HEAD_SPLITS": hf_head_splits,
++                    "HF_LDS_WINDOW": hf_lds_window,
++                    "HF_CACHE_STAGE": stage,
++                    "hf_cache_ptr": workspace_scores if stage == 1 else (workspace_probs if stage == 2 else None),
++                    "HF_CACHE_N": workspace_capacity,
++                    "hf_qk_profile_ptr": _mellum_qk_profile_tensor(__import__("os").environ.get("AITER_MELLUM_QK_PROFILE", ""), query_ptr.device.index),
++                    "HF_QK_K_WIDTH": int(__import__("os").environ.get("AITER_MELLUM_QK_K_WIDTH", "8")),
++                    "HF_QK_SPLIT": __import__("os").environ.get("AITER_MELLUM_QK_SPLIT") == "1",
++                    "HF_PV_K_WIDTH": int(__import__("os").environ.get("AITER_MELLUM_PV_K_WIDTH", "8"))}
++                   if num_kv_heads > 1 else {}),
++                **debug_kwargs,
++                enable_fp_fusion=(hf_bf16_mode == 0),
++            )
++        if hf_gmem:
++            launch(1, grid)
++            _mellum_gmem_softmax[(num_sequences, 32)](workspace_scores, workspace_probs, context_lengths_ptr, workspace_capacity, num_warps=8, enable_fp_fusion=False)
++            launch(2, grid)
++        else:
++            launch(0, grid)
+         return
+ 
+     if KV_BLOCK_SIZE > CONTEXT_PARTITION_SIZE:
+-- 
+2.43.0
+

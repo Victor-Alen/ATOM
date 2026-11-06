@@ -1,0 +1,17 @@
+[
+  {
+    "file": "config.json",
+    "git_blob_sha1": "1a0c2a479334fff0e84eedf624f940902fe4a8be",
+    "verified": true
+  },
+  {
+    "file": "model.safetensors.index.json",
+    "git_blob_sha1": "e5b5413d4030217ef1bb23ad71b9a8e31e2c2e48",
+    "verified": true
+  },
+  {
+    "file": "generation_config.json",
+    "git_blob_sha1": "a9500a728d7ffc4a81bec6d90377f7863321446e",
+    "verified": true
+  }
+]

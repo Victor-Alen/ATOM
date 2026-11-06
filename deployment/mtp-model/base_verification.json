@@ -1,0 +1,42 @@
+[
+  {
+    "file": "model-00001-of-00005.safetensors",
+    "bytes": 4999531104,
+    "expected_bytes": 4999531104,
+    "sha256": "f5ccf8012c7d44fd2598325bf2482b8fc21792ef888de68f9ca8c9053c2e022f",
+    "expected_sha256": "f5ccf8012c7d44fd2598325bf2482b8fc21792ef888de68f9ca8c9053c2e022f",
+    "passed": true
+  },
+  {
+    "file": "model-00002-of-00005.safetensors",
+    "bytes": 4996604776,
+    "expected_bytes": 4996604776,
+    "sha256": "266beea6f34dea9c86414d8bf8cb35c0f4a53330731d99ed41ec666390758e39",
+    "expected_sha256": "266beea6f34dea9c86414d8bf8cb35c0f4a53330731d99ed41ec666390758e39",
+    "passed": true
+  },
+  {
+    "file": "model-00003-of-00005.safetensors",
+    "bytes": 4996605688,
+    "expected_bytes": 4996605688,
+    "sha256": "da9a04fb6ea121f71e30920c7657b889ca0078aea57d878e5cb768ebb3e4483a",
+    "expected_sha256": "da9a04fb6ea121f71e30920c7657b889ca0078aea57d878e5cb768ebb3e4483a",
+    "passed": true
+  },
+  {
+    "file": "model-00004-of-00005.safetensors",
+    "bytes": 4996605688,
+    "expected_bytes": 4996605688,
+    "sha256": "32f27ab7f38ff5d98ac3d50dabb57ab8a55a8aa552febd42c2a5b01f4116262a",
+    "expected_sha256": "32f27ab7f38ff5d98ac3d50dabb57ab8a55a8aa552febd42c2a5b01f4116262a",
+    "passed": true
+  },
+  {
+    "file": "model-00005-of-00005.safetensors",
+    "bytes": 4311191552,
+    "expected_bytes": 4311191552,
+    "sha256": "d8bbb9b829cb3279e23f59af55bf68ec00cc8ad30923c227d8b13c7d831e6b3b",
+    "expected_sha256": "d8bbb9b829cb3279e23f59af55bf68ec00cc8ad30923c227d8b13c7d831e6b3b",
+    "passed": true
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "archive_sha256": "340aadfc3f95d613a8257188f16e5433f40edca58e5b8828bb3752c421be8f82",
+  "parts": [
+    {
+      "name": "runtime-gfx942.tar.gz.part00",
+      "sha256": "f3bf5d0ac35b01fdec37cf0974864faf5661868fda1c213f8e77fec1700f008b",
+      "size": 73400320
+    },
+    {
+      "name": "runtime-gfx942.tar.gz.part01",
+      "sha256": "1e69988c3fcd0444d42435a586785690a54ec3c7680bcefec414dcba8e63882f",
+      "size": 73400320
+    },
+    {
+      "name": "runtime-gfx942.tar.gz.part02",
+      "sha256": "02a05331746951815b37366c1201727b594ae2b3ead99b7486aa2d1486ee614a",
+      "size": 73400320
+    },
+    {
+      "name": "runtime-gfx942.tar.gz.part03",
+      "sha256": "f606219ca30c754a2c12008631f9722ad787780ab33e3bfe0e044928d67e58bd",
+      "size": 13126434
+    }
+  ]
+}

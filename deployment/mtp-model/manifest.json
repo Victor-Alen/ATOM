@@ -1,0 +1,10 @@
+{
+  "metadata": {
+    "config.json": "9039d3a959194a12a473d0f4a39341728c9dd7cd5ad1c93674e3061c97ed6a78",
+    "generation_config.json": "a9dc104ca398a2ef376d3f2fbb03037d99950ddb2db0cd041b98398cf1fc8d7c",
+    "model.safetensors.index.json": "47a6fb3012738fd5312655ac8e3041dc1aeec9d79bc65aec4a543c37f84b25d5"
+  },
+  "head_sha256": "89a2f2454b185b97b809eef2b2a2c32300c6cf550fdbde6430a1c2e8290e025c",
+  "origin": "JetBrains/Mellum2.1-12B-A2.5B-Thinking-MTP",
+  "scope": "Frozen official MTP metadata; base model weights and tokenizer are symlinks to the supplied model. No weights are modified or checked into Git."
+}

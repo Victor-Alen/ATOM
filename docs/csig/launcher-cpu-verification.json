@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "scope": "CPU-only: four measured configurations and independent MTP switch reproduce the frozen runtime after relocating paths. Does not prove actual model execution.",
+  "rows": [
+    {
+      "ablation": "step0",
+      "command_exact_after_path_relocation": true,
+      "all_environment_keys_exact_after_path_relocation": true
+    },
+    {
+      "ablation": "point1",
+      "command_exact_after_path_relocation": true,
+      "all_environment_keys_exact_after_path_relocation": true
+    },
+    {
+      "ablation": "point12",
+      "command_exact_after_path_relocation": true,
+      "all_environment_keys_exact_after_path_relocation": true
+    },
+    {
+      "ablation": "point123",
+      "command_exact_after_path_relocation": true,
+      "all_environment_keys_exact_after_path_relocation": true
+    }
+  ],
+  "mtp_switch": true,
+  "port_collision_rejected": true,
+  "core_source_unchanged": true
+}

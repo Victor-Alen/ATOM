@@ -100,3 +100,11 @@
 - Rebuilt paired HumanEval with official chat template, enable_thinking=False, greedy, EOS stop,2048-token cap. HF and the same single-GPU ATOM instance each scored148/164 (90.24%),0pp gap; all164 complete token sequences identical; each had3 truncated outputs. Official checker canonical164/164 and negative controls validated.
 - Fresh MTP-on and TP2 startup probes failed; kept logs. User explicitly chose single-GPU BF16 with MTP off, so these optional configurations are outside the passed baseline.
 - Corrected the earlier token-stage acceptance scope and the historical16019-token OOM dataset ID (C0049, not C0059). No squash, no arithmetic changes.
+
+
+## 2026-11-06 三点重选与冻结全量补测
+
+- 用户确认正式三点为 Attention、compile/Graph、MTP；恢复原生 MoE 归公共 Step 0。额外 MoE 多流与路由加速从四行中统一关闭。
+- 原 PCI22 卡不可见后，按用户独占授权在剩余 PCI30 同卡完成 A32/B4/C6 四行，每行短正确性832/832；没有把小测写成全量。
+- 09:11（UTC+8）从核心3ea8fc12启动A512/B50/C200各三轮，随后完整C200、16K、HumanEval与MTP开关762对原始256-token验证。此条记录时任务仍运行，不预填结果。
+- 单独建立交付分支，接入三项开关、MTP模型视图与冻结原生依赖；不改正在测量的核心源码。四行命令与环境经路径重定位后均与实测配置一致；真实GPU启动验收待全量任务结束后执行。

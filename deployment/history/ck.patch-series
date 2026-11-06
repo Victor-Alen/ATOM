@@ -1,0 +1,526 @@
+From 78a912528164b54d470a916b437d52a302fb1171 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 05:33:53 +0000
+Subject: [PATCH 1/6] Add opt-in Mellum BF16 stage1 rounding and diagnostic
+ outputs
+
+---
+ .../gpu/grid/gridwise_moe_gemm.hpp            | 47 +++++++++++++++----
+ 1 file changed, 39 insertions(+), 8 deletions(-)
+
+diff --git a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+index c9a4c8bc5..4b7d8873e 100644
+--- a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
++++ b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+@@ -2,6 +2,7 @@
+ // SPDX-License-Identifier: MIT
+ 
+ #pragma once
++#include <cstdlib>
+ 
+ #include "ck/utility/common_header.hpp"
+ #include "ck/tensor_description/multi_index_transform_helper.hpp"
+@@ -690,6 +691,25 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+             Number<NumDTensor>{});
+     }
+ 
++    // Mellum BF16 diagnostic/alignment epilogue. Mode 0 preserves CK.
++    // 1: HF rounding boundaries; 2/3: GEMM gate/up; 4: rounded SiLU.
++    __device__ static float MellumSiluMul(float gate, float up, index_t mode)
++    {
++        if(mode == 0)
++        {
++            tensor_operation::element_wise::Silu{}(gate, gate);
++            return gate * up;
++        }
++        gate = type_convert<float>(type_convert<bhalf_t>(gate));
++        up = type_convert<float>(type_convert<bhalf_t>(up));
++        if(mode == 2) return gate;
++        if(mode == 3) return up;
++        tensor_operation::element_wise::Silu{}(gate, gate);
++        gate = type_convert<float>(type_convert<bhalf_t>(gate));
++        if(mode == 4) return gate;
++        return gate * up;
++    }
++
+     struct Problem
+     {
+         __host__ __device__ Problem(index_t NumTokens_,
+@@ -734,6 +754,7 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                       << "NBlock: " << NBlock << "}" << std::endl;
+         }
+ 
++        index_t MellumStage1Mode = 0;
+         index_t NumTokens;
+         index_t TopK;
+         index_t M;
+@@ -799,6 +820,16 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+               c_element_op{c_element_op_}
+         {
+ 
++            if constexpr(IsInputGemm && is_same_v<ADataType, bhalf_t> &&
++                         is_same_v<BDataType, bhalf_t> && is_same_v<CDataType, bhalf_t>)
++            {
++                if(N_ == 896 && K_ == 2304 && TopK_ == 8)
++                {
++                    const char* mode = std::getenv("CK_MELLUM_STAGE1_MODE");
++                    this->MellumStage1Mode = mode ? std::atoi(mode) : 0;
++                }
++            }
++
+             // populate pointer, desc for Ds
+             static_for<0, NumDTensor, 1>{}([&](auto i) {
+                 using DDataType_ = remove_cvref_t<tuple_element_t<i.value, DsDataType>>;
+@@ -1443,8 +1474,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate *= 16;
+                                         up *= 16;
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+@@ -1532,8 +1563,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate = gate * topk_weights.template AsType<float>()[m4];
+                                         up   = up * topk_weights.template AsType<float>()[m4];
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+@@ -1948,8 +1979,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate *= 16;
+                                         up *= 16;
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+@@ -2037,8 +2068,8 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                                         gate = gate * topk_weights.template AsType<float>()[m4];
+                                         up   = up * topk_weights.template AsType<float>()[m4];
+                                     }
+-                                    tensor_operation::element_wise::Silu{}(gate, gate);
+-                                    c_thread_buf_fp32(cidx) = gate * up;
++                                    c_thread_buf_fp32(cidx) =
++                                        MellumSiluMul(gate, up, problem.MellumStage1Mode);
+                                 }
+                                 else if(ActivationOperation == Activation::gelu_and_mul)
+                                 {
+-- 
+2.43.0
+
+
+From d6e03ebd9ef7dfbbf083885ad77c227584ccfdb4 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 05:38:09 +0000
+Subject: [PATCH 2/6] Add opt-in BF16 down rounding before routed weight
+ multiply
+
+---
+ .../gpu/grid/gridwise_moe_gemm.hpp            | 23 +++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+index 4b7d8873e..5ac6ff88e 100644
+--- a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
++++ b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+@@ -755,6 +755,7 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+         }
+ 
+         index_t MellumStage1Mode = 0;
++        index_t MellumStage2Round = 0;
+         index_t NumTokens;
+         index_t TopK;
+         index_t M;
+@@ -830,6 +831,16 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                 }
+             }
+ 
++            if constexpr(!IsInputGemm && is_same_v<ADataType, bhalf_t> &&
++                         is_same_v<BDataType, bhalf_t> && is_same_v<CDataType, bhalf_t>)
++            {
++                if(N_ == 2304 && K_ == 896)
++                {
++                    const char* round = std::getenv("CK_MELLUM_STAGE2_ROUND_WEIGHT");
++                    this->MellumStage2Round = round ? std::atoi(round) : 0;
++                }
++            }
++
+             // populate pointer, desc for Ds
+             static_for<0, NumDTensor, 1>{}([&](auto i) {
+                 using DDataType_ = remove_cvref_t<tuple_element_t<i.value, DsDataType>>;
+@@ -1521,6 +1532,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = scale_a * scale_b * c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =
+@@ -1594,6 +1608,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =
+@@ -2026,6 +2043,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = scale_a * scale_b * c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =
+@@ -2099,6 +2119,9 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                             else
+                             {
+                                 c_thread_buf_fp32(cidx) = c_thread_buf[cidx];
++                                if(problem.MellumStage2Round != 0)
++                                    c_thread_buf_fp32(cidx) = type_convert<float>(
++                                        type_convert<bhalf_t>(c_thread_buf_fp32(cidx)));
+                                 if constexpr(MulRoutedWeight)
+                                 {
+                                     c_thread_buf_fp32(cidx) =
+-- 
+2.43.0
+
+
+From 14e5a45589c8fbded83ac9fccce59fa317d240b3 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 07:22:21 +0000
+Subject: [PATCH 3/6] fix: merge BF16 V3 up-projection chunks in FP64
+
+---
+ ...peline_xdlops_b_preshuffle_gufusion_v3.hpp | 35 +++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+index 3fc204e6a..ca5c8b3a0 100644
+--- a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
++++ b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+@@ -525,6 +525,33 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+         // Initialize C
+         c_thread_buf.Clear();
+         c_thread_buf_up.Clear();
++        // BF16 V3 variant: independent up-projection MFMA chunks, FP64 merge.
++        // Applies uniformly to every output register, with no target-coordinate logic.
++        constexpr bool UpFp64Merge = is_same_v<ADataType, bhalf_t> &&
++                                     is_same_v<BDataType, bhalf_t>;
++        auto up_fp64 = make_static_buffer<AddressSpaceEnum::Vgpr, double>(
++            Number<CThreadBuffer::Size()>{});
++        if constexpr(UpFp64Merge) up_fp64.Clear();
++        auto begin_up_chunk = [&](auto offset) {
++            if constexpr(UpFp64Merge)
++            {
++                static_for<0, CThreadBuffer::s_per_v, 1>{}([&](auto j) {
++                    constexpr auto reg = Number<decltype(offset)::value + decltype(j)::value>{};
++                    c_thread_buf_up(reg) = 0.0f;
++                });
++            }
++        };
++        auto merge_up_chunk = [&](auto offset) {
++            if constexpr(UpFp64Merge)
++            {
++                static_for<0, CThreadBuffer::s_per_v, 1>{}([&](auto j) {
++                    constexpr auto reg = Number<decltype(offset)::value + decltype(j)::value>{};
++                    up_fp64(reg) += static_cast<double>(c_thread_buf_up[reg]);
++                    c_thread_buf_up(reg) = static_cast<float>(up_fp64[reg]);
++                });
++            }
++        };
++
+ 
+         __builtin_amdgcn_sched_barrier(0);
+ 
+@@ -590,11 +617,13 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                                 a_thread_vec.template AsType<mfma_input_type>(),
+                                 b_thread_vec.template AsType<mfma_input_type>(),
+                                 c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+ 
+                             xdlops_gemm.Run(
+                                 a_thread_vec.template AsType<mfma_input_type>(),
+                                 b_thread_vec_up.template AsType<mfma_input_type>(),
+                                 c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                         });
+ 
+                         if constexpr(m0.value == MRepeat - 2)
+@@ -732,10 +761,12 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+ 
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                 });
+                 if constexpr(m0.value == (MRepeat - 2))
+                 {
+@@ -832,10 +863,12 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+ 
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                 });
+ 
+                 if constexpr(m0.value < (MRepeat - 2))
+@@ -895,9 +928,11 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec.template AsType<mfma_input_type>(),
+                                     c_thread_buf.GetVectorTypeReference(Number<c_offset>{}));
++                            begin_up_chunk(Number<c_offset>{});
+                     xdlops_gemm.Run(a_thread_vec.template AsType<mfma_input_type>(),
+                                     b_thread_vec_up.template AsType<mfma_input_type>(),
+                                     c_thread_buf_up.GetVectorTypeReference(Number<c_offset>{}));
++                            merge_up_chunk(Number<c_offset>{});
+                 });
+ 
+                 if constexpr(m0.value < (MRepeat - 2))
+-- 
+2.43.0
+
+
+From 80f4da5708e343b0b2e27ca3ec1ad3d638f38a65 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 14:55:09 +0000
+Subject: [PATCH 4/6] experiment: isolate BF16 stage1 HF K grouping in V3
+
+---
+ ...peline_xdlops_b_preshuffle_gufusion_v3.hpp | 48 ++++++++++++++++++-
+ 1 file changed, 47 insertions(+), 1 deletion(-)
+
+diff --git a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+index ca5c8b3a0..60e864303 100644
+--- a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
++++ b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+@@ -528,7 +528,12 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+         // BF16 V3 variant: independent up-projection MFMA chunks, FP64 merge.
+         // Applies uniformly to every output register, with no target-coordinate logic.
+         constexpr bool UpFp64Merge = is_same_v<ADataType, bhalf_t> &&
+-                                     is_same_v<BDataType, bhalf_t>;
++                                     is_same_v<BDataType, bhalf_t>
++#ifndef CK_MELLUM_HF_KORDER
++                                     ;
++#else
++                                     && false;
++#endif
+         auto up_fp64 = make_static_buffer<AddressSpaceEnum::Vgpr, double>(
+             Number<CThreadBuffer::Size()>{});
+         if constexpr(UpFp64Merge) up_fp64.Clear();
+@@ -555,6 +560,35 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+ 
+         __builtin_amdgcn_sched_barrier(0);
+ 
++        // Experimental BF16 KPack=8, 16x16 MFMA source permutation.
++        // HF MI32 LDS reads: K[0:4,8:12], then K[4:8,12:16].
++        // CK packs K8 per lane: exchange register bit2 with KLane bit1.
++        auto hf_korder = [&](auto& vec) {
++#ifdef CK_MELLUM_HF_KORDER
++            if constexpr(is_same_v<ADataType, bhalf_t> && is_same_v<BDataType, bhalf_t> &&
++                         MPerXDL == 16 && NPerXDL == 16 && KPack == 8)
++            {
++                auto src = vec;
++                const unsigned lane = get_thread_local_1d_id() % 64;
++                static_for<0, 4, 1>{}([&](auto pair) {
++                    constexpr unsigned reg = decltype(pair)::value;
++
++                    // Select source register pair using the destination KLane high bit.
++                    const unsigned lane_pair = (lane >> 5) * 2;
++                    using pair_type = typename vector_type<ComputeDataType, 2>::type;
++                    unsigned lo = bit_cast<unsigned>(src.template AsType<pair_type>()[Number<reg % 2>{}]);
++                    unsigned hi = bit_cast<unsigned>(src.template AsType<pair_type>()[Number<reg % 2 + 2>{}]);
++
++                    const unsigned from = (lane & ~32u) | ((reg / 2) * 32u);
++                    const unsigned lp = __builtin_amdgcn_ds_bpermute(from * 4, lo);
++                    const unsigned hp = __builtin_amdgcn_ds_bpermute(from * 4, hi);
++                    vec.template AsType<pair_type>()(pair) =
++                        bit_cast<pair_type>(lane_pair ? hp : lp);
++                });
++            }
++#endif
++        };
++
+         // main body
+         if constexpr(HasMainLoop)
+         {
+@@ -605,6 +639,9 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                                                     [Number<b_thread_desc_.CalculateOffset(
+                                                         make_tuple(n0, I0, k0, ik))>{}];
+                             });
++                    hf_korder(a_thread_vec);
++                    hf_korder(b_thread_vec);
++                    hf_korder(b_thread_vec_up);
+ 
+                             using mfma_input_type =
+                                 typename vector_type<ComputeDataType,
+@@ -751,6 +788,9 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                             b_thread_bufs_up[I0][Number<b_thread_desc_.CalculateOffset(
+                                 make_tuple(n0, I0, k0, ik))>{}];
+                     });
++                    hf_korder(a_thread_vec);
++                    hf_korder(b_thread_vec);
++                    hf_korder(b_thread_vec_up);
+ 
+                     using mfma_input_type =
+                         typename vector_type<ComputeDataType, xdlops_gemm.K1PerXdlops>::type;
+@@ -853,6 +893,9 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                             b_thread_bufs_up[I1][Number<b_thread_desc_.CalculateOffset(
+                                 make_tuple(n0, I0, k0, ik))>{}];
+                     });
++                    hf_korder(a_thread_vec);
++                    hf_korder(b_thread_vec);
++                    hf_korder(b_thread_vec_up);
+ 
+                     using mfma_input_type =
+                         typename vector_type<ComputeDataType, xdlops_gemm.K1PerXdlops>::type;
+@@ -918,6 +961,9 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                             b_thread_bufs_up[I0][Number<b_thread_desc_.CalculateOffset(
+                                 make_tuple(n0, I0, k0, ik))>{}];
+                     });
++                    hf_korder(a_thread_vec);
++                    hf_korder(b_thread_vec);
++                    hf_korder(b_thread_vec_up);
+ 
+                     using mfma_input_type =
+                         typename vector_type<ComputeDataType, xdlops_gemm.K1PerXdlops>::type;
+-- 
+2.43.0
+
+
+From 2a17cee0cf2d2f3c9d46de5fab265cf5aecd1ee7 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 15:17:25 +0000
+Subject: [PATCH 5/6] fix: select BF16 stage1 K grouping per HF expert GEMM
+ profile
+
+---
+ ...peline_xdlops_b_preshuffle_gufusion_v3.hpp |  3 ++-
+ .../gpu/grid/gridwise_moe_gemm.hpp            | 19 +++++++++++++++++--
+ 2 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+index 60e864303..ffa4e9a42 100644
+--- a/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
++++ b/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_b_preshuffle_gufusion_v3.hpp
+@@ -469,7 +469,7 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+                         const BBlockTransferStep& b_block_copy_step,
+                         CThreadBuffer& c_thread_buf,
+                         CThreadBuffer& c_thread_buf_up,
+-                        index_t num_loop) const
++                        index_t num_loop, bool hf_mi32 = false) const
+     {
+         ignore = b_block_buf;
+         __builtin_amdgcn_sched_barrier(0);
+@@ -568,6 +568,7 @@ struct BlockwiseGemmXdlops_pipeline_bpreshuffle_gufusion_v3<BlockGemmPipelineSch
+             if constexpr(is_same_v<ADataType, bhalf_t> && is_same_v<BDataType, bhalf_t> &&
+                          MPerXDL == 16 && NPerXDL == 16 && KPack == 8)
+             {
++                if(!hf_mi32) return;
+                 auto src = vec;
+                 const unsigned lane = get_thread_local_1d_id() % 64;
+                 static_for<0, 4, 1>{}([&](auto pair) {
+diff --git a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+index 5ac6ff88e..8fba15d40 100644
+--- a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
++++ b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+@@ -695,6 +695,7 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+     // 1: HF rounding boundaries; 2/3: GEMM gate/up; 4: rounded SiLU.
+     __device__ static float MellumSiluMul(float gate, float up, index_t mode)
+     {
++        mode &= 0xff; // High bits carry opt-in stage1 metadata ABI flags.
+         if(mode == 0)
+         {
+             tensor_operation::element_wise::Silu{}(gate, gate);
+@@ -828,6 +829,10 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                 {
+                     const char* mode = std::getenv("CK_MELLUM_STAGE1_MODE");
+                     this->MellumStage1Mode = mode ? std::atoi(mode) : 0;
++#ifdef CK_MELLUM_HF_KORDER
++                    const char* plan = std::getenv("CK_MELLUM_STAGE1_KORDER_PLAN");
++                    if(plan && std::atoi(plan) != 0) this->MellumStage1Mode |= 0x100;
++#endif
+                 }
+             }
+ 
+@@ -1367,7 +1372,12 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                 b_block_slice_copy_step,
+                 c_thread_buf,
+                 c_thread_buf_up,
+-                num_k_block_main_loop);
++                num_k_block_main_loop
++#ifdef CK_MELLUM_HF_KORDER
++                , ((problem.MellumStage1Mode & 0x100) != 0 &&
++                   p_max_token_id[2 + expert_id] != 0)
++#endif
++                );
+         }
+         else
+         {
+@@ -1878,7 +1888,12 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                 b_block_slice_copy_step,
+                 c_thread_buf,
+                 c_thread_buf_up,
+-                num_k_block_main_loop);
++                num_k_block_main_loop
++#ifdef CK_MELLUM_HF_KORDER
++                , ((problem.MellumStage1Mode & 0x100) != 0 &&
++                   p_max_token_id[2 + expert_id] != 0)
++#endif
++                );
+         }
+         else
+         {
+-- 
+2.43.0
+
+
+From 5082d415da55210da52bb482c4f204efd3733220 Mon Sep 17 00:00:00 2001
+From: Qoder <qoder@localhost>
+Date: Tue, 3 Nov 2026 15:37:31 +0000
+Subject: [PATCH 6/6] perf: apply CK K-order profile metadata only to prefill
+
+---
+ include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+index 8fba15d40..fbf3001f3 100644
+--- a/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
++++ b/include/ck/tensor_operation/gpu/grid/gridwise_moe_gemm.hpp
+@@ -831,7 +831,7 @@ struct GridwiseMoeGemm : public GridwiseGemm_xdl_cshuffle_base<
+                     this->MellumStage1Mode = mode ? std::atoi(mode) : 0;
+ #ifdef CK_MELLUM_HF_KORDER
+                     const char* plan = std::getenv("CK_MELLUM_STAGE1_KORDER_PLAN");
+-                    if(plan && std::atoi(plan) != 0) this->MellumStage1Mode |= 0x100;
++                    if(NumTokens_ > 1 && plan && std::atoi(plan) != 0) this->MellumStage1Mode |= 0x100;
+ #endif
+                 }
+             }
+-- 
+2.43.0
+
